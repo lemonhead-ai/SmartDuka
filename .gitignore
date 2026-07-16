@@ -6,6 +6,8 @@ build/
 .env*.local
 
 # Python
+.env
+backend/.env
 __pycache__/
 *.py[cod]
 *$py.class
@@ -19,3 +21,6 @@ env/
 .idea/
 .vscode/
 *.log
+
+# ShipStudio metadata
+.shipstudio/

@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --color-white: #FFFFFF;
+  --color-grey-soft: #F5F5F7;
+  --color-grey-mid: #E8E8ED;
+  --color-grey-text: #6E6E73;
+  --color-black: #1D1D1F;
+  --color-accent: #0071E3;
+  --radius-button: 14px;
+  --radius-card: 24px;
+  --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100vh; font-family: 'Montserrat', sans-serif; }
+body { margin: 0; background: var(--color-grey-soft); color: var(--color-black); }
+button, a { -webkit-tap-highlight-color: transparent; }
+
+.tahoe-sidebar {
+  position: fixed; top: 16px; left: 16px; height: calc(100vh - 32px); border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04); z-index: 50;
+}
