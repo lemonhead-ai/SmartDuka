@@ -5,23 +5,15 @@ from pydantic import BaseModel
 from src.agents.shared.context import AgentContext
 from src.agents.shared.outputs import (
     CustomerAgentOutput,
-    DifficultyAgentOutput,
-    InsightAgentOutput,
-    LocalizationAgentOutput,
     MissionAgentOutput,
-    RewardAgentOutput,
     TutorAgentOutput,
 )
 
 
 class AgentWorkflowResult(BaseModel):
-    customer: CustomerAgentOutput
-    tutor: TutorAgentOutput
-    difficulty: DifficultyAgentOutput
-    mission: MissionAgentOutput
-    reward: RewardAgentOutput
-    insight: InsightAgentOutput
-    localization: LocalizationAgentOutput
+    customer: CustomerAgentOutput | None = None
+    tutor: TutorAgentOutput | None = None
+    mission: MissionAgentOutput | None = None
 
 
 class AIOrchestrator:
@@ -31,19 +23,15 @@ class AIOrchestrator:
         self.agents = agents
 
     async def run_session_workflow(self, context: AgentContext) -> AgentWorkflowResult:
-        customer = await self.agents.customer.run(context)
-        tutor = await self.agents.tutor.run(context)
-        difficulty = await self.agents.difficulty.run(context)
-        mission = await self.agents.mission.run(context)
-        reward = await self.agents.reward.run(context)
-        insight = await self.agents.insight.run(context)
-        localization = await self.agents.localization.run(context)
+        # Run only the 3 core agents in a single batch
+        results = await asyncio.gather(
+            self.agents.customer.run(context),
+            self.agents.tutor.run(context),
+            self.agents.mission.run(context),
+            return_exceptions=True,
+        )
         return AgentWorkflowResult(
-            customer=customer,
-            tutor=tutor,
-            difficulty=difficulty,
-            mission=mission,
-            reward=reward,
-            insight=insight,
-            localization=localization,
+            customer=results[0] if isinstance(results[0], CustomerAgentOutput) else None,
+            tutor=results[1] if isinstance(results[1], TutorAgentOutput) else None,
+            mission=results[2] if isinstance(results[2], MissionAgentOutput) else None,
         )

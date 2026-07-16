@@ -13,11 +13,7 @@ from src.agents.shared.context import (
 )
 from src.agents.shared.outputs import (
     CustomerAgentOutput,
-    DifficultyAgentOutput,
-    InsightAgentOutput,
-    LocalizationAgentOutput,
     MissionAgentOutput,
-    RewardAgentOutput,
     TutorAgentOutput,
 )
 from src.services.ai.orchestrator import AIOrchestrator
@@ -50,9 +46,6 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
                 encouragement="Keep trying",
             )
         ),
-        difficulty=FixedAgent(
-            DifficultyAgentOutput(recommended_tier=2, adjustment="stay", rationale="Stable")
-        ),
         mission=FixedAgent(
             MissionAgentOutput(
                 title="Serve",
@@ -60,22 +53,6 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
                 goal_description="Serve one customer",
                 target_value=1,
             )
-        ),
-        reward=FixedAgent(
-            RewardAgentOutput(
-                reward_type="duka_coins",
-                amount=10,
-                reason="Careful retry",
-                celebration_message="Well done",
-            )
-        ),
-        insight=FixedAgent(
-            InsightAgentOutput(
-                summary="Progress", recommended_action="Practise", strength="Persistence"
-            )
-        ),
-        localization=FixedAgent(
-            LocalizationAgentOutput(localized_text="Habari", culturally_valid=True, language="sw")
         ),
     )
     context = AgentContext(
@@ -89,6 +66,7 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
 
     result = await AIOrchestrator(agents).run_session_workflow(context)
 
-    assert result.difficulty.recommended_tier == 2
-    assert result.localization.culturally_valid is True
+    assert result.customer is not None
+    assert result.mission is not None
+    assert result.tutor is not None
     assert result.tutor.reveal_answer is False

@@ -1,55 +1,55 @@
 from datetime import datetime
-from uuid import UUID
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from .common import LanguageCode
-from .gameplay import GameplayEvent
+
+class SyncEvent(BaseModel):
+    """An append-only event created by the offline client."""
+
+    id: str = Field(min_length=1, max_length=128)
+    type: str = Field(min_length=1, max_length=64)
+    payload: dict[str, Any] = Field(default_factory=dict)
+    created_at: int = Field(alias="createdAt", ge=0)
+    retry_count: int = Field(default=0, alias="retryCount", ge=0)
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class SyncUploadRequest(BaseModel):
-    child_id: UUID
-    device_id: str = Field(min_length=1, max_length=128)
-    events: list[GameplayEvent] = Field(min_length=1, max_length=250)
+    child_id: str | None = Field(default=None, alias="childId")
+    device_id: str | None = Field(default=None, alias="deviceId", max_length=128)
+    events: list[SyncEvent] = Field(min_length=1, max_length=250)
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
-class CustomerOrderLine(BaseModel):
-    product_id: str = Field(min_length=1, max_length=64)
-    product_name: str = Field(min_length=1, max_length=100)
-    quantity: int = Field(ge=1, le=100)
-    unit_price_kes: int = Field(ge=0, le=10_000)
+class CachedScenarioResponse(BaseModel):
+    id: str
+    child_id: str = Field(alias="childId")
+    title: str
+    customer_name: str = Field(alias="customerName")
+    customer_mood: str = Field(alias="customerMood")
+    difficulty_tier: int = Field(alias="difficultyTier", ge=1, le=7)
+    payload: dict[str, Any]
+    cached_at: int = Field(alias="cachedAt", ge=0)
+    expires_at: int = Field(alias="expiresAt", ge=0)
 
-
-class CustomerScenario(BaseModel):
-    id: UUID
-    customer_name: str = Field(min_length=1, max_length=100)
-    dialogue: str = Field(min_length=1, max_length=500)
-    language: LanguageCode
-    difficulty_tier: int = Field(ge=1, le=7)
-    order: list[CustomerOrderLine] = Field(min_length=1, max_length=5)
-    tendered_amount_kes: int = Field(ge=0, le=10_000)
-    cached_at: datetime
-    expires_at: datetime
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class MissionSnapshot(BaseModel):
-    id: UUID
-    title: str = Field(min_length=1, max_length=120)
-    briefing: str = Field(min_length=1, max_length=500)
-    target_value: int = Field(ge=1)
-    current_value: int = Field(ge=0)
-    difficulty_tier: int = Field(ge=1, le=7)
-    expires_at: datetime
+    title: str
+    briefing: str
+    target_value: int = Field(alias="targetValue", ge=1)
 
-
-class DifficultyProfileSnapshot(BaseModel):
-    tier: int = Field(ge=1, le=7)
-    updated_at: datetime
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class SyncUploadResponse(BaseModel):
-    accepted_event_ids: list[UUID]
-    scenarios: list[CustomerScenario]
+    accepted_event_ids: list[str] = Field(alias="acceptedEventIds")
+    scenarios: list[CachedScenarioResponse]
     missions: list[MissionSnapshot]
-    difficulty_profile: DifficultyProfileSnapshot
-    synced_at: datetime
+    synced_at: datetime = Field(alias="syncedAt")
+
+    model_config = ConfigDict(populate_by_name=True)

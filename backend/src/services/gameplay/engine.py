@@ -87,16 +87,13 @@ class GameplayEngine:
         state["current_customer"] = self.customers.next(int(state["customers_served"]), items)
         advice = await self._agent_advice(game_session, student, state)
         if advice is not None:
-            state["current_customer"]["greeting"] = advice.customer.dialogue
-            state["recommended_tier"] = advice.difficulty.recommended_tier
-            state["agent_mission"] = {
-                "title": advice.mission.title,
-                "target": advice.mission.target_value,
-            }
-            state["reward_message"] = advice.reward.celebration_message
-            state["learning_insight"] = advice.insight.summary
-            if advice.localization.culturally_valid:
-                state["current_customer"]["greeting"] = advice.localization.localized_text
+            if advice.customer:
+                state["current_customer"]["greeting"] = advice.customer.dialogue
+            if advice.mission:
+                state["agent_mission"] = {
+                    "title": advice.mission.title,
+                    "target": advice.mission.target_value,
+                }
         state["basket"] = []
         state["challenge"] = None
         await self._save(game_session, state)
@@ -155,11 +152,12 @@ class GameplayEngine:
         await self._save(game_session, state)
         advice = await self._agent_advice(game_session, student, state)
         if advice is not None:
-            return HintResponse(
-                hint=advice.tutor.hint,
-                encouragement=advice.tutor.encouragement,
-                hints_used=int(challenge["hints_used"]),
-            )
+            if advice.tutor:
+                return HintResponse(
+                    hint=advice.tutor.hint,
+                    encouragement=advice.tutor.encouragement,
+                    hints_used=int(challenge["hints_used"]),
+                )
         return HintResponse(
             hint=self.challenges.hint(challenge),
             encouragement="You can do this—one small step at a time.",
@@ -186,11 +184,7 @@ class GameplayEngine:
         state["stars_earned"] = int(state["stars_earned"]) + stars
         await self._update_progress(student, state, coins, xp, stars, correct)
         await self._save(game_session, state)
-        reward_message = state.get("reward_message")
-        if not isinstance(reward_message, str):
-            reward_message = (
-                "Your persistence earns rewards!" if correct else "Trying again builds your skills!"
-            )
+        reward_message = "Your persistence earns rewards!" if correct else "Trying again builds your skills!"
         reward = RewardResponse(
             coins=coins,
             xp=xp,

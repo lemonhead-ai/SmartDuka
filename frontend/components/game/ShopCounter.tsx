@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 
 import { gameplayApi } from "@/features/gameplay/api";
+import { OfflineSyncManager, queueGameEvent } from "@/features/offline";
 import { triggerSensoryFeedback } from "@/features/feedback/sensory-feedback";
 import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
@@ -73,6 +74,13 @@ export function ShopCounter() {
       setCustomer(null);
       setBasket(null);
       notify("success", result.reward?.message ?? "Checkout complete!");
+      void queueGameEvent("transaction_completed", {
+        sessionId,
+        customerId: customer?.id,
+        totalKes: basket?.total_kes ?? 0
+      }).then(() => new OfflineSyncManager().sync()).catch(() => {
+        // The event remains queued and will retry on the next connectivity window.
+      });
     },
     onError: (error) => notify("error", errorMessage(error))
   });

@@ -3,8 +3,9 @@ import type { CachedScenario, GameEvent } from "./types";
 
 export type SyncResponse = {
   scenarios?: CachedScenario[];
-  difficultyProfile?: Record<string, unknown>;
-  pendingRewards?: Record<string, unknown>[];
+  missions?: { title: string; briefing: string; targetValue: number }[];
+  acceptedEventIds?: string[];
+  syncedAt?: string;
 };
 
 type SyncManagerOptions = {
@@ -20,7 +21,7 @@ export class OfflineSyncManager {
   private isSyncing = false;
   private started = false;
 
-  constructor({ endpoint = "/api/sync", fetcher = fetch, onSyncStateChange }: SyncManagerOptions = {}) {
+  constructor({ endpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1"}/sync/upload`, fetcher = fetch, onSyncStateChange }: SyncManagerOptions = {}) {
     this.endpoint = endpoint;
     this.fetcher = fetcher;
     this.onSyncStateChange = onSyncStateChange;
@@ -61,8 +62,7 @@ export class OfflineSyncManager {
 
       const result = await response.json() as SyncResponse;
       if (result.scenarios?.length) await saveScenarios(result.scenarios);
-      if (result.difficultyProfile) await setOfflineMeta("difficulty-profile", result.difficultyProfile);
-      if (result.pendingRewards) await setOfflineMeta("pending-rewards", result.pendingRewards);
+      if (result.missions) await setOfflineMeta("active-missions", result.missions);
       await setOfflineMeta("last-successful-sync", Date.now());
       await updateEventStatus(ids, "synced");
       this.onSyncStateChange?.("idle");
