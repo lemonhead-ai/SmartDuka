@@ -1,0 +1,12 @@
+{
+    "name": "smartduka-ai",
+    "private": true,
+    "workspaces": [
+      "frontend"
+    ],
+    "scripts": {
+      "dev": "pnpm --filter frontend dev",
+      "frontend": "pnpm --filter frontend dev",
+      "backend": "cd backend && uvicorn src.main:app --reload"
+    }
+  }
