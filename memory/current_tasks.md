@@ -13,6 +13,7 @@
 5. [ ] **Task 5**: Generate Mission Agent module and `/adventure` screen (Requires prompt from human team).
 6. [x] **Task 6**: Write the sync manager for connectivity detection and upload/download queuing.
 7. [x] **Task 7**: Write SQLAlchemy models and seed data (demo gameplay scope).
-8. [ ] **Task 8**: Write unit tests for core logic.
+8. [x] **Task 8**: Write unit tests for core logic.
 9. [ ] **Task 9**: Insight Agent report template (Manual task by human team).
 10.[ ] **Task 10**: Integration pass (Wire agents to frontend).
+11. [x] **Module 5**: Implement the persistent backend gameplay engine and judge-ready demo loop.

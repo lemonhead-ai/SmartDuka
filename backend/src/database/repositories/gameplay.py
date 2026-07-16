@@ -3,7 +3,14 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import GameSession, Question, QuestionAttempt, Student, StudentProgress
+from src.database.models import (
+    GameSession,
+    InventoryItem,
+    Question,
+    QuestionAttempt,
+    Student,
+    StudentProgress,
+)
 
 
 class GameplayRepository:
@@ -13,11 +20,28 @@ class GameplayRepository:
     async def get_demo_student(self) -> Student | None:
         return await self.session.scalar(select(Student).where(Student.is_demo.is_(True)))
 
-    async def create_session(self, student_id: UUID) -> GameSession:
-        game_session = GameSession(student_id=student_id)
+    async def create_session(
+        self, student_id: UUID, game_state: dict[str, object] | None = None
+    ) -> GameSession:
+        game_session = GameSession(student_id=student_id, game_state=game_state or {})
         self.session.add(game_session)
         await self.session.flush()
         return game_session
+
+    async def save_game_state(self, game_session: GameSession, state: dict[str, object]) -> None:
+        game_session.game_state = state
+        await self.session.flush()
+
+    async def list_inventory(self) -> list[InventoryItem]:
+        result = await self.session.scalars(
+            select(InventoryItem)
+            .where(InventoryItem.is_active.is_(True), InventoryItem.stock > 0)
+            .order_by(InventoryItem.category, InventoryItem.name)
+        )
+        return list(result)
+
+    async def get_inventory_item(self, item_id: UUID) -> InventoryItem | None:
+        return await self.session.get(InventoryItem, item_id)
 
     async def get_active_session(self, session_id: UUID) -> GameSession | None:
         return await self.session.scalar(

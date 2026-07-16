@@ -1,4 +1,11 @@
-from .gameplay import GameSession, Question, QuestionAttempt, StudentProgress
+from .gameplay import GameSession, InventoryItem, Question, QuestionAttempt, StudentProgress
 from .student import Student
 
-__all__ = ["GameSession", "Question", "QuestionAttempt", "Student", "StudentProgress"]
+__all__ = [
+    "GameSession",
+    "InventoryItem",
+    "Question",
+    "QuestionAttempt",
+    "Student",
+    "StudentProgress",
+]

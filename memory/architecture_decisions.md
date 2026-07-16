@@ -38,3 +38,8 @@
 ## 2026-07-16 - Educational agent behaviors
 
 - Educational safeguards are expressed through versioned prompts and typed output contracts: tutors provide hints without answer reveals, difficulty changes are limited to one tier, and rewards recognise persistence and improvement.
+
+## 2026-07-16 - Gameplay engine
+
+- The gameplay engine is the authoritative owner of persisted session state; AI orchestration is optional advice that can shape dialogue, tutoring, mission wording, rewards, localization, and difficulty without directly mutating game decisions.
+- Inventory and aggregate learner progress are persisted in SQLite, while the active customer, basket, challenge, and mission state are validated application data persisted on the gameplay session.
