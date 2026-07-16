@@ -13,6 +13,7 @@ class CustomerScenarioOutput(BaseModel):
     dialogue: str
     shopping_list: list[CustomerOrderItem] = Field(min_length=1, max_length=3)
     payment_amount_kes: int = Field(ge=1, le=10_000)
+    checkout_question: str
     mood: Literal["friendly", "curious", "rushed"]
 
 

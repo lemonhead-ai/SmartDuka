@@ -1,7 +1,15 @@
-from uuid import UUID
+from datetime import UTC, datetime
+from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.agents.shared.context import (
+    AgentContext,
+    GameplaySessionContext,
+    LearnerProfile,
+    MissionContext,
+    ProgressContext,
+)
 from src.contracts.gameplay_engine import (
     AnswerChallengeResponse,
     BasketLineResponse,
@@ -22,12 +30,12 @@ from src.contracts.gameplay_engine import (
 from src.core.exceptions import ApplicationError
 from src.database.models import GameSession, InventoryItem, Student, StudentProgress
 from src.database.repositories.gameplay import GameplayRepository
+from src.services.ai.orchestrator import AgentWorkflowResult, AIOrchestrator
 from src.services.gameplay.managers import (
     AchievementEngine,
     BasketLine,
     BasketManager,
     BasketValidationManager,
-    CustomerQueueManager,
     MathChallengeManager,
     MissionProgressEngine,
     ProgressTracker,
@@ -38,13 +46,13 @@ from src.services.gameplay.managers import (
 
 
 class GameplayEngine:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, orchestrator: AIOrchestrator | None = None) -> None:
         self.session = session
+        self.orchestrator = orchestrator
         self.repository = GameplayRepository(session)
         self.inventory = ShopInventoryManager()
         self.basket = BasketManager()
         self.basket_validation = BasketValidationManager()
-        self.customers = CustomerQueueManager()
         self.challenges = MathChallengeManager()
         self.scoring = ScoringEngine()
         self.rewards = XpCoinsEngine()
@@ -54,6 +62,8 @@ class GameplayEngine:
 
     async def start_session(self) -> StartGameplaySessionResponse:
         student = await self._demo_student()
+        if await self.repository.get_shop(student.id) is None:
+            raise ApplicationError("Create your duka before starting a session.", status_code=409)
         state = self._initial_state()
         game_session = await self.repository.create_session(student.id, state)
         await self.session.commit()
@@ -71,10 +81,35 @@ class GameplayEngine:
             raise ApplicationError(
                 "Finish the current customer before serving the next one.", status_code=409
             )
-        items = await self.repository.list_inventory()
+        shop_stock = await self.repository.list_shop_stock(student.id)
+        items = [item for _, item in shop_stock]
         if not items:
-            raise ApplicationError("Shop inventory is unavailable.", status_code=503)
-        state["current_customer"] = self.customers.next(int(state["customers_served"]), items)
+            raise ApplicationError("Add products to your duka before serving customers.", status_code=409)
+        advice = await self._agent_advice(game_session, student, state)
+        if advice is None:
+            raise ApplicationError("AI customer generation is unavailable. Check the GPT-5.6 provider.", status_code=503)
+        scenario = advice.customer.scenarios[int(state["customers_served"]) % len(advice.customer.scenarios)]
+        matched = {item.name.casefold(): item for item in items}
+        requested_items = [
+            {"item_id": str(matched[order.item_name.casefold()].id), "name": matched[order.item_name.casefold()].name, "quantity": order.quantity}
+            for order in scenario.shopping_list
+            if order.item_name.casefold() in matched
+        ]
+        if len(requested_items) != len(scenario.shopping_list):
+            raise ApplicationError("Customer Agent selected a product outside this duka.", status_code=502)
+        request = ", ".join(f"{item['quantity']} {str(item['name']).lower()}" for item in requested_items)
+        state["current_customer"] = {
+            "id": str(uuid4()),
+            "name": scenario.customer_name,
+            "personality": "busy" if scenario.mood == "rushed" else scenario.mood,
+            "greeting": scenario.dialogue,
+            "request": f"I need {request}, please.",
+            "requested_items": requested_items,
+            "checkout_question": scenario.checkout_question,
+            "payment_amount_kes": scenario.payment_amount_kes,
+        }
+        state["agent_mission"] = {"title": advice.mission.title, "target": advice.mission.target_value}
+                
         state["basket"] = []
         state["challenge"] = None
         await self._save(game_session, state)
@@ -85,8 +120,8 @@ class GameplayEngine:
         )
 
     async def list_inventory(self, session_id: UUID) -> list[InventoryItemResponse]:
-        await self._session_and_student(session_id)
-        return [self._item_response(item) for item in await self.repository.list_inventory()]
+        _, student = await self._session_and_student(session_id)
+        return [self._item_response(item, stock.stock) for stock, item in await self.repository.list_shop_stock(student.id)]
 
     async def get_basket(self, session_id: UUID) -> BasketResponse:
         game_session, student = await self._session_and_student(session_id)
@@ -95,15 +130,16 @@ class GameplayEngine:
     async def add_basket_item(
         self, session_id: UUID, item_id: UUID, quantity: int
     ) -> BasketResponse:
-        game_session, _ = await self._session_and_student(session_id)
+        game_session, student = await self._session_and_student(session_id)
         state = self._state(game_session)
         self._require_customer(state)
+        shop_stock = await self.repository.get_shop_stock(student.id, item_id)
         item = await self.repository.get_inventory_item(item_id)
-        if item is None or not item.is_active:
+        if item is None or shop_stock is None or shop_stock.stock < 1:
             raise ApplicationError("Inventory item was not found.", status_code=404)
         lines = self._lines(state)
         try:
-            updated = self.basket.add(lines, item_id, quantity, item.stock)
+            updated = self.basket.add(lines, item_id, quantity, shop_stock.stock)
         except ValueError as error:
             raise ApplicationError(str(error), status_code=409) from error
         state["basket"] = self._serialize_lines(updated)
@@ -131,6 +167,13 @@ class GameplayEngine:
         challenge["hints_used"] = int(challenge["hints_used"]) + 1
         state["hints_used"] = int(state["hints_used"]) + 1
         await self._save(game_session, state)
+        advice = await self._agent_advice(game_session, student, state)
+        if advice is not None:
+            return HintResponse(
+                hint=advice.tutor.hint,
+                encouragement=advice.tutor.encouragement,
+                hints_used=int(challenge["hints_used"]),
+            )
         return HintResponse(
             hint=self.challenges.hint(challenge),
             encouragement="You can do this—one small step at a time.",
@@ -157,7 +200,11 @@ class GameplayEngine:
         state["stars_earned"] = int(state["stars_earned"]) + stars
         await self._update_progress(student, state, coins, xp, stars, correct)
         await self._save(game_session, state)
-        reward_message = "Your persistence earns rewards!" if correct else "Trying again builds your skills!"
+        reward_message = state.get("reward_message")
+        if not isinstance(reward_message, str):
+            reward_message = (
+                "Your persistence earns rewards!" if correct else "Trying again builds your skills!"
+            )
         reward = RewardResponse(
             coins=coins,
             xp=xp,
@@ -184,11 +231,13 @@ class GameplayEngine:
         challenge = state["challenge"]
         if not isinstance(challenge, dict):
             recommended_tier = state.get("recommended_tier")
+            customer_data = state.get("current_customer")
             state["challenge"] = self.challenges.create_checkout_challenge(
                 basket.total_kes,
                 int(recommended_tier)
                 if isinstance(recommended_tier, int)
                 else student.difficulty_tier,
+                customer=customer_data if isinstance(customer_data, dict) else None
             )
             await self._save(game_session, state)
             return CheckoutResponse(
@@ -205,12 +254,12 @@ class GameplayEngine:
                 next_customer_available=False,
             )
         for line in self._lines(state):
-            item = await self.repository.get_inventory_item(line.item_id)
-            if item is None or item.stock < line.quantity:
+            shop_stock = await self.repository.get_shop_stock(student.id, line.item_id)
+            if shop_stock is None or shop_stock.stock < line.quantity:
                 raise ApplicationError(
                     "An item is no longer available in the requested quantity.", status_code=409
                 )
-            item.stock -= line.quantity
+            shop_stock.stock -= line.quantity
         state["customers_served"] = int(state["customers_served"]) + 1
         state["achievements"] = self.achievements.update(
             int(state["customers_served"]),
@@ -329,6 +378,44 @@ class GameplayEngine:
         await self.repository.save_game_state(game_session, state)
         await self.session.commit()
 
+    async def _agent_advice(
+        self, game_session: GameSession, student: Student, state: dict[str, object]
+    ) -> AgentWorkflowResult | None:
+        if self.orchestrator is None:
+            return None
+        basket = await self._basket_response(state)
+        inventory_items = [item for _, item in await self.repository.list_shop_stock(student.id)]
+        available_goods = [item.name for item in inventory_items]
+        
+        context = AgentContext(
+            learner=LearnerProfile(
+                student_id=student.id,
+                age=student.age,
+                language=student.language,
+                difficulty_tier=student.difficulty_tier,
+            ),
+            session=GameplaySessionContext(
+                session_id=game_session.id,
+                started_at=game_session.started_at or datetime.now(UTC),
+                transactions_completed=int(state["customers_served"]),
+                last_skill=(
+                    str(state["challenge"]["skill"])
+                    if isinstance(state["challenge"], dict)
+                    else None
+                ),
+            ),
+            progress=ProgressContext(
+                attempts=int(state["questions_attempted"]),
+                correct_attempts=int(state["correct_answers"]),
+                basket_feedback=basket.validation.tutor_feedback,
+            ),
+            mission=MissionContext(
+                progress_value=int(state["customers_served"]), target_value=3, mission_type="sales"
+            ),
+            available_goods=available_goods,
+        )
+        return await self.orchestrator.run_session_workflow(context)
+
     async def _demo_student(self) -> Student:
         student = await self.repository.get_demo_student()
         if student is None:
@@ -360,6 +447,9 @@ class GameplayEngine:
             "achievements": [],
             "mission_completed": False,
             "recommended_tier": None,
+            "agent_mission": None,
+            "reward_message": None,
+            "learning_insight": None,
         }
 
     @staticmethod
@@ -379,19 +469,28 @@ class GameplayEngine:
         return [{"item_id": str(line.item_id), "quantity": line.quantity} for line in lines]
 
     def _mission(self, state: dict[str, object]) -> MissionResponse:
+        agent_mission = state.get("agent_mission")
+        if isinstance(agent_mission, dict):
+            target = int(agent_mission["target"])
+            return MissionResponse(
+                title=str(agent_mission["title"]),
+                progress=min(int(state["customers_served"]), target),
+                target=target,
+                completed=int(state["customers_served"]) >= target,
+            )
         return MissionResponse.model_validate(
             self.missions.progress(int(state["customers_served"]))
         )
 
     @staticmethod
-    def _item_response(item: InventoryItem) -> InventoryItemResponse:
+    def _item_response(item: InventoryItem, stock: int | None = None) -> InventoryItemResponse:
         return InventoryItemResponse(
             id=item.id,
             name=item.name,
             category=item.category,
             price_kes=ShopInventoryManager.price(item),
             image_placeholder=item.image_placeholder,
-            stock=item.stock,
+            stock=stock if stock is not None else item.stock,
             educational_tags=item.educational_tags,
         )
 

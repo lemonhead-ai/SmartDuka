@@ -45,6 +45,26 @@ class InventoryItem(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class Shop(Base):
+    __tablename__ = "shops"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    student_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("students.id"), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    category: Mapped[str] = mapped_column(String(40), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ShopStock(Base):
+    __tablename__ = "shop_stock"
+    __table_args__ = (UniqueConstraint("shop_id", "inventory_item_id", name="uq_shop_stock_item"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    shop_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("shops.id"), index=True)
+    inventory_item_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("inventory_items.id"), index=True)
+    stock: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Question(Base):
     __tablename__ = "questions"
 

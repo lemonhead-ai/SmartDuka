@@ -89,3 +89,6 @@ export type PlayerProgress = {
 };
 
 export type ApiError = { detail: string; request_id?: string; errors?: { field?: string; message: string }[] };
+
+export type CatalogItem = { id: string; name: string; category: string; price_kes: number; image_placeholder: string };
+export type Duka = { id: string; name: string; category: string; items: CatalogItem[] };

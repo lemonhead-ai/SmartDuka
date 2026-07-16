@@ -10,6 +10,8 @@ from src.database.models import (
     OfflineEvent,
     Question,
     QuestionAttempt,
+    Shop,
+    ShopStock,
     Student,
     StudentProgress,
 )
@@ -41,6 +43,34 @@ class GameplayRepository:
             .order_by(InventoryItem.category, InventoryItem.name)
         )
         return list(result)
+
+    async def get_shop(self, student_id: UUID) -> Shop | None:
+        return await self.session.scalar(select(Shop).where(Shop.student_id == student_id))
+
+    async def create_shop(self, student_id: UUID, name: str, category: str, item_ids: list[UUID]) -> Shop:
+        shop = Shop(student_id=student_id, name=name, category=category)
+        self.session.add(shop)
+        await self.session.flush()
+        self.session.add_all([ShopStock(shop_id=shop.id, inventory_item_id=item_id, stock=12) for item_id in item_ids])
+        await self.session.flush()
+        return shop
+
+    async def list_shop_stock(self, student_id: UUID) -> list[tuple[ShopStock, InventoryItem]]:
+        result = await self.session.execute(
+            select(ShopStock, InventoryItem)
+            .join(Shop, ShopStock.shop_id == Shop.id)
+            .join(InventoryItem, ShopStock.inventory_item_id == InventoryItem.id)
+            .where(Shop.student_id == student_id, ShopStock.stock > 0, InventoryItem.is_active.is_(True))
+            .order_by(InventoryItem.name)
+        )
+        return list(result.tuples())
+
+    async def get_shop_stock(self, student_id: UUID, item_id: UUID) -> ShopStock | None:
+        return await self.session.scalar(
+            select(ShopStock)
+            .join(Shop, ShopStock.shop_id == Shop.id)
+            .where(Shop.student_id == student_id, ShopStock.inventory_item_id == item_id)
+        )
 
     async def get_inventory_item(self, item_id: UUID) -> InventoryItem | None:
         return await self.session.get(InventoryItem, item_id)

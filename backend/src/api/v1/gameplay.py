@@ -16,6 +16,7 @@ from src.contracts.gameplay_engine import (
     SessionSummaryResponse,
     StartGameplaySessionResponse,
 )
+from src.dependencies.core import AIOrchestratorDependency
 from src.dependencies.database import DatabaseSession
 from src.services.gameplay.engine import GameplayEngine
 
@@ -30,9 +31,9 @@ router = APIRouter(prefix="/gameplay", tags=["gameplay"])
     description="Creates an active session for the seeded demo learner and returns its mission.",
 )
 async def start_gameplay_session(
-    db: DatabaseSession
+    db: DatabaseSession, orchestrator: AIOrchestratorDependency
 ) -> StartGameplaySessionResponse:
-    return await GameplayEngine(db).start_session()
+    return await GameplayEngine(db, orchestrator).start_session()
 
 
 @router.post(
@@ -41,9 +42,9 @@ async def start_gameplay_session(
     summary="Serve the next customer",
 )
 async def next_customer(
-    session_id: UUID, db: DatabaseSession
+    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
 ) -> NextCustomerResponse:
-    return await GameplayEngine(db).next_customer(session_id)
+    return await GameplayEngine(db, orchestrator).next_customer(session_id)
 
 
 @router.get(
@@ -116,9 +117,9 @@ async def answer_challenge(
 
 @router.post("/sessions/{session_id}/hint", response_model=HintResponse, summary="Request a hint")
 async def request_hint(
-    session_id: UUID, db: DatabaseSession
+    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
 ) -> HintResponse:
-    return await GameplayEngine(db).request_hint(session_id)
+    return await GameplayEngine(db, orchestrator).request_hint(session_id)
 
 
 @router.post(

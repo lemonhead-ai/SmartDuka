@@ -141,29 +141,19 @@ class BasketValidationManager:
 
 
 class MathChallengeManager:
-    def create_checkout_challenge(self, total_kes: int, tier: int) -> dict[str, object]:
-        tender = max(100, ((total_kes + 49) // 50) * 50)
-        if tender == total_kes:
-            return {
-                "id": str(uuid4()),
-                "prompt": "What is the total cost in KES?",
-                "skill": "money",
-                "answer": total_kes,
-                "difficulty_tier": tier,
-                "attempts": 0,
-                "hints_used": 0,
-                "complete": False,
-                "total_kes": total_kes,
-                "amount_paid_kes": total_kes,
-            }
+    def create_checkout_challenge(self, total_kes: int, tier: int, customer: dict[str, object] | None = None) -> dict[str, object]:
+        tender = max(total_kes, int(customer.get("payment_amount_kes", total_kes))) if customer else max(100, ((total_kes + 49) // 50) * 50)
+        
+        prompt = "What is the total cost in KES?"
+        if tender > total_kes:
+            question = str(customer.get("checkout_question", "How much change should I receive?")) if customer else "How much change should I receive?"
+            prompt = f"{question} Basket total: KES {total_kes}. Amount paid: KES {tender}."
+            
         return {
             "id": str(uuid4()),
-            "prompt": (
-                f"The basket costs KES {total_kes}. The customer pays KES {tender}. "
-                "What change should they receive?"
-            ),
-            "skill": "change",
-            "answer": tender - total_kes,
+            "prompt": prompt,
+            "skill": "change" if tender > total_kes else "money",
+            "answer": tender - total_kes if tender > total_kes else total_kes,
             "difficulty_tier": tier,
             "attempts": 0,
             "hints_used": 0,

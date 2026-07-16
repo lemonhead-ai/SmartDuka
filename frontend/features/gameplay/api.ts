@@ -8,7 +8,9 @@ import type {
   Hint,
   InventoryItem,
   PlayerProgress,
-  Session
+  Session,
+  CatalogItem,
+  Duka
 } from "@/features/gameplay/types";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -49,5 +51,8 @@ export const gameplayApi = {
     request<Hint>(`/gameplay/sessions/${sessionId}/hint`, { method: "POST" }),
   currentChallenge: (sessionId: string) =>
     request<Challenge | null>(`/gameplay/sessions/${sessionId}/challenge`),
-  progress: () => request<PlayerProgress>("/gameplay/progress")
+  progress: () => request<PlayerProgress>("/gameplay/progress"),
+  catalog: () => request<CatalogItem[]>("/shop/catalog"),
+  shop: () => request<Duka>("/shop"),
+  createShop: (name: string, category: string, itemIds: string[]) => request<Duka>("/shop", { method: "POST", body: JSON.stringify({ name, category, item_ids: itemIds }) })
 };

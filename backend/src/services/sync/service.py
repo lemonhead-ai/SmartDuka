@@ -76,7 +76,7 @@ class SyncService:
         accepted_ids: list[str],
         request: SyncBootstrapRequest,
     ) -> SyncUploadResponse:
-        inventory = await self.repository.list_inventory()
+        inventory = [item for _, item in await self.repository.list_shop_stock(student.id)]
         if not inventory:
             raise ApplicationError("The duka inventory is unavailable.", status_code=503)
         progress = await self.repository.get_progress(student.id)
