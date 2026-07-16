@@ -16,9 +16,14 @@ class SyncEvent(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class SyncUploadRequest(BaseModel):
+class SyncBootstrapRequest(BaseModel):
     child_id: str | None = Field(default=None, alias="childId")
     device_id: str | None = Field(default=None, alias="deviceId", max_length=128)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class SyncUploadRequest(SyncBootstrapRequest):
     events: list[SyncEvent] = Field(min_length=1, max_length=250)
 
     model_config = ConfigDict(populate_by_name=True)
@@ -46,10 +51,19 @@ class MissionSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class TutorSnapshot(BaseModel):
+    hint: str
+    encouragement: str
+    focus_skill: str = Field(alias="focusSkill")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class SyncUploadResponse(BaseModel):
     accepted_event_ids: list[str] = Field(alias="acceptedEventIds")
     scenarios: list[CachedScenarioResponse]
     missions: list[MissionSnapshot]
+    tutor: TutorSnapshot | None = None
     synced_at: datetime = Field(alias="syncedAt")
 
     model_config = ConfigDict(populate_by_name=True)

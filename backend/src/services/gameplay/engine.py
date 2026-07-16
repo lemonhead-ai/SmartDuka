@@ -1,15 +1,7 @@
-from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.shared.context import (
-    AgentContext,
-    GameplaySessionContext,
-    LearnerProfile,
-    MissionContext,
-    ProgressContext,
-)
 from src.contracts.gameplay_engine import (
     AnswerChallengeResponse,
     BasketLineResponse,
@@ -30,7 +22,6 @@ from src.contracts.gameplay_engine import (
 from src.core.exceptions import ApplicationError
 from src.database.models import GameSession, InventoryItem, Student, StudentProgress
 from src.database.repositories.gameplay import GameplayRepository
-from src.services.ai.orchestrator import AgentWorkflowResult, AIOrchestrator
 from src.services.gameplay.managers import (
     AchievementEngine,
     BasketLine,
@@ -47,9 +38,8 @@ from src.services.gameplay.managers import (
 
 
 class GameplayEngine:
-    def __init__(self, session: AsyncSession, orchestrator: AIOrchestrator | None = None) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.orchestrator = orchestrator
         self.repository = GameplayRepository(session)
         self.inventory = ShopInventoryManager()
         self.basket = BasketManager()
@@ -85,15 +75,6 @@ class GameplayEngine:
         if not items:
             raise ApplicationError("Shop inventory is unavailable.", status_code=503)
         state["current_customer"] = self.customers.next(int(state["customers_served"]), items)
-        advice = await self._agent_advice(game_session, student, state)
-        if advice is not None:
-            if advice.customer:
-                state["current_customer"]["greeting"] = advice.customer.dialogue
-            if advice.mission:
-                state["agent_mission"] = {
-                    "title": advice.mission.title,
-                    "target": advice.mission.target_value,
-                }
         state["basket"] = []
         state["challenge"] = None
         await self._save(game_session, state)
@@ -150,14 +131,6 @@ class GameplayEngine:
         challenge["hints_used"] = int(challenge["hints_used"]) + 1
         state["hints_used"] = int(state["hints_used"]) + 1
         await self._save(game_session, state)
-        advice = await self._agent_advice(game_session, student, state)
-        if advice is not None:
-            if advice.tutor:
-                return HintResponse(
-                    hint=advice.tutor.hint,
-                    encouragement=advice.tutor.encouragement,
-                    hints_used=int(challenge["hints_used"]),
-                )
         return HintResponse(
             hint=self.challenges.hint(challenge),
             encouragement="You can do this—one small step at a time.",
@@ -356,40 +329,6 @@ class GameplayEngine:
         await self.repository.save_game_state(game_session, state)
         await self.session.commit()
 
-    async def _agent_advice(
-        self, game_session: GameSession, student: Student, state: dict[str, object]
-    ) -> AgentWorkflowResult | None:
-        if self.orchestrator is None:
-            return None
-        basket = await self._basket_response(state)
-        context = AgentContext(
-            learner=LearnerProfile(
-                student_id=student.id,
-                age=student.age,
-                language=student.language,
-                difficulty_tier=student.difficulty_tier,
-            ),
-            session=GameplaySessionContext(
-                session_id=game_session.id,
-                started_at=game_session.started_at or datetime.now(UTC),
-                transactions_completed=int(state["customers_served"]),
-                last_skill=(
-                    str(state["challenge"]["skill"])
-                    if isinstance(state["challenge"], dict)
-                    else None
-                ),
-            ),
-            progress=ProgressContext(
-                attempts=int(state["questions_attempted"]),
-                correct_attempts=int(state["correct_answers"]),
-                basket_feedback=basket.validation.tutor_feedback,
-            ),
-            mission=MissionContext(
-                progress_value=int(state["customers_served"]), target_value=3, mission_type="sales"
-            ),
-        )
-        return await self.orchestrator.run_session_workflow(context)
-
     async def _demo_student(self) -> Student:
         student = await self.repository.get_demo_student()
         if student is None:
@@ -421,9 +360,6 @@ class GameplayEngine:
             "achievements": [],
             "mission_completed": False,
             "recommended_tier": None,
-            "agent_mission": None,
-            "reward_message": None,
-            "learning_insight": None,
         }
 
     @staticmethod
@@ -443,15 +379,6 @@ class GameplayEngine:
         return [{"item_id": str(line.item_id), "quantity": line.quantity} for line in lines]
 
     def _mission(self, state: dict[str, object]) -> MissionResponse:
-        agent_mission = state.get("agent_mission")
-        if isinstance(agent_mission, dict):
-            target = int(agent_mission["target"])
-            return MissionResponse(
-                title=str(agent_mission["title"]),
-                progress=min(int(state["customers_served"]), target),
-                target=target,
-                completed=int(state["customers_served"]) >= target,
-            )
         return MissionResponse.model_validate(
             self.missions.progress(int(state["customers_served"]))
         )

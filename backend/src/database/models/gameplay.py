@@ -86,3 +86,17 @@ class StudentProgress(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class OfflineEvent(Base):
+    __tablename__ = "offline_events"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    event_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    student_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("students.id"), index=True)
+    event_type: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

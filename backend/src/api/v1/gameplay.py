@@ -16,7 +16,6 @@ from src.contracts.gameplay_engine import (
     SessionSummaryResponse,
     StartGameplaySessionResponse,
 )
-from src.dependencies.core import AIOrchestratorDependency
 from src.dependencies.database import DatabaseSession
 from src.services.gameplay.engine import GameplayEngine
 
@@ -31,9 +30,9 @@ router = APIRouter(prefix="/gameplay", tags=["gameplay"])
     description="Creates an active session for the seeded demo learner and returns its mission.",
 )
 async def start_gameplay_session(
-    db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    db: DatabaseSession
 ) -> StartGameplaySessionResponse:
-    return await GameplayEngine(db, orchestrator).start_session()
+    return await GameplayEngine(db).start_session()
 
 
 @router.post(
@@ -42,9 +41,9 @@ async def start_gameplay_session(
     summary="Serve the next customer",
 )
 async def next_customer(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, db: DatabaseSession
 ) -> NextCustomerResponse:
-    return await GameplayEngine(db, orchestrator).next_customer(session_id)
+    return await GameplayEngine(db).next_customer(session_id)
 
 
 @router.get(
@@ -53,16 +52,16 @@ async def next_customer(
     summary="List available shop inventory",
 )
 async def list_inventory(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, db: DatabaseSession
 ) -> list[InventoryItemResponse]:
-    return await GameplayEngine(db, orchestrator).list_inventory(session_id)
+    return await GameplayEngine(db).list_inventory(session_id)
 
 
 @router.get("/sessions/{session_id}/basket", response_model=BasketResponse, summary="Get basket")
 async def get_basket(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, db: DatabaseSession
 ) -> BasketResponse:
-    return await GameplayEngine(db, orchestrator).get_basket(session_id)
+    return await GameplayEngine(db).get_basket(session_id)
 
 
 @router.post(
@@ -72,9 +71,8 @@ async def add_basket_item(
     session_id: UUID,
     payload: BasketItemRequest,
     db: DatabaseSession,
-    orchestrator: AIOrchestratorDependency,
 ) -> BasketResponse:
-    return await GameplayEngine(db, orchestrator).add_basket_item(
+    return await GameplayEngine(db).add_basket_item(
         session_id, payload.item_id, payload.quantity
     )
 
@@ -88,9 +86,8 @@ async def remove_basket_item(
     session_id: UUID,
     item_id: UUID,
     db: DatabaseSession,
-    orchestrator: AIOrchestratorDependency,
 ) -> BasketResponse:
-    return await GameplayEngine(db, orchestrator).remove_basket_item(session_id, item_id)
+    return await GameplayEngine(db).remove_basket_item(session_id, item_id)
 
 
 @router.get(
@@ -99,9 +96,9 @@ async def remove_basket_item(
     summary="Get the active math challenge",
 )
 async def current_challenge(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, db: DatabaseSession
 ) -> ChallengeResponse | None:
-    return await GameplayEngine(db, orchestrator).current_challenge(session_id)
+    return await GameplayEngine(db).current_challenge(session_id)
 
 
 @router.post(
@@ -113,25 +110,24 @@ async def answer_challenge(
     session_id: UUID,
     payload: AnswerChallengeRequest,
     db: DatabaseSession,
-    orchestrator: AIOrchestratorDependency,
 ) -> AnswerChallengeResponse:
-    return await GameplayEngine(db, orchestrator).submit_answer(session_id, payload.answer)
+    return await GameplayEngine(db).submit_answer(session_id, payload.answer)
 
 
 @router.post("/sessions/{session_id}/hint", response_model=HintResponse, summary="Request a hint")
 async def request_hint(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, db: DatabaseSession
 ) -> HintResponse:
-    return await GameplayEngine(db, orchestrator).request_hint(session_id)
+    return await GameplayEngine(db).request_hint(session_id)
 
 
 @router.post(
     "/sessions/{session_id}/checkout", response_model=CheckoutResponse, summary="Checkout basket"
 )
 async def checkout(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, db: DatabaseSession
 ) -> CheckoutResponse:
-    return await GameplayEngine(db, orchestrator).checkout(session_id)
+    return await GameplayEngine(db).checkout(session_id)
 
 
 @router.get(
@@ -140,13 +136,13 @@ async def checkout(
     summary="Get session summary",
 )
 async def session_summary(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, db: DatabaseSession
 ) -> SessionSummaryResponse:
-    return await GameplayEngine(db, orchestrator).summary(session_id)
+    return await GameplayEngine(db).summary(session_id)
 
 
 @router.get("/progress", response_model=PlayerProgressResponse, summary="Get demo learner progress")
 async def player_progress(
-    db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    db: DatabaseSession
 ) -> PlayerProgressResponse:
-    return await GameplayEngine(db, orchestrator).player_progress()
+    return await GameplayEngine(db).player_progress()

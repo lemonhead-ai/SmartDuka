@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 
 import { gameplayApi } from "@/features/gameplay/api";
-import { OfflineSyncManager, queueGameEvent } from "@/features/offline";
+import { OfflineSyncManager, completeScenario, getOfflineMeta, getPlayableScenarios, queueGameEvent } from "@/features/offline";
+import type { CachedScenario } from "@/features/offline";
 import { triggerSensoryFeedback } from "@/features/feedback/sensory-feedback";
 import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
@@ -24,6 +25,8 @@ export function ShopCounter() {
   const [basket, setBasket] = useState<Basket | null>(null);
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [answer, setAnswer] = useState("");
+  const [offlineScenario, setOfflineScenario] = useState<CachedScenario | null>(null);
+  const [offlineBasket, setOfflineBasket] = useState<Record<string, number>>({});
 
   const notify = (kind: ToastKind, message: string) => {
     triggerSensoryFeedback(kind);
@@ -107,11 +110,44 @@ export function ShopCounter() {
       nextCustomerMutation.mutate(sessionId);
       return;
     }
-    const session = await startMutation.mutateAsync();
-    setSessionId(session.session_id);
-    nextCustomerMutation.mutate(session.session_id);
+    try {
+      const session = await startMutation.mutateAsync();
+      setSessionId(session.session_id);
+      nextCustomerMutation.mutate(session.session_id);
+    } catch {
+      await loadOfflineScenario();
+    }
+  };
+  const loadOfflineScenario = async () => {
+    const childId = await getOfflineMeta<string>("active-child-id");
+    if (!childId) return;
+    const [scenario] = await getPlayableScenarios(childId);
+    if (!scenario) return;
+    setOfflineScenario(scenario);
+    setOfflineBasket({});
+  };
+  const completeOfflineScenario = async () => {
+    if (!offlineScenario) return;
+    const items = (offlineScenario.payload.items ?? []) as { id: string; quantity: number }[];
+    const matches = items.length > 0 && items.every((item) => offlineBasket[item.id] === item.quantity);
+    if (!matches) {
+      const tutor = await getOfflineMeta<{ hint: string; encouragement: string }>("tutor-guidance");
+      notify("warning", tutor ? `${tutor.hint} ${tutor.encouragement}` : "Match the customer’s list before completing the sale.");
+      return;
+    }
+    await completeScenario(offlineScenario.id);
+    await queueGameEvent("transaction_completed", { scenarioId: offlineScenario.id, correct: true });
+    void new OfflineSyncManager().sync().catch(() => undefined);
+    notify("success", "Sale saved on this device. New adventures will sync when you are online.");
+    setOfflineScenario(null);
+    await loadOfflineScenario();
   };
   const pending = startMutation.isPending || nextCustomerMutation.isPending;
+
+  if (offlineScenario) {
+    const items = (offlineScenario.payload.items ?? []) as { id: string; name: string; quantity: number; unitPriceKes: number }[];
+    return <section className="rounded-[24px] border border-line bg-surface p-6"><p className="text-sm font-medium text-muted">Offline adventure</p><h1 className="mt-1 text-2xl font-semibold">{offlineScenario.customerName} is at the counter</h1><p className="mt-3 text-muted">{String(offlineScenario.payload.greeting ?? "Jambo!")}</p><p className="mt-5 rounded-[20px] bg-canvas p-4 text-lg font-medium">{String(offlineScenario.payload.shoppingRequest ?? "")}</p><div className="mt-6 space-y-3">{items.map((item) => <div key={item.id} className="flex items-center justify-between rounded-[16px] border border-line p-4"><div><p className="font-semibold">{item.name}</p><p className="text-sm text-muted">KES {item.unitPriceKes} · needs {item.quantity}</p></div><div className="flex items-center gap-3"><button type="button" onClick={() => setOfflineBasket((basket) => ({ ...basket, [item.id]: Math.max(0, (basket[item.id] ?? 0) - 1) }))} className="rounded-lg border border-line px-3 py-1">−</button><span className="w-5 text-center">{offlineBasket[item.id] ?? 0}</span><button type="button" onClick={() => setOfflineBasket((basket) => ({ ...basket, [item.id]: Math.min(item.quantity + 2, (basket[item.id] ?? 0) + 1) }))} className="rounded-lg border border-line px-3 py-1">+</button></div></div>)}</div><button type="button" onClick={() => void completeOfflineScenario()} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white">Complete sale</button></section>;
+  }
 
   if (!customer) {
     return <section className="rounded-[24px] border border-line bg-surface p-6"><p className="text-sm font-medium text-muted">Smart Duka session</p><h1 className="mt-1 text-2xl font-semibold">Ready to serve a customer?</h1><p className="mt-3 text-muted">Start a live demo session to receive a customer and stock your basket.</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => void startOrContinue()} disabled={pending} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{pending ? "Loading…" : sessionId ? "Next customer" : "Start session"}</motion.button></section>;

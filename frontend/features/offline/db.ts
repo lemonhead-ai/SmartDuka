@@ -50,6 +50,11 @@ export async function getPlayableScenarios(childId: string, now = Date.now()): P
   return (scenarios as CachedScenario[]).filter((scenario) => !scenario.completedAt && scenario.expiresAt > now).sort((a, b) => a.difficultyTier - b.difficultyTier || a.cachedAt - b.cachedAt);
 }
 
+export async function getPlayableScenarioCount(now = Date.now()): Promise<number> {
+  const scenarios = await useStore(SCENARIOS_STORE, "readonly", async (store) => requestToPromise(store.getAll()));
+  return (scenarios as CachedScenario[]).filter((scenario) => !scenario.completedAt && scenario.expiresAt > now).length;
+}
+
 export async function completeScenario(id: string): Promise<void> { await useStore(SCENARIOS_STORE, "readwrite", async (store) => { const scenario = await requestToPromise(store.get(id)) as CachedScenario | undefined; if (scenario) await requestToPromise(store.put({ ...scenario, completedAt: Date.now() })); }); }
 
 export async function removeExpiredScenarios(now = Date.now()): Promise<number> {

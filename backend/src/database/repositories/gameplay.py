@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -6,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.models import (
     GameSession,
     InventoryItem,
+    OfflineEvent,
     Question,
     QuestionAttempt,
     Student,
@@ -100,3 +102,29 @@ class GameplayRepository:
             progress.questions_correct += 1
         await self.session.flush()
         return progress
+
+    async def record_offline_event(
+        self,
+        *,
+        event_id: str,
+        student_id: UUID,
+        event_type: str,
+        payload: dict[str, object],
+        occurred_at: datetime,
+    ) -> bool:
+        existing = await self.session.scalar(
+            select(OfflineEvent.id).where(OfflineEvent.event_id == event_id)
+        )
+        if existing is not None:
+            return False
+        self.session.add(
+            OfflineEvent(
+                event_id=event_id,
+                student_id=student_id,
+                event_type=event_type,
+                payload=payload,
+                occurred_at=occurred_at,
+            )
+        )
+        await self.session.flush()
+        return True

@@ -32,11 +32,15 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
     agents = SimpleNamespace(
         customer=FixedAgent(
             CustomerAgentOutput(
-                customer_name="Akinyi",
-                dialogue="Habari",
-                shopping_request="Chai moja",
-                item_count=1,
-                mood="friendly",
+                scenarios=[
+                    {
+                        "customer_name": "Akinyi",
+                        "dialogue": "Habari",
+                        "shopping_list": [{"item_name": "Chai", "quantity": 1}],
+                        "payment_amount_kes": 50,
+                        "mood": "friendly",
+                    }
+                ] * 5,
             )
         ),
         tutor=FixedAgent(

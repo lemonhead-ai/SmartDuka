@@ -7,16 +7,14 @@ import {
   DashboardSquare01Icon, 
   ShoppingBag01Icon, 
   AdventureIcon, 
-  Award01Icon, 
-  UserIcon 
+  Award01Icon
 } from "hugeicons-react";
 
 const items = [
   { href: "/dashboard", icon: DashboardSquare01Icon, label: "Dashboard" },
   { href: "/shop", icon: ShoppingBag01Icon, label: "Shop" },
   { href: "/adventure", icon: AdventureIcon, label: "Play" },
-  { href: "/rewards", icon: Award01Icon, label: "Rewards" },
-  { href: "/parents", icon: UserIcon, label: "Parents" }
+  { href: "/profile", icon: Award01Icon, label: "Progress" }
 ];
 
 export function BottomNavigation() {

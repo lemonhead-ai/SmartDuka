@@ -18,8 +18,16 @@ from src.agents.shared.outputs import CustomerAgentOutput
 class StaticProvider:
     async def complete(self, **_: object) -> str:
         return (
+            '{"scenarios":[{"customer_name":"Akinyi","dialogue":"Habari!",'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
             '{"customer_name":"Akinyi","dialogue":"Habari!",'
-            '"shopping_request":"Chai moja, tafadhali.","item_count":1,"mood":"friendly"}'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
+            '{"customer_name":"Akinyi","dialogue":"Habari!",'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
+            '{"customer_name":"Akinyi","dialogue":"Habari!",'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
+            '{"customer_name":"Akinyi","dialogue":"Habari!",'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"}]}'
         )
 
 
@@ -43,8 +51,8 @@ def build_context() -> AgentContext:
 async def test_structured_agent_validates_provider_json() -> None:
     agent = CustomerTestAgent(StaticProvider(), PromptLoader(), "gpt-5.6")
     result = await agent.run(build_context())
-    assert result.customer_name == "Akinyi"
-    assert result.mood == "friendly"
+    assert len(result.scenarios) == 5
+    assert result.scenarios[0].customer_name == "Akinyi"
 
 
 def test_prompt_loader_reads_versioned_prompt() -> None:

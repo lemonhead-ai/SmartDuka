@@ -1,53 +1,23 @@
-version: '3.8'
-
 services:
   backend:
-    build: 
-      context: ./backend
+    build: ./backend
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/smartduka
-      - REDIS_URL=redis://redis:6379/0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    depends_on:
-      - db
-      - redis
+      SMARTDUKA_DATABASE_URL: sqlite+aiosqlite:///./data/smartduka.db
+      SMARTDUKA_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SMARTDUKA_LLM_PROVIDER: ${LLM_PROVIDER:-openai}
     volumes:
-      - ./backend:/app
+      - smartduka_data:/app/data
 
   frontend:
-    build:
-      context: ./frontend
+    build: ./frontend
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=smartduka
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
 
 volumes:
-  postgres_data:
-  redis_data:
+  smartduka_data:

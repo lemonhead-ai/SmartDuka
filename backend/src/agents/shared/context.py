@@ -40,3 +40,4 @@ class AgentContext(BaseModel):
     session: GameplaySessionContext
     progress: ProgressContext
     mission: MissionContext
+    available_goods: list[str] = Field(default_factory=list)

@@ -1,9 +1,10 @@
-import { getEventsByStatus, saveScenarios, setOfflineMeta, updateEventStatus } from "./db";
+import { getEventsByStatus, getPlayableScenarioCount, saveScenarios, setOfflineMeta, updateEventStatus } from "./db";
 import type { CachedScenario, GameEvent } from "./types";
 
 export type SyncResponse = {
   scenarios?: CachedScenario[];
   missions?: { title: string; briefing: string; targetValue: number }[];
+  tutor?: { hint: string; encouragement: string; focusSkill: string };
   acceptedEventIds?: string[];
   syncedAt?: string;
 };
@@ -16,6 +17,7 @@ type SyncManagerOptions = {
 
 export class OfflineSyncManager {
   private readonly endpoint: string;
+  private readonly bootstrapEndpoint: string;
   private readonly fetcher: typeof fetch;
   private readonly onSyncStateChange?: SyncManagerOptions["onSyncStateChange"];
   private isSyncing = false;
@@ -23,6 +25,7 @@ export class OfflineSyncManager {
 
   constructor({ endpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1"}/sync/upload`, fetcher = fetch, onSyncStateChange }: SyncManagerOptions = {}) {
     this.endpoint = endpoint;
+    this.bootstrapEndpoint = endpoint.replace(/\/upload$/, "/bootstrap");
     this.fetcher = fetcher;
     this.onSyncStateChange = onSyncStateChange;
   }
@@ -31,7 +34,7 @@ export class OfflineSyncManager {
     if (this.started || typeof window === "undefined") return;
     this.started = true;
     window.addEventListener("online", this.handleOnline);
-    if (navigator.onLine) void this.sync();
+    if (navigator.onLine) void this.bootstrap().then(() => this.sync());
   }
 
   stop() {
@@ -41,6 +44,27 @@ export class OfflineSyncManager {
   }
 
   private handleOnline = () => { void this.sync(); };
+
+  async bootstrap(): Promise<SyncResponse | undefined> {
+    if (typeof navigator === "undefined" || !navigator.onLine) return;
+    if (await getPlayableScenarioCount() >= 5) return;
+    this.onSyncStateChange?.("syncing");
+    try {
+      const response = await this.fetcher(this.bootstrapEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId: "browser" })
+      });
+      if (!response.ok) throw new Error(`Bootstrap failed with status ${response.status}.`);
+      const result = await response.json() as SyncResponse;
+      await this.cacheResponse(result);
+      this.onSyncStateChange?.("idle");
+      return result;
+    } catch (error) {
+      this.onSyncStateChange?.("error");
+      throw error;
+    }
+  }
 
   async sync(): Promise<SyncResponse | undefined> {
     if (this.isSyncing || typeof navigator === "undefined" || !navigator.onLine) return;
@@ -61,9 +85,7 @@ export class OfflineSyncManager {
       if (!response.ok) throw new Error(`Sync failed with status ${response.status}.`);
 
       const result = await response.json() as SyncResponse;
-      if (result.scenarios?.length) await saveScenarios(result.scenarios);
-      if (result.missions) await setOfflineMeta("active-missions", result.missions);
-      await setOfflineMeta("last-successful-sync", Date.now());
+      await this.cacheResponse(result);
       await updateEventStatus(ids, "synced");
       this.onSyncStateChange?.("idle");
       return result;
@@ -74,6 +96,16 @@ export class OfflineSyncManager {
     } finally {
       this.isSyncing = false;
     }
+  }
+
+  private async cacheResponse(result: SyncResponse): Promise<void> {
+    if (result.scenarios?.length) {
+      await saveScenarios(result.scenarios);
+      await setOfflineMeta("active-child-id", result.scenarios[0].childId);
+    }
+    if (result.missions) await setOfflineMeta("active-missions", result.missions);
+    if (result.tutor) await setOfflineMeta("tutor-guidance", result.tutor);
+    await setOfflineMeta("last-successful-sync", Date.now());
   }
 }
 

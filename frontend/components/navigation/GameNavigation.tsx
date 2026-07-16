@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AdventureIcon, ArrowLeft01Icon, Award01Icon, DashboardSquare01Icon, ShoppingBag01Icon, UserIcon } from "hugeicons-react";
+import { AdventureIcon, ArrowLeft01Icon, Award01Icon, DashboardSquare01Icon, ShoppingBag01Icon } from "hugeicons-react";
 import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 
-const items = [{ href: "/dashboard", icon: DashboardSquare01Icon, label: "Dashboard" }, { href: "/shop", icon: ShoppingBag01Icon, label: "My shop" }, { href: "/adventure", icon: AdventureIcon, label: "Adventure" }, { href: "/rewards", icon: Award01Icon, label: "Rewards" }, { href: "/parents", icon: UserIcon, label: "Parents" }];
+const items = [{ href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" }, { href: "/shop", icon: ShoppingBag01Icon, label: "My shop" }, { href: "/adventure", icon: AdventureIcon, label: "Missions" }, { href: "/profile", icon: Award01Icon, label: "Progress" }];
 
 export function GameNavigation() {
   const [expanded, setExpanded] = useState(true);
