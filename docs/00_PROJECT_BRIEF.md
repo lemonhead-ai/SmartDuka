@@ -10,7 +10,7 @@ The Education-track demo is deliberately focused:
 - The child completes transactions with or without connectivity.
 - Completed offline transactions are queued and synced later.
 - A single GPT-5.6 batch concurrently runs Customer, Tutor, and Mission agents to refill content.
-- Unsafe or invalid AI output falls back to approved Kenyan inventory and safe local scenarios.
+- Unsafe or invalid AI output is rejected, logged, and fixed at the agent/provider boundary before retrying sync.
 
 The MVP does not include parent/teacher dashboards, leaderboards, social rewards, avatar customisation, or multi-country localisation. Those are future work, not part of the judgeable core loop.
 

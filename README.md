@@ -61,15 +61,15 @@ The backend powers the GPT-5.6 Sol agents.
 
 ## Demo flow
 
-Open the frontend while online once to cache five generated scenarios. Turn off the network, complete an offline scenario, then reconnect: the event uploads and the cache refills. If no model key is configured, the same flow uses safe seeded fallback content.
+Open the frontend while online once to cache five generated scenarios. Turn off the network, complete an offline scenario, then reconnect: the event uploads and the cache refills. If an AI call fails, the API returns a clear error and logs the failing agent response for diagnosis.
 
 ## GPT-5.6 and Codex
 
-Codex was used to build and refine the offline sync architecture, API contracts, tests, and PWA shell. GPT-5.6 powers the three concurrent sync agents: Customer creates five local shop scenarios, Tutor contributes contextual guidance, and Mission creates the session narrative. Agent output is schema-validated and falls back safely so AI never blocks a child from playing.
+Codex was used to build and refine the offline sync architecture, API contracts, tests, and PWA shell. GPT-5.6 powers the three concurrent sync agents: Customer creates five local shop scenarios, Tutor contributes contextual guidance, and Mission creates the session narrative. Agent output is schema-validated; invalid output is logged and rejected so the agent issue can be corrected rather than hidden.
 
 ### 3. Docker (Optional)
 
-If you prefer to run the entire stack (including PostgreSQL and Redis) via Docker Compose:
+To run the frontend and SQLite-backed FastAPI demo via Docker Compose:
 
 ```bash
 docker-compose up --build

@@ -34,7 +34,7 @@ export class OfflineSyncManager {
     if (this.started || typeof window === "undefined") return;
     this.started = true;
     window.addEventListener("online", this.handleOnline);
-    if (navigator.onLine) void this.bootstrap().then(() => this.sync());
+    if (navigator.onLine) void this.bootstrap().then(() => this.sync()).catch(() => undefined);
   }
 
   stop() {

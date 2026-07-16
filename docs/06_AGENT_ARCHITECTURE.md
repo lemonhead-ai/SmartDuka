@@ -8,6 +8,6 @@ Smart Duka uses exactly three GPT-5.6 agents. They run once, concurrently, durin
 | Tutor | Focus skill and non-revealing hint | Personalises the next cache refill |
 | Mission | One achievable local mission | Gives the session narrative purpose |
 
-The sync service supplies the learner context and approved inventory names. It validates every generated shopping item against the active inventory and verifies that payment covers the total. Any failed agent call, invalid JSON, unapproved item, or unavailable model falls back to deterministic Kenyan scenarios and a safe mission. Children never see an AI error.
+The sync service supplies the learner context and approved inventory names. It validates every generated shopping item against the active inventory and verifies that payment covers the total. Any failed agent call, invalid JSON, unapproved item, or unavailable model is logged and returned as a clear sync error for investigation; it is not silently replaced.
 
 Agents are never called by gameplay routes. The device plays from IndexedDB and uploads compact completion events when connected.

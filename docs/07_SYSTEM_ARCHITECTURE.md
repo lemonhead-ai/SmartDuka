@@ -8,4 +8,4 @@ Smart Duka is a Next.js PWA with a FastAPI backend.
 4. The shop can complete cached scenarios offline and queues events locally.
 5. When connectivity returns, `POST /api/v1/sync/upload` stores each event idempotently, updates progress, and refills the cache.
 
-The backend uses SQLite for the reliable hackathon demo. The service boundary is deliberately small: gameplay routes provide a deterministic online demo, while sync owns AI generation and offline cache refill. The frontend service worker caches the app shell; IndexedDB holds playable content and unsynced events.
+The backend uses SQLite for the reliable hackathon demo. The service boundary is deliberately small: gameplay routes provide a deterministic online demo, while sync owns AI generation and offline cache refill. If an agent batch fails, the server logs the precise failure and returns a sync error instead of silently generating replacement content. The frontend service worker caches the app shell; IndexedDB holds playable content and unsynced events.

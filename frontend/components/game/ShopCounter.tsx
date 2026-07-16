@@ -96,8 +96,8 @@ export function ShopCounter() {
     mutationFn: () => gameplayApi.answerChallenge(sessionId ?? "", Number(answer)),
     onSuccess: (result) => {
       if (result.challenge_complete) {
-        setChallenge(null);
         notify("success", result.feedback);
+        checkoutMutation.mutate();
       } else {
         notify("error", result.feedback);
       }

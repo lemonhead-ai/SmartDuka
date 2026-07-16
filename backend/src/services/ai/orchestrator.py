@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from pydantic import BaseModel
 
@@ -11,9 +12,9 @@ from src.agents.shared.outputs import (
 
 
 class AgentWorkflowResult(BaseModel):
-    customer: CustomerAgentOutput | None = None
-    tutor: TutorAgentOutput | None = None
-    mission: MissionAgentOutput | None = None
+    customer: CustomerAgentOutput
+    tutor: TutorAgentOutput
+    mission: MissionAgentOutput
 
 
 class AIOrchestrator:
@@ -21,6 +22,7 @@ class AIOrchestrator:
 
     def __init__(self, agents: object) -> None:
         self.agents = agents
+        self.logger = logging.getLogger(__name__)
 
     async def run_session_workflow(self, context: AgentContext) -> AgentWorkflowResult:
         # Run only the 3 core agents in a single batch
@@ -30,8 +32,13 @@ class AIOrchestrator:
             self.agents.mission.run(context),
             return_exceptions=True,
         )
+        names = ("customer", "tutor", "mission")
+        errors = [f"{name}: {result}" for name, result in zip(names, results) if isinstance(result, Exception)]
+        if errors:
+            self.logger.error("AI sync batch failed: %s", "; ".join(errors))
+            raise RuntimeError("; ".join(errors))
         return AgentWorkflowResult(
-            customer=results[0] if isinstance(results[0], CustomerAgentOutput) else None,
-            tutor=results[1] if isinstance(results[1], TutorAgentOutput) else None,
-            mission=results[2] if isinstance(results[2], MissionAgentOutput) else None,
+            customer=results[0],  # type: ignore[arg-type]
+            tutor=results[1],  # type: ignore[arg-type]
+            mission=results[2],  # type: ignore[arg-type]
         )

@@ -17,7 +17,7 @@ class CustomerScenarioOutput(BaseModel):
 
 
 class CustomerAgentOutput(BaseModel):
-    scenarios: list[CustomerScenarioOutput] = Field(min_length=5, max_length=8)
+    scenarios: list[CustomerScenarioOutput] = Field(min_length=5, max_length=5)
 
 
 class TutorAgentOutput(BaseModel):
