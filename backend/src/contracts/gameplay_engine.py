@@ -15,6 +15,27 @@ class InventoryItemResponse(BaseModel):
     educational_tags: list[str]
 
 
+class RequestedItemResponse(BaseModel):
+    item_id: UUID
+    name: str
+    quantity: int = Field(ge=1)
+
+
+class BasketValidationIssue(BaseModel):
+    item_id: UUID | None = None
+    name: str
+    expected_quantity: int = Field(ge=0)
+    selected_quantity: int = Field(ge=0)
+
+
+class BasketValidationResponse(BaseModel):
+    is_valid: bool
+    missing_items: list[BasketValidationIssue] = Field(default_factory=list)
+    unexpected_items: list[BasketValidationIssue] = Field(default_factory=list)
+    quantity_mismatches: list[BasketValidationIssue] = Field(default_factory=list)
+    tutor_feedback: str
+
+
 class BasketItemRequest(BaseModel):
     item_id: UUID
     quantity: int = Field(ge=1, le=10)
@@ -29,6 +50,7 @@ class BasketLineResponse(BaseModel):
 class BasketResponse(BaseModel):
     lines: list[BasketLineResponse]
     total_kes: int
+    validation: BasketValidationResponse
 
 
 class CustomerResponse(BaseModel):
@@ -37,6 +59,7 @@ class CustomerResponse(BaseModel):
     personality: Literal["friendly", "curious", "busy", "elderly", "parent", "child"]
     greeting: str
     request: str
+    requested_items: list[RequestedItemResponse]
 
 
 class ChallengeResponse(BaseModel):
@@ -46,6 +69,8 @@ class ChallengeResponse(BaseModel):
     difficulty_tier: int
     attempts: int
     hints_used: int
+    total_kes: int
+    amount_paid_kes: int
 
 
 class HintResponse(BaseModel):

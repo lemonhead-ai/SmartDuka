@@ -19,10 +19,13 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
     database_url: str = "sqlite+aiosqlite:///./smartduka.db"
-    llm_provider: str = "openai"
+    llm_provider: str = "featherless"
+    featherless_api_key: str | None = None
+    featherless_model: str = "meta-llama/Meta-Llama-3-8B-Instruct"
+    featherless_base_url: str = "https://api.featherless.ai/v1"
     openai_api_key: str | None = None
     openai_model: str = "gpt-5.6"
-    allowed_origins: list[str] = Field(default_factory=list)
+    allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
 
 
 @lru_cache

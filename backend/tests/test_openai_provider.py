@@ -14,6 +14,17 @@ class FakeOpenAIClient:
     responses = FakeResponses()
 
 
+class FakeChatCompletions:
+    async def create(self, **_: object) -> object:
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content='{"status":"ok"}'))]
+        )
+
+
+class FakeFeatherlessClient:
+    chat = SimpleNamespace(completions=FakeChatCompletions())
+
+
 @pytest.mark.asyncio
 async def test_openai_provider_returns_output_text() -> None:
     provider = OpenAIProvider(api_key="test", client=FakeOpenAIClient())
@@ -22,6 +33,23 @@ async def test_openai_provider_returns_output_text() -> None:
         system_prompt="Return JSON.",
         user_prompt="{}",
         model="gpt-5.6",
+        temperature=0.2,
+        max_output_tokens=100,
+    )
+
+    assert result == '{"status":"ok"}'
+
+
+@pytest.mark.asyncio
+async def test_featherless_provider_uses_chat_completions() -> None:
+    provider = OpenAIProvider(
+        api_key="test", client=FakeFeatherlessClient(), use_responses_api=False
+    )
+
+    result = await provider.complete(
+        system_prompt="Return JSON.",
+        user_prompt="{}",
+        model="glm-5.2",
         temperature=0.2,
         max_output_tokens=100,
     )

@@ -43,3 +43,18 @@
 
 - The gameplay engine is the authoritative owner of persisted session state; AI orchestration is optional advice that can shape dialogue, tutoring, mission wording, rewards, localization, and difficulty without directly mutating game decisions.
 - Inventory and aggregate learner progress are persisted in SQLite, while the active customer, basket, challenge, and mission state are validated application data persisted on the gameplay session.
+
+## 2026-07-16 - REST API v1 integration
+
+- The public gameplay API exposes only the session-centric engine flow under `/api/v1/gameplay`; legacy seeded-question routes are retired rather than maintained as a parallel contract.
+- The Next.js client consumes typed REST responses through one API module, React Query mutations/queries, and a small Zustand session store.
+
+## 2026-07-16 - Context-aware validation
+
+- Customer requests persist as explicit inventory identifiers and quantities, allowing the gameplay engine to reject missing, unexpected, and incorrect basket lines before a payment challenge is generated.
+- Gameplay feedback is delivered through a single replacement toast rather than inline status text; sound and haptic helpers are optional browser enhancements and never block gameplay.
+
+## 2026-07-16 - Featherless agent runtime
+
+- The application creates one shared seven-agent orchestrator during startup when a configured provider credential is present, then injects it into each gameplay engine request through FastAPI dependencies.
+- Featherless uses its OpenAI-compatible Chat Completions endpoint with the official `zai-org/GLM-5.2` model identifier; the core engine retains authoritative state and deterministic validation.

@@ -17,3 +17,6 @@
 9. [ ] **Task 9**: Insight Agent report template (Manual task by human team).
 10.[ ] **Task 10**: Integration pass (Wire agents to frontend).
 11. [x] **Module 5**: Implement the persistent backend gameplay engine and judge-ready demo loop.
+12. [x] **Module 6**: Consolidate REST API v1 and connect the Next.js gameplay scaffold to live endpoints.
+13. [x] **Gameplay polish**: Add semantic basket validation, contextual tutoring, sensory feedback, and animated toasts.
+14. [x] **Live agent integration**: Initialize and inject the Featherless GLM-5.2 orchestrator into gameplay requests.

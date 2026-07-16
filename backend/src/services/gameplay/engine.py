@@ -14,6 +14,7 @@ from src.contracts.gameplay_engine import (
     AnswerChallengeResponse,
     BasketLineResponse,
     BasketResponse,
+    BasketValidationResponse,
     ChallengeResponse,
     CheckoutResponse,
     CustomerResponse,
@@ -34,6 +35,7 @@ from src.services.gameplay.managers import (
     AchievementEngine,
     BasketLine,
     BasketManager,
+    BasketValidationManager,
     CustomerQueueManager,
     MathChallengeManager,
     MissionProgressEngine,
@@ -51,6 +53,7 @@ class GameplayEngine:
         self.repository = GameplayRepository(session)
         self.inventory = ShopInventoryManager()
         self.basket = BasketManager()
+        self.basket_validation = BasketValidationManager()
         self.customers = CustomerQueueManager()
         self.challenges = MathChallengeManager()
         self.scoring = ScoringEngine()
@@ -85,7 +88,6 @@ class GameplayEngine:
         advice = await self._agent_advice(game_session, student, state)
         if advice is not None:
             state["current_customer"]["greeting"] = advice.customer.dialogue
-            state["current_customer"]["request"] = advice.customer.shopping_request
             state["recommended_tier"] = advice.difficulty.recommended_tier
             state["agent_mission"] = {
                 "title": advice.mission.title,
@@ -197,7 +199,7 @@ class GameplayEngine:
         )
         return AnswerChallengeResponse(
             is_correct=correct,
-            feedback=self.scoring.feedback(correct, int(challenge["attempts"])),
+            feedback=self.scoring.feedback(correct, int(challenge["attempts"]), challenge),
             attempts=int(challenge["attempts"]),
             challenge_complete=correct,
             rewards_preview=reward,
@@ -210,6 +212,8 @@ class GameplayEngine:
         basket = await self._basket_response(state)
         if not basket.lines:
             raise ApplicationError("Add at least one item before checkout.", status_code=422)
+        if not basket.validation.is_valid:
+            raise ApplicationError(basket.validation.tutor_feedback, status_code=409)
         challenge = state["challenge"]
         if not isinstance(challenge, dict):
             recommended_tier = state.get("recommended_tier")
@@ -315,8 +319,22 @@ class GameplayEngine:
                         line_total_kes=self.inventory.price(item) * line.quantity,
                     )
                 )
+        selected = [
+            {
+                "item_id": str(line.item.id),
+                "name": line.item.name,
+                "quantity": line.quantity,
+            }
+            for line in responses
+        ]
+        customer = state["current_customer"]
+        validation = self.basket_validation.validate(
+            customer if isinstance(customer, dict) else None, selected
+        )
         return BasketResponse(
-            lines=responses, total_kes=sum(line.line_total_kes for line in responses)
+            lines=responses,
+            total_kes=sum(line.line_total_kes for line in responses),
+            validation=BasketValidationResponse.model_validate(validation),
         )
 
     async def _update_progress(
@@ -349,6 +367,7 @@ class GameplayEngine:
     ) -> AgentWorkflowResult | None:
         if self.orchestrator is None:
             return None
+        basket = await self._basket_response(state)
         context = AgentContext(
             learner=LearnerProfile(
                 student_id=student.id,
@@ -369,6 +388,7 @@ class GameplayEngine:
             progress=ProgressContext(
                 attempts=int(state["questions_attempted"]),
                 correct_attempts=int(state["correct_answers"]),
+                basket_feedback=basket.validation.tutor_feedback,
             ),
             mission=MissionContext(
                 progress_value=int(state["customers_served"]), target_value=3, mission_type="sales"
@@ -463,6 +483,8 @@ class GameplayEngine:
             difficulty_tier=int(challenge["difficulty_tier"]),
             attempts=int(challenge["attempts"]),
             hints_used=int(challenge["hints_used"]),
+            total_kes=int(challenge["total_kes"]),
+            amount_paid_kes=int(challenge["amount_paid_kes"]),
         )
 
     @staticmethod

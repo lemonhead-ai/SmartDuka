@@ -36,7 +36,17 @@ class StructuredAgent[OutputModel: BaseModel]:
             max_output_tokens=self.max_output_tokens,
         )
         try:
-            return self.output_model.model_validate_json(raw_output)
+            # Strip markdown formatting if the LLM wraps the JSON
+            cleaned_output = raw_output.strip()
+            if cleaned_output.startswith("```json"):
+                cleaned_output = cleaned_output[7:]
+            if cleaned_output.startswith("```"):
+                cleaned_output = cleaned_output[3:]
+            if cleaned_output.endswith("```"):
+                cleaned_output = cleaned_output[:-3]
+            cleaned_output = cleaned_output.strip()
+
+            return self.output_model.model_validate_json(cleaned_output)
         except ValidationError as error:
             self.logger.warning("Invalid agent output: %s", raw_output)
             raise ValueError(f"{self.prompt_name} returned invalid structured output") from error

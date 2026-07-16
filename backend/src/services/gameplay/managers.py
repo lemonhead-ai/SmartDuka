@@ -53,7 +53,91 @@ class CustomerQueueManager:
             "request": (
                 f"I need {quantity} {first.name.lower()} and 1 {second.name.lower()}, please."
             ),
+            "requested_items": [
+                {"item_id": str(first.id), "name": first.name, "quantity": quantity},
+                {"item_id": str(second.id), "name": second.name, "quantity": 1},
+            ],
         }
+
+
+class BasketValidationManager:
+    def validate(
+        self, customer: dict[str, object] | None, selected: list[dict[str, object]]
+    ) -> dict[str, object]:
+        if customer is None:
+            return {
+                "is_valid": False,
+                "missing_items": [],
+                "unexpected_items": [],
+                "quantity_mismatches": [],
+                "tutor_feedback": "Serve a customer first, then build their basket.",
+            }
+        requested_items = [item for item in customer["requested_items"] if isinstance(item, dict)]
+        selected_by_id = {str(item["item_id"]): item for item in selected}
+        requested_by_id = {str(item["item_id"]): item for item in requested_items}
+        missing_items: list[dict[str, object]] = []
+        quantity_mismatches: list[dict[str, object]] = []
+        unexpected_items: list[dict[str, object]] = []
+        for item_id, requested in requested_by_id.items():
+            selected_item = selected_by_id.get(item_id)
+            expected = int(requested["quantity"])
+            selected_quantity = int(selected_item["quantity"]) if selected_item else 0
+            issue = {
+                "item_id": requested["item_id"],
+                "name": str(requested["name"]),
+                "expected_quantity": expected,
+                "selected_quantity": selected_quantity,
+            }
+            if selected_item is None:
+                missing_items.append(issue)
+            elif selected_quantity != expected:
+                quantity_mismatches.append(issue)
+        for item_id, selected_item in selected_by_id.items():
+            if item_id not in requested_by_id:
+                unexpected_items.append(
+                    {
+                        "item_id": selected_item["item_id"],
+                        "name": str(selected_item["name"]),
+                        "expected_quantity": 0,
+                        "selected_quantity": int(selected_item["quantity"]),
+                    }
+                )
+        return {
+            "is_valid": not (missing_items or quantity_mismatches or unexpected_items),
+            "missing_items": missing_items,
+            "unexpected_items": unexpected_items,
+            "quantity_mismatches": quantity_mismatches,
+            "tutor_feedback": self._feedback(
+                str(customer["name"]), missing_items, unexpected_items, quantity_mismatches
+            ),
+        }
+
+    @staticmethod
+    def _feedback(
+        customer_name: str,
+        missing_items: list[dict[str, object]],
+        unexpected_items: list[dict[str, object]],
+        quantity_mismatches: list[dict[str, object]],
+    ) -> str:
+        if not (missing_items or unexpected_items or quantity_mismatches):
+            return f"Excellent! The basket is exactly what {customer_name} requested."
+        if unexpected_items and missing_items:
+            return (
+                f"Almost! You picked {unexpected_items[0]['name'].lower()}, "
+                f"but {customer_name} asked "
+                f"for {missing_items[0]['name'].lower()}."
+            )
+        if missing_items:
+            item = missing_items[0]
+            return f"You still need {item['expected_quantity']} {item['name'].lower()}."
+        if quantity_mismatches:
+            item = quantity_mismatches[0]
+            return (
+                f"{customer_name} needs {item['expected_quantity']} {item['name'].lower()}, "
+                f"but the basket has {item['selected_quantity']}."
+            )
+        item_name = str(unexpected_items[0]["name"]).lower()
+        return f"{customer_name} did not ask for {item_name}. Try removing it."
 
 
 class MathChallengeManager:
@@ -69,6 +153,8 @@ class MathChallengeManager:
                 "attempts": 0,
                 "hints_used": 0,
                 "complete": False,
+                "total_kes": total_kes,
+                "amount_paid_kes": total_kes,
             }
         return {
             "id": str(uuid4()),
@@ -82,21 +168,28 @@ class MathChallengeManager:
             "attempts": 0,
             "hints_used": 0,
             "complete": False,
+            "total_kes": total_kes,
+            "amount_paid_kes": tender,
         }
 
     def hint(self, challenge: dict[str, object]) -> str:
-        if challenge["skill"] == "change":
+        if challenge["skill"] == "change" and int(challenge["hints_used"]) <= 1:
             return "Start at the basket total and count up to the amount paid."
+        if challenge["skill"] == "change":
+            return "Write it as money received minus the basket total, then subtract carefully."
         return "Add each item price carefully, one at a time."
 
 
 class ScoringEngine:
-    def feedback(self, correct: bool, attempts: int) -> str:
+    def feedback(self, correct: bool, attempts: int, challenge: dict[str, object]) -> str:
         if correct:
-            return "Great reasoning! You worked it out."
+            return (
+                f"Correct! KES {challenge['amount_paid_kes']} - KES {challenge['total_kes']} = "
+                f"KES {challenge['answer']}."
+            )
         if attempts == 1:
-            return "Nice try. Let’s use a hint and solve it step by step."
-        return "You are getting closer. Take your time and try the next step."
+            return "Not quite. Calculate the change as money received minus total cost."
+        return "Try counting from the total up to the money received, one amount at a time."
 
 
 class XpCoinsEngine:

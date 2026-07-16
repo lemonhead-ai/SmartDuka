@@ -7,6 +7,7 @@ from src.core.config import Settings
 from src.main import create_application
 from src.services.gameplay.managers import (
     AchievementEngine,
+    BasketValidationManager,
     MissionProgressEngine,
     ScoringEngine,
     XpCoinsEngine,
@@ -14,7 +15,9 @@ from src.services.gameplay.managers import (
 
 
 def test_scoring_rewards_missions_and_achievements_reward_persistence() -> None:
-    assert "Nice try" in ScoringEngine().feedback(False, 1)
+    challenge = {"amount_paid_kes": 200, "total_kes": 170, "answer": 30}
+    assert "Not quite" in ScoringEngine().feedback(False, 1, challenge)
+    assert "KES 30" in ScoringEngine().feedback(True, 1, challenge)
     perfect = XpCoinsEngine().reward(True, attempts=1, hints=0)
     persistent = XpCoinsEngine().reward(True, attempts=2, hints=1)
     assert perfect[0] > persistent[0] > 0
@@ -22,33 +25,59 @@ def test_scoring_rewards_missions_and_achievements_reward_persistence() -> None:
     assert "First Sale" in AchievementEngine().update(1, True, 0, [])
 
 
+def test_basket_validation_identifies_missing_unexpected_and_wrong_quantities() -> None:
+    customer = {
+        "name": "Mama Asha",
+        "requested_items": [
+            {"item_id": "banana", "name": "Banana", "quantity": 2},
+            {"item_id": "mango", "name": "Mango", "quantity": 1},
+        ],
+    }
+    selected = [{"item_id": "milk", "name": "Milk", "quantity": 1}]
+    result = BasketValidationManager().validate(customer, selected)
+    assert result["is_valid"] is False
+    assert result["missing_items"]
+    assert result["unexpected_items"]
+    assert "milk" in str(result["tutor_feedback"]).lower()
+
+
 @pytest.mark.asyncio
 async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
     database_path = tmp_path / "gameplay.db"
     app = create_application(
-        Settings(database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}")
+        Settings(
+            database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}",
+            featherless_api_key=None,
+        )
     )
 
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            started = await client.post("/api/v1/gameplay/sessions/start")
+            started = await client.post("/api/v1/gameplay/sessions")
             assert started.status_code == 201
             session_id = started.json()["session_id"]
 
             customer = await client.post(f"/api/v1/gameplay/sessions/{session_id}/customers/next")
             assert customer.status_code == 200
-            assert customer.json()["customer"]["personality"] == "friendly"
+            customer_payload = customer.json()["customer"]
+            assert customer_payload["personality"] == "friendly"
 
             inventory = await client.get(f"/api/v1/gameplay/sessions/{session_id}/inventory")
             assert inventory.status_code == 200
-            first_item = inventory.json()[0]
-            added = await client.post(
-                f"/api/v1/gameplay/sessions/{session_id}/basket/items",
-                json={"item_id": first_item["id"], "quantity": 2},
+            inventory_by_id = {item["id"]: item for item in inventory.json()}
+            for requested_item in customer_payload["requested_items"]:
+                for _ in range(requested_item["quantity"]):
+                    added = await client.post(
+                        f"/api/v1/gameplay/sessions/{session_id}/basket/items",
+                        json={"item_id": requested_item["item_id"], "quantity": 1},
+                    )
+                    assert added.status_code == 200
+            assert added.json()["validation"]["is_valid"] is True
+            assert added.json()["total_kes"] == sum(
+                inventory_by_id[item["item_id"]]["price_kes"] * item["quantity"]
+                for item in customer_payload["requested_items"]
             )
-            assert added.status_code == 200
-            assert added.json()["total_kes"] == first_item["price_kes"] * 2
 
             checkout = await client.post(f"/api/v1/gameplay/sessions/{session_id}/checkout")
             assert checkout.status_code == 200
@@ -79,7 +108,7 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
             assert summary.json()["customers_served"] == 1
             assert summary.json()["questions_attempted"] == 1
 
-            progress = await client.get("/api/v1/gameplay/player-progress")
+            progress = await client.get("/api/v1/gameplay/progress")
             assert progress.status_code == 200
             assert progress.json()["questions_attempted"] == 1
             assert progress.json()["hints_used"] == 1
@@ -89,15 +118,50 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
 async def test_gameplay_rejects_next_customer_until_checkout(tmp_path: Path) -> None:
     database_path = tmp_path / "queue.db"
     app = create_application(
-        Settings(database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}")
+        Settings(
+            database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}",
+            featherless_api_key=None,
+        )
     )
 
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            session_id = (await client.post("/api/v1/gameplay/sessions/start")).json()["session_id"]
+            session_id = (await client.post("/api/v1/gameplay/sessions")).json()["session_id"]
             assert (
                 await client.post(f"/api/v1/gameplay/sessions/{session_id}/customers/next")
             ).status_code == 200
             blocked = await client.post(f"/api/v1/gameplay/sessions/{session_id}/customers/next")
             assert blocked.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_checkout_blocks_a_basket_that_does_not_match_request(tmp_path: Path) -> None:
+    database_path = tmp_path / "validation.db"
+    app = create_application(
+        Settings(
+            database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}",
+            featherless_api_key=None,
+        )
+    )
+
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            session_id = (await client.post("/api/v1/gameplay/sessions")).json()["session_id"]
+            customer = await client.post(f"/api/v1/gameplay/sessions/{session_id}/customers/next")
+            requested_ids = {
+                item["item_id"] for item in customer.json()["customer"]["requested_items"]
+            }
+            inventory = await client.get(f"/api/v1/gameplay/sessions/{session_id}/inventory")
+            unexpected_item = next(
+                item for item in inventory.json() if item["id"] not in requested_ids
+            )
+            basket = await client.post(
+                f"/api/v1/gameplay/sessions/{session_id}/basket/items",
+                json={"item_id": unexpected_item["id"], "quantity": 1},
+            )
+            assert basket.json()["validation"]["is_valid"] is False
+            blocked_checkout = await client.post(f"/api/v1/gameplay/sessions/{session_id}/checkout")
+            assert blocked_checkout.status_code == 409
+            assert "Almost!" in blocked_checkout.json()["detail"]

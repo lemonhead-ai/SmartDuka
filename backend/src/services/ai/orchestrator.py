@@ -31,21 +31,19 @@ class AIOrchestrator:
         self.agents = agents
 
     async def run_session_workflow(self, context: AgentContext) -> AgentWorkflowResult:
-        results = await asyncio.gather(
-            self.agents.customer.run(context),
-            self.agents.tutor.run(context),
-            self.agents.difficulty.run(context),
-            self.agents.mission.run(context),
-            self.agents.reward.run(context),
-            self.agents.insight.run(context),
-            self.agents.localization.run(context),
-        )
+        customer = await self.agents.customer.run(context)
+        tutor = await self.agents.tutor.run(context)
+        difficulty = await self.agents.difficulty.run(context)
+        mission = await self.agents.mission.run(context)
+        reward = await self.agents.reward.run(context)
+        insight = await self.agents.insight.run(context)
+        localization = await self.agents.localization.run(context)
         return AgentWorkflowResult(
-            customer=results[0],
-            tutor=results[1],
-            difficulty=results[2],
-            mission=results[3],
-            reward=results[4],
-            insight=results[5],
-            localization=results[6],
+            customer=customer,
+            tutor=tutor,
+            difficulty=difficulty,
+            mission=mission,
+            reward=reward,
+            insight=insight,
+            localization=localization,
         )

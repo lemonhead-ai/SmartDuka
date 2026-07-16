@@ -25,6 +25,7 @@ class ProgressContext(BaseModel):
     weak_skills: list[str] = Field(default_factory=list)
     consecutive_same_skill_mistakes: int = Field(default=0, ge=0)
     recent_improvement: bool = False
+    basket_feedback: str | None = None
 
 
 class MissionContext(BaseModel):
