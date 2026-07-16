@@ -38,6 +38,7 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
                         "dialogue": "Habari",
                         "shopping_list": [{"item_name": "Chai", "quantity": 1}],
                         "payment_amount_kes": 50,
+                        "checkout_question": "I paid KES 50. What change do I get?",
                         "mood": "friendly",
                     }
                 ] * 5,

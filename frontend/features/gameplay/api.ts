@@ -15,13 +15,29 @@ import type {
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
+export class ApiRequestError extends Error {
+  readonly detail: string;
+  readonly status: number;
+
+  constructor(detail: string, status: number) {
+    super(detail);
+    this.name = "ApiRequestError";
+    this.detail = detail;
+    this.status = status;
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
     headers: { "Content-Type": "application/json", ...options.headers }
   });
   if (!response.ok) {
-    throw (await response.json()) as ApiError;
+    const payload = await response.json().catch(() => null) as ApiError | null;
+    throw new ApiRequestError(
+      typeof payload?.detail === "string" ? payload.detail : "Something went wrong. Please try again.",
+      response.status
+    );
   }
   return response.json() as Promise<T>;
 }

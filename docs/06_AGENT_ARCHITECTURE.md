@@ -1,6 +1,6 @@
 # Agent Architecture
 
-Smart Duka uses exactly three GPT-5.6 agents. They run once, concurrently, during a sync/bootstrap request. This stays below the four-task inference limit and keeps gameplay independent of network availability.
+Smart Duka uses exactly three GLM 5.2 agents. They run once, concurrently, during a sync/bootstrap request. This stays below the four-task inference limit and keeps gameplay independent of network availability. Runtime content is temporarily English-only; the learner language field remains in the context for future localization.
 
 | Agent | Output | Purpose |
 |---|---|---|

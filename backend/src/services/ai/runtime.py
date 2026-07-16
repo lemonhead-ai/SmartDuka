@@ -27,15 +27,17 @@ def create_ai_orchestrator(
         else settings.openai_model
     )
     prompt_loader = PromptLoader()
-    agent_kwargs = {
+    common_kwargs = {
         "provider": configured_provider,
         "prompt_loader": prompt_loader,
         "model": model,
+        "temperature": 0.1,
     }
     return AIOrchestrator(
         AgentBundle(
-            customer=CustomerAgent(**agent_kwargs),
-            tutor=TutorAgent(**agent_kwargs),
-            mission=MissionAgent(**agent_kwargs),
+            # Keep outputs deliberately compact to reduce latency and token use.
+            customer=CustomerAgent(**common_kwargs, max_output_tokens=850),
+            tutor=TutorAgent(**common_kwargs, max_output_tokens=220),
+            mission=MissionAgent(**common_kwargs, max_output_tokens=220),
         )
     )

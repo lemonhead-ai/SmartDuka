@@ -13,6 +13,7 @@ import { useGameplaySessionStore } from "@/features/gameplay/store";
 import type { ApiError, Basket, Challenge, Customer } from "@/features/gameplay/types";
 
 function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
   return typeof error === "object" && error !== null && "detail" in error
     ? (error as ApiError).detail
     : "The Smart Duka API is unavailable. Start the backend, then try again.";

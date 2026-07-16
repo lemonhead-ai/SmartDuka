@@ -1,6 +1,6 @@
 # Smart Duka
 
-An offline-first, GPT-5.6-powered learning game where Kenyan children practise maths through running a virtual duka.
+An offline-first, GLM 5.2-powered learning game where Kenyan children practise maths through running a virtual duka.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ The frontend is a responsive web application built with Next.js, Tailwind CSS, a
 
 ### 2. Backend (Python FastAPI)
 
-The backend powers the GPT-5.6 Sol agents.
+The backend powers three concise GLM 5.2 agents through the configurable Featherless provider.
 
 1. Navigate to the backend directory:
    ```bash
@@ -63,9 +63,9 @@ The backend powers the GPT-5.6 Sol agents.
 
 Open the frontend while online once to cache five generated scenarios. Turn off the network, complete an offline scenario, then reconnect: the event uploads and the cache refills. If an AI call fails, the API returns a clear error and logs the failing agent response for diagnosis.
 
-## GPT-5.6 and Codex
+## GLM 5.2 and Codex
 
-Codex was used to build and refine the offline sync architecture, API contracts, tests, and PWA shell. GPT-5.6 powers the three concurrent sync agents: Customer creates five local shop scenarios, Tutor contributes contextual guidance, and Mission creates the session narrative. Agent output is schema-validated; invalid output is logged and rejected so the agent issue can be corrected rather than hidden.
+Codex was used to build and refine the offline sync architecture, API contracts, tests, and PWA shell. GLM 5.2 powers the three concurrent sync agents: Customer creates five local shop scenarios, Tutor contributes contextual guidance, and Mission creates the session narrative. Agent output is schema-validated; invalid output is logged and rejected so the agent issue can be corrected rather than hidden.
 
 ### 3. Docker (Optional)
 

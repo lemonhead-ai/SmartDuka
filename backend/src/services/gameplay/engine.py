@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
@@ -36,6 +37,7 @@ from src.services.gameplay.managers import (
     BasketLine,
     BasketManager,
     BasketValidationManager,
+    CustomerQueueManager,
     MathChallengeManager,
     MissionProgressEngine,
     ProgressTracker,
@@ -51,6 +53,7 @@ class GameplayEngine:
         self.orchestrator = orchestrator
         self.repository = GameplayRepository(session)
         self.inventory = ShopInventoryManager()
+        self.customer_queue = CustomerQueueManager()
         self.basket = BasketManager()
         self.basket_validation = BasketValidationManager()
         self.challenges = MathChallengeManager()
@@ -87,7 +90,20 @@ class GameplayEngine:
             raise ApplicationError("Add products to your duka before serving customers.", status_code=409)
         advice = await self._agent_advice(game_session, student, state)
         if advice is None:
-            raise ApplicationError("AI customer generation is unavailable. Check the GPT-5.6 provider.", status_code=503)
+            # A malformed or unavailable AI response should not prevent a child from
+            # continuing the game. The local queue only uses the shop's real stock.
+            state["current_customer"] = self.customer_queue.next(
+                int(state["customers_served"]), items
+            )
+            state["basket"] = []
+            state["challenge"] = None
+            await self._save(game_session, state)
+            return NextCustomerResponse(
+                customer=CustomerResponse.model_validate(state["current_customer"]),
+                basket=await self._basket_response(state),
+                mission=self._mission(state),
+            )
+
         scenario = advice.customer.scenarios[int(state["customers_served"]) % len(advice.customer.scenarios)]
         matched = {item.name.casefold(): item for item in items}
         requested_items = [
@@ -391,7 +407,9 @@ class GameplayEngine:
             learner=LearnerProfile(
                 student_id=student.id,
                 age=student.age,
-                language=student.language,
+                # Localization remains represented in the context, but is
+                # bypassed for the hackathon's English-only runtime.
+                language="en",
                 difficulty_tier=student.difficulty_tier,
             ),
             session=GameplaySessionContext(
@@ -414,7 +432,13 @@ class GameplayEngine:
             ),
             available_goods=available_goods,
         )
-        return await self.orchestrator.run_session_workflow(context)
+        try:
+            return await self.orchestrator.run_session_workflow(context)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "AI advice failed; continuing gameplay with local content."
+            )
+            return None
 
     async def _demo_student(self) -> Student:
         student = await self.repository.get_demo_student()

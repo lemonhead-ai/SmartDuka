@@ -21,7 +21,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./smartduka.db"
     llm_provider: str = "featherless"
     featherless_api_key: str | None = None
-    featherless_model: str = "meta-llama/Meta-Llama-3-8B-Instruct"
+    # Featherless model remains configurable via SMARTDUKA_FEATHERLESS_MODEL.
+    featherless_model: str = "zai-org/GLM-5.2"
     featherless_base_url: str = "https://api.featherless.ai/v1"
     openai_api_key: str | None = None
     openai_model: str = "gpt-5.6"

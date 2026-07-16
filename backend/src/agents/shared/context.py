@@ -7,7 +7,9 @@ from pydantic import BaseModel, Field
 class LearnerProfile(BaseModel):
     student_id: UUID
     age: int = Field(ge=4, le=13)
-    language: str = "sw"
+    # English is the temporary hackathon runtime language. The field remains
+    # configurable so the localization layer can be re-enabled later.
+    language: str = "en"
     difficulty_tier: int = Field(default=1, ge=1, le=7)
 
 

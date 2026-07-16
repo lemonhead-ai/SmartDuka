@@ -17,8 +17,17 @@
 }
 
 * { box-sizing: border-box; }
-html, body { min-height: 100vh; font-family: 'Montserrat', sans-serif; }
-body { margin: 0; background: var(--color-grey-soft); color: var(--color-black); }
+html, body {
+  min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  font-family: 'Montserrat', sans-serif;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+body { min-height: 100dvh; margin: 0; background: var(--color-grey-soft); color: var(--color-black); }
+*::-webkit-scrollbar { display: none; }
+main, section, article { min-width: 0; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
 .tahoe-sidebar {

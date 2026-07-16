@@ -105,10 +105,10 @@ class SyncService:
         self, student: Student, inventory: list[InventoryItem], attempts: int, correct: int
     ) -> AgentWorkflowResult:
         if self.orchestrator is None:
-            raise ApplicationError("AI sync is unavailable. Configure the GPT-5.6 provider and try again.", status_code=503)
+            raise ApplicationError("AI sync is unavailable. Configure the Featherless provider and try again.", status_code=503)
         try:
             return await self.orchestrator.run_session_workflow(AgentContext(
-                learner=LearnerProfile(student_id=student.id, age=student.age, language=student.language, difficulty_tier=student.difficulty_tier),
+                learner=LearnerProfile(student_id=student.id, age=student.age, language="en", difficulty_tier=student.difficulty_tier),
                 session=GameplaySessionContext(session_id=uuid4(), started_at=datetime.now(UTC), transactions_completed=attempts),
                 progress=ProgressContext(attempts=attempts, correct_attempts=correct),
                 mission=MissionContext(progress_value=0, target_value=3, mission_type="sales"),

@@ -19,15 +19,15 @@ class StaticProvider:
     async def complete(self, **_: object) -> str:
         return (
             '{"scenarios":[{"customer_name":"Akinyi","dialogue":"Habari!",'
-            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"checkout_question":"I paid KES 50. What change do I get?","mood":"friendly"},'
             '{"customer_name":"Akinyi","dialogue":"Habari!",'
-            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"checkout_question":"I paid KES 50. What change do I get?","mood":"friendly"},'
             '{"customer_name":"Akinyi","dialogue":"Habari!",'
-            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"checkout_question":"I paid KES 50. What change do I get?","mood":"friendly"},'
             '{"customer_name":"Akinyi","dialogue":"Habari!",'
-            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"},'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"checkout_question":"I paid KES 50. What change do I get?","mood":"friendly"},'
             '{"customer_name":"Akinyi","dialogue":"Habari!",'
-            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"mood":"friendly"}]}'
+            '"shopping_list":[{"item_name":"Chai","quantity":1}],"payment_amount_kes":50,"checkout_question":"I paid KES 50. What change do I get?","mood":"friendly"}]}'
         )
 
 
