@@ -15,18 +15,23 @@ class GameplaySessionContext(BaseModel):
     session_id: UUID
     started_at: datetime
     transactions_completed: int = Field(ge=0)
+    last_skill: str | None = None
+    last_answer_was_correct: bool | None = None
 
 
 class ProgressContext(BaseModel):
     attempts: int = Field(default=0, ge=0)
     correct_attempts: int = Field(default=0, ge=0)
     weak_skills: list[str] = Field(default_factory=list)
+    consecutive_same_skill_mistakes: int = Field(default=0, ge=0)
+    recent_improvement: bool = False
 
 
 class MissionContext(BaseModel):
     active_mission_id: UUID | None = None
     progress_value: int = Field(default=0, ge=0)
     target_value: int | None = Field(default=None, ge=1)
+    mission_type: str | None = None
 
 
 class AgentContext(BaseModel):

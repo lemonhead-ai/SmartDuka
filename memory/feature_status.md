@@ -13,3 +13,4 @@
 | Backend Foundation | Done | FastAPI application factory, versioned health endpoint, configuration, logging, exception handling, dependency injection, tests, and CI are ready. |
 | Demo Gameplay API | Done | Judges can start a seeded learner session, retrieve a stored question, submit an answer, and read persisted progress. |
 | Agent System Framework | Done | Tutor, Customer, Difficulty, Mission, Reward, Insight, and Localization agents have typed outputs, versioned prompts, provider abstraction, orchestration, and tests. |
+| AI Educational Behaviors | Done | Agent prompts and contracts now enforce encouraging hints, gradual difficulty, achievable missions, improvement-based rewards, concise insights, and Kenyan localization. |

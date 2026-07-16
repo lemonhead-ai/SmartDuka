@@ -35,15 +35,47 @@ class FixedAgent:
 async def test_orchestrator_returns_typed_parallel_workflow() -> None:
     agents = SimpleNamespace(
         customer=FixedAgent(
-            CustomerAgentOutput(customer_name="Akinyi", dialogue="Habari", item_count=1)
+            CustomerAgentOutput(
+                customer_name="Akinyi",
+                dialogue="Habari",
+                shopping_request="Chai moja",
+                item_count=1,
+                mood="friendly",
+            )
         ),
-        tutor=FixedAgent(TutorAgentOutput(hint="Count again", focus_skill="addition")),
-        difficulty=FixedAgent(DifficultyAgentOutput(recommended_tier=2, rationale="Stable")),
-        mission=FixedAgent(MissionAgentOutput(title="Serve", briefing="Serve one", target_value=1)),
-        reward=FixedAgent(RewardAgentOutput(reward_type="duka_coins", amount=10)),
-        insight=FixedAgent(InsightAgentOutput(summary="Progress", recommended_action="Practise")),
+        tutor=FixedAgent(
+            TutorAgentOutput(
+                hint="Count again",
+                focus_skill="addition",
+                encouragement="Keep trying",
+            )
+        ),
+        difficulty=FixedAgent(
+            DifficultyAgentOutput(recommended_tier=2, adjustment="stay", rationale="Stable")
+        ),
+        mission=FixedAgent(
+            MissionAgentOutput(
+                title="Serve",
+                briefing="Serve one",
+                goal_description="Serve one customer",
+                target_value=1,
+            )
+        ),
+        reward=FixedAgent(
+            RewardAgentOutput(
+                reward_type="duka_coins",
+                amount=10,
+                reason="Careful retry",
+                celebration_message="Well done",
+            )
+        ),
+        insight=FixedAgent(
+            InsightAgentOutput(
+                summary="Progress", recommended_action="Practise", strength="Persistence"
+            )
+        ),
         localization=FixedAgent(
-            LocalizationAgentOutput(localized_text="Habari", culturally_valid=True)
+            LocalizationAgentOutput(localized_text="Habari", culturally_valid=True, language="sw")
         ),
     )
     context = AgentContext(
@@ -59,3 +91,4 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
 
     assert result.difficulty.recommended_tier == 2
     assert result.localization.culturally_valid is True
+    assert result.tutor.reveal_answer is False

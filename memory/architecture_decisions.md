@@ -34,3 +34,7 @@
 
 - Each specialist agent owns a typed output model and versioned prompt file. The shared base agent validates provider output before it can enter an orchestration workflow.
 - The orchestrator coordinates independent agent calls in parallel with one shared learner/session/progress context; agents never call each other directly.
+
+## 2026-07-16 - Educational agent behaviors
+
+- Educational safeguards are expressed through versioned prompts and typed output contracts: tutors provide hints without answer reveals, difficulty changes are limited to one tier, and rewards recognise persistence and improvement.

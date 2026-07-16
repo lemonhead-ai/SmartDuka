@@ -11,3 +11,4 @@
 - Implemented and verified the FastAPI backend foundation with versioned routing, health checks, configuration, logging, exception handling, dependencies, tests, and backend CI.
 - Added persistent demo gameplay models, startup seed data, and judge-facing session, question, answer, and progress endpoints.
 - Implemented the typed seven-agent framework, prompt loader, OpenAI provider abstraction, parallel orchestrator, and unit tests.
+- Added educational behavior constraints, richer prompt examples, a stubbed seven-agent loop script, and agent behavior tests.

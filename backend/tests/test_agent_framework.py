@@ -17,7 +17,10 @@ from src.agents.shared.outputs import CustomerAgentOutput
 
 class StaticProvider:
     async def complete(self, **_: object) -> str:
-        return '{"customer_name":"Akinyi","dialogue":"Habari!","item_count":1}'
+        return (
+            '{"customer_name":"Akinyi","dialogue":"Habari!",'
+            '"shopping_request":"Chai moja, tafadhali.","item_count":1,"mood":"friendly"}'
+        )
 
 
 class CustomerTestAgent(StructuredAgent[CustomerAgentOutput]):
@@ -41,9 +44,11 @@ async def test_structured_agent_validates_provider_json() -> None:
     agent = CustomerTestAgent(StaticProvider(), PromptLoader(), "gpt-5.6")
     result = await agent.run(build_context())
     assert result.customer_name == "Akinyi"
+    assert result.mood == "friendly"
 
 
 def test_prompt_loader_reads_versioned_prompt() -> None:
     prompt = PromptLoader().load("customer")
     assert prompt.version == "1"
     assert "Customer Agent" in prompt.content
+    assert "Tier 1" in prompt.content
