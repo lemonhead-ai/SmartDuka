@@ -1,5 +1,14 @@
 import { GameNavigation } from "@/components/navigation/GameNavigation";
+import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 
 export function GameShell({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className="min-h-screen bg-canvas"><GameNavigation /><main className="mx-auto w-full max-w-7xl px-5 py-6 sm:px-8 lg:ml-[272px] lg:px-10 lg:py-9">{children}</main></div>;
+  return (
+    <div className="min-h-screen bg-canvas pb-20 lg:pb-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+      <GameNavigation />
+      <main className="mx-auto w-full max-w-7xl px-5 py-6 sm:px-8 lg:ml-[272px] lg:px-10 lg:py-9 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+        {children}
+      </main>
+      <BottomNavigation />
+    </div>
+  );
 }

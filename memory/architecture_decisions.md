@@ -24,3 +24,13 @@
 
 - The FastAPI application uses `src/core` for cross-cutting concerns, `src/dependencies` for dependency injection, and `src/api/v1` for every HTTP route.
 - AI orchestration, sync, and storage are independent service boundaries. Only interfaces are present until their later implementation modules.
+
+## 2026-07-16 - Demo gameplay persistence
+
+- The judge flow uses a persistent async SQLite database with SQLAlchemy models for a demo student, sessions, questions, attempts, and aggregate progress. API handlers only access this state through gameplay services and repositories.
+- Demo learner and curriculum records are startup seeds, not endpoint mock responses. Production schema expansion remains a later database-design module.
+
+## 2026-07-16 - Agent framework
+
+- Each specialist agent owns a typed output model and versioned prompt file. The shared base agent validates provider output before it can enter an orchestration workflow.
+- The orchestrator coordinates independent agent calls in parallel with one shared learner/session/progress context; agents never call each other directly.

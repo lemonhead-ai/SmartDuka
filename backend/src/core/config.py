@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     debug: bool = False
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
+    database_url: str = "sqlite+aiosqlite:///./smartduka.db"
+    llm_provider: str = "openai"
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-5.6"
     allowed_origins: list[str] = Field(default_factory=list)
 
 

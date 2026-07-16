@@ -1,1 +1,1 @@
-"""AI service interfaces and future orchestration implementations."""
+"""AI provider and orchestration services."""
