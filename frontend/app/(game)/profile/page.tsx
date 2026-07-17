@@ -23,7 +23,10 @@ export default function ProfilePage() {
     if (savedName) setName(savedName);
   }, []);
   const displayName = name || progress?.student_name || "Shopkeeper";
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const nameParts = displayName.trim().split(" ");
+  const initials = nameParts.length > 1 
+    ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase() 
+    : displayName.slice(0, 2).toUpperCase();
   const accuracy = progress?.questions_attempted
     ? Math.round((progress.correct_answers / progress.questions_attempted) * 100)
     : 0;
@@ -57,7 +60,7 @@ export default function ProfilePage() {
       <section className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
         <article className="rounded-[24px] border border-line bg-surface p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-4">
-            <div className="grid size-20 place-items-center rounded-[24px] bg-mango text-2xl font-bold text-white">{initials}</div>
+            <div className="grid size-20 place-items-center rounded-[24px] bg-line text-2xl font-bold text-ink">{initials}</div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-muted">Smart shopkeeper</p>
               <h2 className="mt-1 truncate text-2xl font-semibold">{displayName}</h2>

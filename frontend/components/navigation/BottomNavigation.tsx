@@ -21,35 +21,42 @@ export function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 bg-white/80 backdrop-blur-xl border-t border-line shadow-[0_-4px_24px_rgba(0,0,0,0.04)] lg:hidden">
-      {items.map(({ href, icon: Icon, label }) => {
-        const isActive = pathname === href || pathname?.startsWith(`${href}/`);
-        
-        return (
-          <Link 
-            key={href} 
-            href={href}
-            className="relative flex flex-col items-center justify-center w-16 h-14"
-          >
-            <motion.div
-              whileTap={{ scale: 0.9 }}
-              className={`flex flex-col items-center justify-center transition-colors duration-200 ${isActive ? 'text-accent' : 'text-ink/50 hover:text-ink/80'}`}
+    <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center lg:hidden px-4">
+      <nav className="flex items-center gap-1 rounded-full bg-white/60 p-2 backdrop-blur-xl saturate-150 shadow-elevated border border-white/50">
+        {items.map(({ href, icon: Icon, label }) => {
+          const isActive = pathname === href || pathname?.startsWith(`${href}/`);
+          
+          return (
+            <Link 
+              key={href} 
+              href={href}
+              className="relative"
             >
-              <Icon size={24} color="currentColor" />
-              <span className="text-[10px] font-semibold mt-1">
-                {label}
-              </span>
-            </motion.div>
-            {isActive && (
-              <motion.div 
-                layoutId="bottomNavIndicator"
-                className="absolute -top-2 w-12 h-1 rounded-full bg-accent"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-          </Link>
-        );
-      })}
-    </nav>
+              <motion.div
+                layout
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className={`flex items-center justify-center h-12 rounded-full px-4 transition-colors ${
+                  isActive 
+                    ? 'bg-[#10B981]/15 text-[#047857]' 
+                    : 'text-ink/60 hover:text-ink/90 bg-transparent'
+                }`}
+              >
+                <Icon size={24} color="currentColor" className="shrink-0" />
+                {isActive && (
+                  <motion.span 
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="ml-2 text-sm font-semibold whitespace-nowrap overflow-hidden"
+                  >
+                    {label}
+                  </motion.span>
+                )}
+              </motion.div>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
