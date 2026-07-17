@@ -8,6 +8,7 @@ import type {
   Hint,
   InventoryItem,
   PlayerProgress,
+  SessionSummary,
   Session,
   CatalogItem,
   Duka
@@ -68,6 +69,7 @@ export const gameplayApi = {
   currentChallenge: (sessionId: string) =>
     request<Challenge | null>(`/gameplay/sessions/${sessionId}/challenge`),
   progress: () => request<PlayerProgress>("/gameplay/progress"),
+  sessionSummary: (sessionId: string) => request<SessionSummary>(`/gameplay/sessions/${sessionId}/summary`),
   catalog: () => request<CatalogItem[]>("/shop/catalog"),
   shop: () => request<Duka>("/shop"),
   createShop: (name: string, category: string, itemIds: string[]) => request<Duka>("/shop", { method: "POST", body: JSON.stringify({ name, category, item_ids: itemIds }) })

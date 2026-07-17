@@ -16,3 +16,6 @@
 - Consolidated Module 6 REST API v1 routes, standardized errors and OpenAPI metadata, and connected the Next.js shop/dashboard to live backend data.
 - Added exact basket validation, contextual checkout and change feedback, a single animated toast system, and safe browser haptic and sound feedback.
 - Wired the startup-created Featherless GLM-5.2 agent bundle into gameplay dependencies, switched Featherless to Chat Completions, and verified a live structured completion.
+- Completed the selected demo reliability work: persisted active sessions, real checkout summary/reward feedback, idempotent offline event reconciliation with conflicts, clean SQLite upgrades, and automatic demo-shop setup.
+- Added an AI collaboration record covering Codex/GPT-5.6 Terra development assistance, the current Featherless GLM-5.2 runtime, and the planned OpenAI migration.
+- Updated the setup route so learners with an existing duka are directed to the dashboard; only learners without a shop see the setup form.

@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import InventoryItem, Question, Student, StudentProgress
+from src.database.models import InventoryItem, Question, Shop, ShopStock, Student, StudentProgress
 
 
 async def seed_demo_data(session: AsyncSession) -> None:
@@ -113,6 +113,20 @@ async def seed_demo_data(session: AsyncSession) -> None:
                     stock=25,
                     educational_tags=["subtraction", "change"],
                 ),
+            ]
+        )
+        await session.flush()
+
+    shop = await session.scalar(select(Shop).where(Shop.student_id == student.id))
+    if shop is None:
+        inventory = list(await session.scalars(select(InventoryItem)))
+        shop = Shop(student_id=student.id, name="Amina's Smart Duka", category="general")
+        session.add(shop)
+        await session.flush()
+        session.add_all(
+            [
+                ShopStock(shop_id=shop.id, inventory_item_id=item.id, stock=item.stock)
+                for item in inventory
             ]
         )
     await session.commit()

@@ -10,7 +10,7 @@ import type { CachedScenario } from "@/features/offline";
 import { triggerSensoryFeedback } from "@/features/feedback/sensory-feedback";
 import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
-import type { ApiError, Basket, Challenge, Customer } from "@/features/gameplay/types";
+import type { ApiError, Basket, Checkout, SessionSummary } from "@/features/gameplay/types";
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -20,12 +20,10 @@ function errorMessage(error: unknown): string {
 }
 
 export function ShopCounter() {
-  const { sessionId, setSessionId } = useGameplaySessionStore();
+  const { sessionId, setSessionId, customer, basket, challenge, setCustomer, setBasket, setChallenge, clearCurrentCustomer } = useGameplaySessionStore();
   const showToast = useToastStore((state) => state.showToast);
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [basket, setBasket] = useState<Basket | null>(null);
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [answer, setAnswer] = useState("");
+  const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary } | null>(null);
   const [offlineScenario, setOfflineScenario] = useState<CachedScenario | null>(null);
   const [offlineBasket, setOfflineBasket] = useState<Record<string, number>>({});
 
@@ -48,6 +46,7 @@ export function ShopCounter() {
       setCustomer(result.customer);
       setBasket(result.basket);
       setChallenge(null);
+      setCompletion(null);
       setAnswer("");
       notify("info", `${result.customer.name} is ready at the counter.`);
     },
@@ -69,19 +68,21 @@ export function ShopCounter() {
   });
   const checkoutMutation = useMutation({
     mutationFn: () => gameplayApi.checkout(sessionId ?? ""),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       if (result.challenge) {
         setChallenge(result.challenge);
         notify("info", `Money received: KES ${result.challenge.amount_paid_kes}. Find the change.`);
         return;
       }
-      setCustomer(null);
-      setBasket(null);
+      const summary = await gameplayApi.sessionSummary(sessionId ?? "");
+      clearCurrentCustomer();
+      setCompletion({ checkout: result, summary });
       notify("success", result.reward?.message ?? "Checkout complete!");
       void queueGameEvent("transaction_completed", {
         sessionId,
         customerId: customer?.id,
-        totalKes: basket?.total_kes ?? 0
+        totalKes: basket?.total_kes ?? 0,
+        source: "live"
       }).then(() => new OfflineSyncManager().sync()).catch(() => {
         // The event remains queued and will retry on the next connectivity window.
       });
@@ -137,7 +138,7 @@ export function ShopCounter() {
       return;
     }
     await completeScenario(offlineScenario.id);
-    await queueGameEvent("transaction_completed", { scenarioId: offlineScenario.id, correct: true });
+    await queueGameEvent("transaction_completed", { scenarioId: offlineScenario.id, correct: true, source: "offline" });
     void new OfflineSyncManager().sync().catch(() => undefined);
     notify("success", "Sale saved on this device. New adventures will sync when you are online.");
     setOfflineScenario(null);
@@ -148,6 +149,10 @@ export function ShopCounter() {
   if (offlineScenario) {
     const items = (offlineScenario.payload.items ?? []) as { id: string; name: string; quantity: number; unitPriceKes: number }[];
     return <section className="rounded-[24px] border border-line bg-surface p-6"><p className="text-sm font-medium text-muted">Offline adventure</p><h1 className="mt-1 text-2xl font-semibold">{offlineScenario.customerName} is at the counter</h1><p className="mt-3 text-muted">{String(offlineScenario.payload.greeting ?? "Jambo!")}</p><p className="mt-5 rounded-[20px] bg-canvas p-4 text-lg font-medium">{String(offlineScenario.payload.shoppingRequest ?? "")}</p><div className="mt-6 space-y-3">{items.map((item) => <div key={item.id} className="flex items-center justify-between rounded-[16px] border border-line p-4"><div><p className="font-semibold">{item.name}</p><p className="text-sm text-muted">KES {item.unitPriceKes} · needs {item.quantity}</p></div><div className="flex items-center gap-3"><button type="button" onClick={() => setOfflineBasket((basket) => ({ ...basket, [item.id]: Math.max(0, (basket[item.id] ?? 0) - 1) }))} className="rounded-lg border border-line px-3 py-1">−</button><span className="w-5 text-center">{offlineBasket[item.id] ?? 0}</span><button type="button" onClick={() => setOfflineBasket((basket) => ({ ...basket, [item.id]: Math.min(item.quantity + 2, (basket[item.id] ?? 0) + 1) }))} className="rounded-lg border border-line px-3 py-1">+</button></div></div>)}</div><button type="button" onClick={() => void completeOfflineScenario()} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white">Complete sale</button></section>;
+  }
+
+  if (completion) {
+    return <motion.section initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="rounded-[24px] border border-line bg-surface p-6 text-center"><p className="text-sm font-medium text-muted">Sale complete</p><h1 className="mt-1 text-2xl font-semibold">{completion.checkout.reward?.message ?? "Wonderful work at the counter!"}</h1><div className="mt-6 grid grid-cols-3 gap-3"><div className="rounded-[16px] bg-canvas p-3"><p className="text-sm text-muted">Coins</p><p className="text-xl font-semibold">{completion.summary.coins_earned}</p></div><div className="rounded-[16px] bg-canvas p-3"><p className="text-sm text-muted">XP</p><p className="text-xl font-semibold">{completion.summary.xp_earned}</p></div><div className="rounded-[16px] bg-canvas p-3"><p className="text-sm text-muted">Stars</p><p className="text-xl font-semibold">{completion.summary.stars_earned}</p></div></div><p className="mt-5 text-muted">Mission: {completion.summary.mission.title} ({completion.summary.mission.progress}/{completion.summary.mission.target})</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => { setCompletion(null); if (sessionId) nextCustomerMutation.mutate(sessionId); }} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white">Serve next customer</motion.button></motion.section>;
   }
 
   if (!customer) {

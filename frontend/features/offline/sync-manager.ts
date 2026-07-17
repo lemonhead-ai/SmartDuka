@@ -6,6 +6,7 @@ export type SyncResponse = {
   missions?: { title: string; briefing: string; targetValue: number }[];
   tutor?: { hint: string; encouragement: string; focusSkill: string };
   acceptedEventIds?: string[];
+  conflicts?: { eventId: string; reason: string }[];
   syncedAt?: string;
 };
 
@@ -86,7 +87,13 @@ export class OfflineSyncManager {
 
       const result = await response.json() as SyncResponse;
       await this.cacheResponse(result);
-      await updateEventStatus(ids, "synced");
+      const acceptedIds = result.acceptedEventIds ?? [];
+      const conflicts = result.conflicts ?? [];
+      const conflictIds = conflicts.map((conflict) => conflict.eventId);
+      const unresolvedIds = ids.filter((id) => !acceptedIds.includes(id) && !conflictIds.includes(id));
+      await updateEventStatus(acceptedIds, "synced");
+      await Promise.all(conflicts.map((conflict) => updateEventStatus([conflict.eventId], "conflicted", conflict.reason)));
+      await updateEventStatus(unresolvedIds, "failed");
       this.onSyncStateChange?.("idle");
       return result;
     } catch (error) {

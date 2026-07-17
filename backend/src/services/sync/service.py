@@ -14,6 +14,7 @@ from src.agents.shared.context import (
 from src.agents.shared.outputs import CustomerScenarioOutput
 from src.contracts.sync import (
     CachedScenarioResponse,
+    SyncConflictResponse,
     MissionSnapshot,
     SyncBootstrapRequest,
     SyncUploadRequest,
@@ -44,7 +45,12 @@ class SyncService:
     async def upload(self, request: SyncUploadRequest) -> SyncUploadResponse:
         student = await self._student()
         accepted_ids: list[str] = []
+        conflicts: list[SyncConflictResponse] = []
         for event in request.events:
+            conflict = self._event_conflict(event.type, event.payload)
+            if conflict is not None:
+                conflicts.append(SyncConflictResponse(eventId=event.id, reason=conflict))
+                continue
             accepted = await self.repository.record_offline_event(
                 event_id=event.id,
                 student_id=student.id,
@@ -52,11 +58,13 @@ class SyncService:
                 payload=event.payload,
                 occurred_at=datetime.fromtimestamp(event.created_at / 1000, tz=UTC),
             )
+            # An event that reached the server before is also safely acknowledged.
+            # This makes client retries idempotent after an interrupted response.
+            accepted_ids.append(event.id)
             if accepted:
-                accepted_ids.append(event.id)
                 await self._apply_event(student, event.type, event.payload)
         await self.session.commit()
-        return await self._response(student, accepted_ids, request)
+        return await self._response(student, accepted_ids, request, conflicts)
 
     async def _student(self) -> Student:
         student = await self.repository.get_demo_student()
@@ -65,7 +73,7 @@ class SyncService:
         return student
 
     async def _apply_event(self, student: Student, event_type: str, payload: dict[str, object]) -> None:
-        if event_type != "transaction_completed":
+        if event_type != "transaction_completed" or payload.get("source") != "offline":
             return
         correct = bool(payload.get("correct", True))
         await self.repository.increment_progress(student.id, correct)
@@ -75,6 +83,7 @@ class SyncService:
         student: Student,
         accepted_ids: list[str],
         request: SyncBootstrapRequest,
+        conflicts: list[SyncConflictResponse] | None = None,
     ) -> SyncUploadResponse:
         inventory = [item for _, item in await self.repository.list_shop_stock(student.id)]
         if not inventory:
@@ -87,6 +96,7 @@ class SyncService:
         tutor = workflow.tutor
         return SyncUploadResponse(
             accepted_event_ids=accepted_ids,
+            conflicts=conflicts or [],
             scenarios=scenarios,
             missions=[MissionSnapshot(
                 title=mission.title,
@@ -100,6 +110,16 @@ class SyncService:
             ),
             synced_at=now,
         )
+
+    @staticmethod
+    def _event_conflict(event_type: str, payload: dict[str, object]) -> str | None:
+        if event_type != "transaction_completed":
+            return None
+        if payload.get("source") == "offline" and not isinstance(payload.get("scenarioId"), str):
+            return "An offline completed sale must include its cached scenario ID."
+        if payload.get("source") == "live" and not isinstance(payload.get("sessionId"), str):
+            return "A live completed sale must include its gameplay session ID."
+        return None
 
     async def _run_agents(
         self, student: Student, inventory: list[InventoryItem], attempts: int, correct: int

@@ -25,13 +25,14 @@ class AIOrchestrator:
         self.logger = logging.getLogger(__name__)
 
     async def run_session_workflow(self, context: AgentContext) -> AgentWorkflowResult:
-        # Run only the 3 core agents in a single batch
-        results = await asyncio.gather(
-            self.agents.customer.run(context),
-            self.agents.tutor.run(context),
-            self.agents.mission.run(context),
-            return_exceptions=True,
-        )
+        # Run the 3 core agents sequentially to avoid concurrency limits (429 errors)
+        results = []
+        for run_func in (self.agents.customer.run, self.agents.tutor.run, self.agents.mission.run):
+            try:
+                results.append(await run_func(context))
+            except Exception as e:
+                results.append(e)
+                
         names = ("customer", "tutor", "mission")
         errors = [f"{name}: {result}" for name, result in zip(names, results) if isinstance(result, Exception)]
         if errors:

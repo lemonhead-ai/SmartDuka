@@ -38,9 +38,9 @@ export async function queueGameEvent<TPayload = Record<string, unknown>>(type: G
 
 export async function getEventsByStatus(status: EventStatus): Promise<GameEvent[]> { return useStore(EVENTS_STORE, "readonly", async (store) => requestToPromise(store.index("by-status").getAll(status))); }
 
-export async function updateEventStatus(ids: string[], status: EventStatus): Promise<void> {
+export async function updateEventStatus(ids: string[], status: EventStatus, conflictReason?: string): Promise<void> {
   if (!ids.length) return;
-  await useStore(EVENTS_STORE, "readwrite", async (store) => { await Promise.all(ids.map(async (id) => { const event = await requestToPromise(store.get(id)) as GameEvent | undefined; if (event) await requestToPromise(store.put({ ...event, status, retryCount: status === "failed" ? event.retryCount + 1 : event.retryCount })); })); });
+  await useStore(EVENTS_STORE, "readwrite", async (store) => { await Promise.all(ids.map(async (id) => { const event = await requestToPromise(store.get(id)) as GameEvent | undefined; if (event) await requestToPromise(store.put({ ...event, status, conflictReason, retryCount: status === "failed" ? event.retryCount + 1 : event.retryCount })); })); });
 }
 
 export async function saveScenarios(scenarios: CachedScenario[]): Promise<void> { if (scenarios.length) await useStore(SCENARIOS_STORE, "readwrite", async (store) => { await Promise.all(scenarios.map((scenario) => requestToPromise(store.put(scenario)))); }); }

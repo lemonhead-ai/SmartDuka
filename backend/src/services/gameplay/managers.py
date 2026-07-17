@@ -144,7 +144,7 @@ class MathChallengeManager:
     def create_checkout_challenge(self, total_kes: int, tier: int, customer: dict[str, object] | None = None) -> dict[str, object]:
         tender = max(total_kes, int(customer.get("payment_amount_kes", total_kes))) if customer else max(100, ((total_kes + 49) // 50) * 50)
         
-        prompt = "What is the total cost in KES?"
+        prompt = f"The basket total is KES {total_kes}. What is the total cost in KES?"
         if tender > total_kes:
             question = str(customer.get("checkout_question", "How much change should I receive?")) if customer else "How much change should I receive?"
             prompt = f"{question} Basket total: KES {total_kes}. Amount paid: KES {tender}."

@@ -63,6 +63,19 @@ export type Checkout = {
 
 export type Reward = { coins: number; xp: number; stars: number; message: string };
 
+export type SessionSummary = {
+  session_id: string;
+  customers_served: number;
+  questions_attempted: number;
+  correct_answers: number;
+  hints_used: number;
+  coins_earned: number;
+  xp_earned: number;
+  stars_earned: number;
+  achievements: string[];
+  mission: Mission;
+};
+
 export type Answer = {
   is_correct: boolean;
   feedback: string;

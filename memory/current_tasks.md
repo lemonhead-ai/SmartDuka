@@ -15,8 +15,9 @@
 7. [x] **Task 7**: Write SQLAlchemy models and seed data (demo gameplay scope).
 8. [x] **Task 8**: Write unit tests for core logic.
 9. [ ] **Task 9**: Insight Agent report template (Manual task by human team).
-10.[ ] **Task 10**: Integration pass (Wire agents to frontend).
+10.[x] **Task 10**: Integration pass (Wire agents to frontend).
 11. [x] **Module 5**: Implement the persistent backend gameplay engine and judge-ready demo loop.
 12. [x] **Module 6**: Consolidate REST API v1 and connect the Next.js gameplay scaffold to live endpoints.
 13. [x] **Gameplay polish**: Add semantic basket validation, contextual tutoring, sensory feedback, and animated toasts.
 14. [x] **Live agent integration**: Initialize and inject the Featherless GLM-5.2 orchestrator into gameplay requests.
+15. [x] **Demo reliability pass**: Persist active gameplay state, reconcile offline events safely, and make a clean demo database start ready for judging.

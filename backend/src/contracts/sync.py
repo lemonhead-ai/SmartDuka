@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -8,7 +8,14 @@ class SyncEvent(BaseModel):
     """An append-only event created by the offline client."""
 
     id: str = Field(min_length=1, max_length=128)
-    type: str = Field(min_length=1, max_length=64)
+    type: Literal[
+        "session_started",
+        "item_selected",
+        "transaction_completed",
+        "mission_progressed",
+        "mission_completed",
+        "session_ended",
+    ]
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: int = Field(alias="createdAt", ge=0)
     retry_count: int = Field(default=0, alias="retryCount", ge=0)
@@ -59,8 +66,16 @@ class TutorSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class SyncConflictResponse(BaseModel):
+    event_id: str = Field(alias="eventId")
+    reason: str
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class SyncUploadResponse(BaseModel):
     accepted_event_ids: list[str] = Field(alias="acceptedEventIds")
+    conflicts: list[SyncConflictResponse] = Field(default_factory=list)
     scenarios: list[CachedScenarioResponse]
     missions: list[MissionSnapshot]
     tutor: TutorSnapshot | None = None

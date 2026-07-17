@@ -1,4 +1,4 @@
-export type EventStatus = "pending" | "syncing" | "synced" | "failed";
+export type EventStatus = "pending" | "syncing" | "synced" | "failed" | "conflicted";
 
 export type GameEventType = "session_started" | "item_selected" | "transaction_completed" | "mission_progressed" | "mission_completed" | "session_ended";
 
@@ -9,6 +9,7 @@ export type GameEvent<TPayload = Record<string, unknown>> = {
   createdAt: number;
   status: EventStatus;
   retryCount: number;
+  conflictReason?: string;
 };
 
 export type CachedScenario = {
