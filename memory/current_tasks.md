@@ -22,3 +22,4 @@
 14. [x] **Live agent integration**: Initialize and inject the Featherless GLM-5.2 orchestrator into gameplay requests.
 15. [x] **Demo reliability pass**: Persist active gameplay state, reconcile offline events safely, and make a clean demo database start ready for judging.
 16. [x] **Inventory management**: Restock products, expand the duka catalogue, and handle customer responses to limited stock.
+17. [x] **Inference optimisation**: Replace the three-call runtime workflow with cached customer batches, on-demand tutoring, and deterministic mission selection.

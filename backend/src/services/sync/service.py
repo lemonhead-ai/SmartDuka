@@ -11,7 +11,7 @@ from src.agents.shared.context import (
     MissionContext,
     ProgressContext,
 )
-from src.agents.shared.outputs import CustomerScenarioOutput
+from src.agents.shared.outputs import CustomerAgentOutput, CustomerScenarioOutput
 from src.contracts.sync import (
     CachedScenarioResponse,
     SyncConflictResponse,
@@ -19,19 +19,18 @@ from src.contracts.sync import (
     SyncBootstrapRequest,
     SyncUploadRequest,
     SyncUploadResponse,
-    TutorSnapshot,
 )
 from src.database.models import InventoryItem, Student
 from src.database.repositories.gameplay import GameplayRepository
 from src.core.exceptions import ApplicationError
-from src.services.ai.orchestrator import AIOrchestrator, AgentWorkflowResult
+from src.services.ai.orchestrator import AIOrchestrator
 from src.services.gameplay.managers import ShopInventoryManager
 
 logger = logging.getLogger(__name__)
 
 
 class SyncService:
-    """Creates and refills the offline cache from the required three-agent batch."""
+    """Creates offline customer batches with one model request per cache refill."""
 
     def __init__(self, session: AsyncSession, orchestrator: AIOrchestrator | None) -> None:
         self.session = session
@@ -89,25 +88,25 @@ class SyncService:
         if not inventory:
             raise ApplicationError("The duka inventory is unavailable.", status_code=503)
         progress = await self.repository.get_progress(student.id)
-        workflow = await self._run_agents(student, inventory, progress.questions_attempted if progress else 0, progress.questions_correct if progress else 0)
+        customers = await self._generate_customer_batch(
+            student,
+            inventory,
+            progress.questions_attempted if progress else 0,
+            progress.questions_correct if progress else 0,
+        )
         now = datetime.now(UTC)
-        scenarios = self._scenarios(student, inventory, workflow, now)
-        mission = workflow.mission
-        tutor = workflow.tutor
+        scenarios = self._scenarios(student, inventory, customers, now)
+        mission = MissionSnapshot(
+            title="Helpful Shopkeeper",
+            briefing="Serve three customers carefully and kindly.",
+            target_value=3,
+        )
         return SyncUploadResponse(
             accepted_event_ids=accepted_ids,
             conflicts=conflicts or [],
             scenarios=scenarios,
-            missions=[MissionSnapshot(
-                title=mission.title,
-                briefing=mission.briefing,
-                target_value=mission.target_value,
-            )],
-            tutor=TutorSnapshot(
-                hint=tutor.hint,
-                encouragement=tutor.encouragement,
-                focus_skill=tutor.focus_skill,
-            ),
+            missions=[mission],
+            tutor=None,
             synced_at=now,
         )
 
@@ -121,13 +120,13 @@ class SyncService:
             return "A live completed sale must include its gameplay session ID."
         return None
 
-    async def _run_agents(
+    async def _generate_customer_batch(
         self, student: Student, inventory: list[InventoryItem], attempts: int, correct: int
-    ) -> AgentWorkflowResult:
+    ) -> CustomerAgentOutput:
         if self.orchestrator is None:
             raise ApplicationError("AI sync is unavailable. Configure the Featherless provider and try again.", status_code=503)
         try:
-            return await self.orchestrator.run_session_workflow(AgentContext(
+            return await self.orchestrator.generate_customer_batch(AgentContext(
                 learner=LearnerProfile(student_id=student.id, age=student.age, language="en", difficulty_tier=student.difficulty_tier),
                 session=GameplaySessionContext(session_id=uuid4(), started_at=datetime.now(UTC), transactions_completed=attempts),
                 progress=ProgressContext(attempts=attempts, correct_attempts=correct),
@@ -135,17 +134,17 @@ class SyncService:
                 available_goods=[item.name for item in inventory],
             ))
         except Exception as error:
-            logger.exception("AI sync batch failed")
+            logger.exception("AI customer batch failed")
             raise ApplicationError(
                 "AI scenario generation failed. Check the server logs, model credentials, and agent response.",
                 status_code=502,
             ) from error
 
     def _scenarios(
-        self, student: Student, inventory: list[InventoryItem], workflow: AgentWorkflowResult, now: datetime
+        self, student: Student, inventory: list[InventoryItem], customers: CustomerAgentOutput, now: datetime
     ) -> list[CachedScenarioResponse]:
         by_name = {item.name.casefold(): item for item in inventory}
-        generated = workflow.customer.scenarios
+        generated = customers.scenarios
         valid = [scenario for scenario in generated if self._valid_scenario(scenario, by_name)]
         if len(valid) != 5:
             raise ApplicationError(

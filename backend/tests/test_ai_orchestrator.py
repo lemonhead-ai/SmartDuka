@@ -11,11 +11,7 @@ from src.agents.shared.context import (
     MissionContext,
     ProgressContext,
 )
-from src.agents.shared.outputs import (
-    CustomerAgentOutput,
-    MissionAgentOutput,
-    TutorAgentOutput,
-)
+from src.agents.shared.outputs import CustomerAgentOutput, StockOfferDecisionOutput, TutorAgentOutput
 from src.services.ai.orchestrator import AIOrchestrator
 
 
@@ -28,7 +24,7 @@ class FixedAgent:
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_returns_typed_parallel_workflow() -> None:
+async def test_orchestrator_runs_customer_batches_and_tutor_interventions_separately() -> None:
     agents = SimpleNamespace(
         customer=FixedAgent(
             CustomerAgentOutput(
@@ -51,12 +47,10 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
                 encouragement="Keep trying",
             )
         ),
-        mission=FixedAgent(
-            MissionAgentOutput(
-                title="Serve",
-                briefing="Serve one",
-                goal_description="Serve one customer",
-                target_value=1,
+        stock_offer=FixedAgent(
+            StockOfferDecisionOutput(
+                accepts_available_quantity=True,
+                dialogue="I can take what you have.",
             )
         ),
     )
@@ -69,9 +63,11 @@ async def test_orchestrator_returns_typed_parallel_workflow() -> None:
         mission=MissionContext(),
     )
 
-    result = await AIOrchestrator(agents).run_session_workflow(context)
+    orchestrator = AIOrchestrator(agents)
+    result = await orchestrator.generate_customer_batch(context)
+    tutor = await orchestrator.tutor(context)
+    stock_offer = await orchestrator.resolve_stock_offer(context)
 
-    assert result.customer is not None
-    assert result.mission is not None
-    assert result.tutor is not None
-    assert result.tutor.reveal_answer is False
+    assert len(result.scenarios) == 5
+    assert tutor.reveal_answer is False
+    assert stock_offer.accepts_available_quantity is True

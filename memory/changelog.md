@@ -21,3 +21,4 @@
 - Updated the setup route so learners with an existing duka are directed to the dashboard; only learners without a shop see the setup form.
 - Switched the live Featherless configuration to `Qwen/Qwen3-32B` with non-thinking mode, added provider support for Featherless chat-template settings, and verified a live completion.
 - Added dashboard inventory management, expanded the catalogue, typed restock and product-addition APIs, and AI-backed customer decisions for limited-stock offers.
+- Consolidated Qwen orchestration into cached five-customer Gameplay Agent batches and explicit Tutor interventions, removing Mission Agent calls from the live path.

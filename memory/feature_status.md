@@ -5,7 +5,7 @@
 | Project Scaffolding | Done | Basic dependencies and config files set up |
 | Next.js App Shell | Done | Responsive game shell, dashboard, shop route, navigation, shared components, and placeholder routes are in place. |
 | Offline Storage (IndexedDB) | Done | Event queue, scenario cache, expiry cleanup, persisted replay status, and server conflict handling are implemented with native IndexedDB. |
-| Agent Orchestration Pipeline | Done | Featherless-backed Qwen3-32B agent bundle is initialized at startup with non-thinking mode and injected into gameplay and sync requests. |
+| Agent Orchestration Pipeline | Done | Featherless-backed Qwen3-32B uses one cached Gameplay Agent batch plus on-demand Tutor interventions; mission selection is deterministic and does not spend live inference. |
 | Sync Manager | Done | Syncs pending events on connectivity restoration, acknowledges idempotent retries, surfaces non-retryable conflicts, and caches returned agent content safely. |
 | Database Models & Seed | Done | Demo-ready async SQLite models and persistent startup seed cover student, session, question, attempt, and progress. |
 | Unit Tests | Done | Backend suite covers foundations, agents, and the persistent gameplay loop. |

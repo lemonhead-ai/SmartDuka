@@ -33,6 +33,7 @@ def test_featherless_runtime_builds_all_agents_with_configured_model() -> None:
 
     assert orchestrator.agents.customer.model == "glm-5.2"
     assert orchestrator.agents.tutor.model == "glm-5.2"
+    assert not hasattr(orchestrator.agents, "mission")
 
 
 @pytest.mark.asyncio

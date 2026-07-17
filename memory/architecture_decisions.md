@@ -52,6 +52,7 @@
 ## 2026-07-16 - Context-aware validation
 
 - Customer requests persist as explicit inventory identifiers and quantities, allowing the gameplay engine to reject missing, unexpected, and incorrect basket lines before a payment challenge is generated.
+- Live Qwen inference is limited to a reusable five-customer Gameplay Agent batch and explicit Tutor/stock-offer interventions. Missions are selected by deterministic progress rules to keep ordinary play responsive and below Featherless concurrency limits.
 - Gameplay feedback is delivered through a single replacement toast rather than inline status text; sound and haptic helpers are optional browser enhancements and never block gameplay.
 
 ## 2026-07-16 - Featherless agent runtime

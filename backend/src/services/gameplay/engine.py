@@ -32,7 +32,8 @@ from src.contracts.gameplay_engine import (
 from src.core.exceptions import ApplicationError
 from src.database.models import GameSession, InventoryItem, Student, StudentProgress
 from src.database.repositories.gameplay import GameplayRepository
-from src.services.ai.orchestrator import AgentWorkflowResult, AIOrchestrator
+from src.agents.shared.outputs import CustomerScenarioOutput, TutorAgentOutput
+from src.services.ai.orchestrator import AIOrchestrator
 from src.services.gameplay.managers import (
     AchievementEngine,
     BasketLine,
@@ -89,8 +90,8 @@ class GameplayEngine:
         items = [item for _, item in shop_stock]
         if not items:
             raise ApplicationError("Add products to your duka before serving customers.", status_code=409)
-        advice = await self._agent_advice(game_session, student, state)
-        if advice is None:
+        scenario = await self._next_customer_scenario(game_session, student, state)
+        if scenario is None:
             # A malformed or unavailable AI response should not prevent a child from
             # continuing the game. The local queue only uses the shop's real stock.
             state["current_customer"] = self.customer_queue.next(
@@ -106,7 +107,6 @@ class GameplayEngine:
                 mission=self._mission(state),
             )
 
-        scenario = advice.customer.scenarios[int(state["customers_served"]) % len(advice.customer.scenarios)]
         matched = {item.name.casefold(): item for item in items}
         requested_items = [
             {"item_id": str(matched[order.item_name.casefold()].id), "name": matched[order.item_name.casefold()].name, "quantity": order.quantity}
@@ -126,7 +126,6 @@ class GameplayEngine:
             "checkout_question": scenario.checkout_question,
             "payment_amount_kes": scenario.payment_amount_kes,
         }
-        state["agent_mission"] = {"title": advice.mission.title, "target": advice.mission.target_value}
         state["basket"] = []
         state["challenge"] = None
         self._prepare_stock_offer(state["current_customer"], shop_stock)
@@ -215,7 +214,7 @@ class GameplayEngine:
         challenge["hints_used"] = int(challenge["hints_used"]) + 1
         state["hints_used"] = int(state["hints_used"]) + 1
         await self._save(game_session, state)
-        advice = await self._agent_advice(game_session, student, state)
+        advice = await self._tutor_advice(game_session, student, state)
         if advice is not None:
             return HintResponse(
                 hint=advice.tutor.hint,
@@ -426,16 +425,58 @@ class GameplayEngine:
         await self.repository.save_game_state(game_session, state)
         await self.session.commit()
 
-    async def _agent_advice(
+    async def _next_customer_scenario(
         self, game_session: GameSession, student: Student, state: dict[str, object]
-    ) -> AgentWorkflowResult | None:
+    ) -> CustomerScenarioOutput | None:
         if self.orchestrator is None:
             return None
-        basket = await self._basket_response(state)
+        served = int(state["customers_served"])
+        cached = state.get("customer_scenarios")
+        if isinstance(cached, list) and served % 5 != 0 and served % 5 < len(cached):
+            try:
+                return CustomerScenarioOutput.model_validate(cached[served % 5])
+            except ValueError:
+                state["customer_scenarios"] = []
         inventory_items = [item for _, item in await self.repository.list_shop_stock(student.id)]
-        available_goods = [item.name for item in inventory_items]
-        
-        context = AgentContext(
+        context = await self._agent_context(
+            game_session, student, state, [item.name for item in inventory_items]
+        )
+        try:
+            batch = await self.orchestrator.generate_customer_batch(context)
+            state["customer_scenarios"] = [scenario.model_dump() for scenario in batch.scenarios]
+            return batch.scenarios[0]
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Customer batch failed; continuing gameplay with local content."
+            )
+            return None
+
+    async def _tutor_advice(
+        self, game_session: GameSession, student: Student, state: dict[str, object]
+    ) -> TutorAgentOutput | None:
+        if self.orchestrator is None:
+            return None
+        inventory_items = [item for _, item in await self.repository.list_shop_stock(student.id)]
+        try:
+            context = await self._agent_context(
+                game_session, student, state, [item.name for item in inventory_items]
+            )
+            return await self.orchestrator.tutor(context)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Tutor intervention failed; using the deterministic hint."
+            )
+            return None
+
+    async def _agent_context(
+        self,
+        game_session: GameSession,
+        student: Student,
+        state: dict[str, object],
+        available_goods: list[str],
+    ) -> AgentContext:
+        basket = await self._basket_response(state)
+        return AgentContext(
             learner=LearnerProfile(
                 student_id=student.id,
                 age=student.age,
@@ -464,13 +505,7 @@ class GameplayEngine:
             ),
             available_goods=available_goods,
         )
-        try:
-            return await self.orchestrator.run_session_workflow(context)
-        except Exception:
-            logging.getLogger(__name__).exception(
-                "AI advice failed; continuing gameplay with local content."
-            )
-            return None
+        return context
 
     async def _demo_student(self) -> Student:
         student = await self.repository.get_demo_student()
@@ -506,6 +541,7 @@ class GameplayEngine:
             "agent_mission": None,
             "reward_message": None,
             "learning_insight": None,
+            "customer_scenarios": [],
         }
 
     @staticmethod
