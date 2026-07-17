@@ -10,14 +10,36 @@ import { gameplayApi } from "@/features/gameplay/api";
 
 const items = [{ href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" }, { href: "/shop", icon: ShoppingBag01Icon, label: "My shop" }, { href: "/adventure", icon: AdventureIcon, label: "Missions" }, { href: "/profile", icon: Award01Icon, label: "Progress" }];
 
-export function GameNavigation() {
+type GameNavigationProps = { onWidthChange?: (width: number) => void };
+
+export function GameNavigation({ onWidthChange }: GameNavigationProps) {
   const [expanded, setExpanded] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const [resizing, setResizing] = useState(false);
   const [localName, setLocalName] = useState("");
 
   useEffect(() => {
     const savedName = window.localStorage.getItem("smart-duka-profile-name");
     if (savedName) setLocalName(savedName);
   }, []);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const handlePointerMove = (event: PointerEvent) => {
+      setSidebarWidth(Math.min(360, Math.max(180, event.clientX)));
+    };
+    const handlePointerUp = () => setResizing(false);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [resizing]);
+
+  useEffect(() => {
+    onWidthChange?.(expanded ? sidebarWidth : 68);
+  }, [expanded, onWidthChange, sidebarWidth]);
 
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
   const displayName = localName || progressQuery.data?.student_name || "Shopkeeper";
@@ -27,7 +49,7 @@ export function GameNavigation() {
     : displayName.slice(0, 2).toUpperCase();
 
   return (
-    <motion.aside className="tahoe-sidebar hidden flex-col px-3 py-5 lg:flex border-r border-line" animate={{ width: expanded ? 240 : 68 }} transition={{ type: "tween", duration: expanded ? 0.35 : 0.28, ease: [0.32, 0.72, 0, 1] }}>
+    <motion.aside className={`tahoe-sidebar relative hidden flex-col border-r border-line px-3 py-5 lg:flex ${resizing ? "select-none" : ""}`} animate={{ width: expanded ? sidebarWidth : 68 }} transition={resizing ? { duration: 0 } : { type: "tween", duration: expanded ? 0.35 : 0.28, ease: [0.32, 0.72, 0, 1] }}>
       <div className={`flex items-center ${expanded ? 'px-2 justify-between' : 'justify-center'}`}>
         <motion.div animate={{ width: expanded ? "auto" : 0, opacity: expanded ? 1 : 0 }} className="overflow-hidden whitespace-nowrap">
           <SmartDukaLogo compact={false} />
@@ -60,6 +82,15 @@ export function GameNavigation() {
           </motion.span>
         </Link>
       </div>
+      {expanded && (
+        <div
+          aria-label="Resize sidebar"
+          role="separator"
+          aria-orientation="vertical"
+          onPointerDown={() => setResizing(true)}
+          className="absolute inset-y-0 right-0 z-10 w-2 cursor-col-resize touch-none"
+        />
+      )}
     </motion.aside>
   );
 }

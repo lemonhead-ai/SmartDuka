@@ -29,6 +29,10 @@ body { min-height: 100dvh; margin: 0; background: var(--color-grey-soft); color:
 *::-webkit-scrollbar { display: none; }
 main, section, article { min-width: 0; }
 button, a { -webkit-tap-highlight-color: transparent; }
+.game-main { --sidebar-offset: 256px; }
+@media (min-width: 1024px) {
+  .game-main { margin-left: var(--sidebar-offset); width: calc(100% - var(--sidebar-offset)); }
+}
 
 .tahoe-sidebar {
   position: fixed; top: 16px; left: 16px; height: calc(100vh - 32px); border-radius: 20px;
