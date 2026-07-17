@@ -127,6 +127,24 @@ async def seed_demo_data(session: AsyncSession) -> None:
     session.add_all([item for item in expansion_products if item.name not in existing_names])
     await session.flush()
 
+    supplier_costs = {
+        "Banana": 6,
+        "Mango": 15,
+        "Tomato": 5,
+        "Milk": 40,
+        "Juice": 30,
+        "Mandazi": 6,
+        "Exercise Book": 22,
+        "Soap": 35,
+        "Bread": 38,
+        "Egg": 12,
+        "Sugar": 52,
+        "Pencil": 9,
+    }
+    for item in await session.scalars(select(InventoryItem)):
+        if item.supplier_cost_kes <= 0:
+            item.supplier_cost_kes = supplier_costs[item.name]
+
     shop = await session.scalar(select(Shop).where(Shop.student_id == student.id))
     if shop is None:
         inventory = list(await session.scalars(select(InventoryItem)))

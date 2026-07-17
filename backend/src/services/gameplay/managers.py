@@ -141,38 +141,137 @@ class BasketValidationManager:
 
 
 class MathChallengeManager:
-    def create_checkout_challenge(self, total_kes: int, tier: int, customer: dict[str, object] | None = None) -> dict[str, object]:
-        if customer:
-            tender = int(customer.get("payment_amount_kes", 0))
-            if tender <= total_kes:
-                # If AI's guessed payment is too small, round up total to next 50/100
-                tender = ((total_kes + 49) // 50) * 50
-                if tender == total_kes:
-                    tender += 50
-        else:
-            tender = max(100, ((total_kes + 49) // 50) * 50)
-            if tender == total_kes:
+    def create_checkout_challenge(
+        self,
+        total_kes: int,
+        tier: int,
+        customer: dict[str, object] | None = None,
+        basket_lines: list[dict[str, object]] | None = None,
+    ) -> dict[str, object]:
+        lines = basket_lines or []
+        normalized_tier = max(1, min(7, tier))
+
+        if normalized_tier >= 5:
+            divisor = next((value for value in (2, 3, 4) if total_kes % value == 0), None)
+            if divisor is not None:
+                tender = self._tender(total_kes, customer)
+                return self._challenge(
+                    prompt=(
+                        f"{divisor} friends are sharing this shopping bill of KES {total_kes} equally. "
+                        "How much should each friend pay?"
+                    ),
+                    skill="division",
+                    answer=total_kes // divisor,
+                    tier=normalized_tier,
+                    total_kes=total_kes,
+                    amount_due_kes=total_kes,
+                    amount_paid_kes=tender,
+                )
+
+        if normalized_tier >= 4 and len(lines) >= 2:
+            discount = max(1, total_kes // 10)
+            amount_due = total_kes - discount
+            tender = self._tender(amount_due, customer)
+            return self._challenge(
+                prompt=(
+                    f"This basket has a 10% bundle discount. The items cost KES {total_kes} before the discount. "
+                    "How many shillings is the discount?"
+                ),
+                skill="discount",
+                answer=discount,
+                tier=normalized_tier,
+                total_kes=total_kes,
+                amount_due_kes=amount_due,
+                amount_paid_kes=tender,
+                discount_kes=discount,
+            )
+
+        if normalized_tier >= 3:
+            quantity_line = next(
+                (
+                    line
+                    for line in lines
+                    if int(line.get("quantity", 0)) >= 2
+                ),
+                None,
+            )
+            if quantity_line is not None:
+                quantity = int(quantity_line["quantity"])
+                price = int(quantity_line["price_kes"])
+                item_name = str(quantity_line["name"]).lower()
+                tender = self._tender(total_kes, customer)
+                return self._challenge(
+                    prompt=(
+                        f"{quantity} {item_name} cost KES {price} each. "
+                        "What is the cost of those items together?"
+                    ),
+                    skill="multiplication",
+                    answer=quantity * price,
+                    tier=normalized_tier,
+                    total_kes=total_kes,
+                    amount_due_kes=total_kes,
+                    amount_paid_kes=tender,
+                )
+
+        tender = self._tender(total_kes, customer)
+        question = (
+            str(customer.get("checkout_question", "How much change should I receive?"))
+            if customer
+            else "How much change should I receive?"
+        )
+        return self._challenge(
+            prompt=f"{question} Basket total: KES {total_kes}. Amount paid: KES {tender}.",
+            skill="change",
+            answer=tender - total_kes,
+            tier=normalized_tier,
+            total_kes=total_kes,
+            amount_due_kes=total_kes,
+            amount_paid_kes=tender,
+        )
+
+    @staticmethod
+    def _tender(amount_due_kes: int, customer: dict[str, object] | None) -> int:
+        tender = int(customer.get("payment_amount_kes", 0)) if customer else 0
+        if tender <= amount_due_kes:
+            tender = max(100, ((amount_due_kes + 49) // 50) * 50)
+            if tender == amount_due_kes:
                 tender += 50
-        
-        prompt = f"The basket total is KES {total_kes}. What is the total cost in KES?"
-        if tender > total_kes:
-            question = str(customer.get("checkout_question", "How much change should I receive?")) if customer else "How much change should I receive?"
-            prompt = f"{question} Basket total: KES {total_kes}. Amount paid: KES {tender}."
-            
+        return tender
+
+    @staticmethod
+    def _challenge(
+        *,
+        prompt: str,
+        skill: str,
+        answer: int,
+        tier: int,
+        total_kes: int,
+        amount_due_kes: int,
+        amount_paid_kes: int,
+        discount_kes: int = 0,
+    ) -> dict[str, object]:
         return {
             "id": str(uuid4()),
             "prompt": prompt,
-            "skill": "change" if tender > total_kes else "money",
-            "answer": tender - total_kes if tender > total_kes else total_kes,
+            "skill": skill,
+            "answer": answer,
             "difficulty_tier": tier,
             "attempts": 0,
             "hints_used": 0,
             "complete": False,
             "total_kes": total_kes,
-            "amount_paid_kes": tender,
+            "amount_due_kes": amount_due_kes,
+            "amount_paid_kes": amount_paid_kes,
+            "discount_kes": discount_kes,
         }
 
     def hint(self, challenge: dict[str, object]) -> str:
+        if challenge["skill"] == "multiplication":
+            return "Count equal groups: the price of one item, added once for each item."
+        if challenge["skill"] == "discount":
+            return "Ten percent means one out of every ten shillings. Divide the total by 10."
+        if challenge["skill"] == "division":
+            return "Share the total into equal groups, one friend at a time."
         if challenge["skill"] == "change" and int(challenge["hints_used"]) <= 1:
             return "Start at the basket total and count up to the amount paid."
         if challenge["skill"] == "change":
@@ -182,13 +281,20 @@ class MathChallengeManager:
 
 class ScoringEngine:
     def feedback(self, correct: bool, attempts: int, challenge: dict[str, object]) -> str:
-        if correct:
+        skill = str(challenge.get("skill", "change"))
+        if correct and skill == "change":
             return (
                 f"Correct! KES {challenge['amount_paid_kes']} - KES {challenge['total_kes']} = "
                 f"KES {challenge['answer']}."
             )
+        if correct and skill == "multiplication":
+            return f"Correct! {challenge['prompt'].split('.')[0]} = KES {challenge['answer']}."
+        if correct and skill == "discount":
+            return f"Correct! The bundle saves KES {challenge['answer']}, so the customer pays KES {challenge['amount_due_kes']}."
+        if correct and skill == "division":
+            return f"Correct! Each friend pays KES {challenge['answer']}."
         if attempts == 1:
-            return "Not quite. Calculate the change as money received minus total cost."
+            return "Not quite. Try the first small step again and use the numbers in the shopping story."
         return "Try counting from the total up to the money received, one amount at a time."
 
 
@@ -223,3 +329,18 @@ class ProgressTracker:
     @staticmethod
     def skills_improving(correct_answers: int) -> list[str]:
         return ["money", "change"] if correct_answers else []
+
+
+class AdaptiveDifficultyEngine:
+    """Adjust challenge tier from a short, forgiving window of attempts."""
+
+    def adjust(self, current_tier: int, attempts: int, correct: int) -> int:
+        tier = max(1, min(7, current_tier))
+        if attempts < 3:
+            return tier
+        accuracy = correct / attempts
+        if accuracy >= 0.8:
+            return min(7, tier + 1)
+        if accuracy <= 0.4:
+            return max(1, tier - 1)
+        return tier

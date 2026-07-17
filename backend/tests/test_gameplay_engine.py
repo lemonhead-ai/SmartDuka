@@ -8,6 +8,7 @@ from src.main import create_application
 from src.services.gameplay.managers import (
     AchievementEngine,
     BasketValidationManager,
+    MathChallengeManager,
     MissionProgressEngine,
     ScoringEngine,
     XpCoinsEngine,
@@ -39,6 +40,25 @@ def test_basket_validation_identifies_missing_unexpected_and_wrong_quantities() 
     assert result["missing_items"]
     assert result["unexpected_items"]
     assert "milk" in str(result["tutor_feedback"]).lower()
+
+
+def test_checkout_challenges_progress_from_change_to_multiplication_discount_and_division() -> None:
+    manager = MathChallengeManager()
+    lines = [
+        {"name": "Banana", "quantity": 2, "price_kes": 10},
+        {"name": "Milk", "quantity": 1, "price_kes": 60},
+    ]
+
+    assert manager.create_checkout_challenge(80, tier=2, basket_lines=lines)["skill"] == "change"
+    multiplication = manager.create_checkout_challenge(80, tier=3, basket_lines=lines)
+    assert multiplication["skill"] == "multiplication"
+    assert multiplication["answer"] == 20
+    discount = manager.create_checkout_challenge(80, tier=4, basket_lines=lines)
+    assert discount["skill"] == "discount"
+    assert discount["discount_kes"] == 8
+    division = manager.create_checkout_challenge(80, tier=5, basket_lines=lines)
+    assert division["skill"] == "division"
+    assert division["answer"] == 40
 
 
 @pytest.mark.asyncio
@@ -103,6 +123,12 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
             assert completed.status_code == 200
             assert completed.json()["status"] == "completed"
 
+            ledger = await client.get("/api/v1/shop/ledger")
+            assert ledger.status_code == 200
+            assert ledger.json()["daily_revenue_kes"] > 0
+            assert ledger.json()["sales_count"] == 1
+            assert ledger.json()["cash_balance_kes"] > 500
+
             summary = await client.get(f"/api/v1/gameplay/sessions/{session_id}/summary")
             assert summary.status_code == 200
             assert summary.json()["customers_served"] == 1
@@ -112,6 +138,36 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
             assert progress.status_code == 200
             assert progress.json()["questions_attempted"] == 1
             assert progress.json()["hints_used"] == 1
+
+
+@pytest.mark.asyncio
+async def test_restock_records_an_expense_and_protects_the_duka_cash_balance(tmp_path: Path) -> None:
+    database_path = tmp_path / "ledger.db"
+    app = create_application(
+        Settings(
+            database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}",
+            featherless_api_key=None,
+        )
+    )
+
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            shop = await client.get("/api/v1/shop")
+            assert shop.status_code == 200
+            item = shop.json()["items"][0]
+            cash_before = shop.json()["cash_balance_kes"]
+
+            restocked = await client.post(
+                "/api/v1/shop/restock", json={"item_id": item["id"], "quantity": 2}
+            )
+            assert restocked.status_code == 200
+            assert restocked.json()["cash_balance_kes"] == cash_before - item["restock_cost_kes"] * 2
+
+            ledger = await client.get("/api/v1/shop/ledger")
+            assert ledger.status_code == 200
+            assert ledger.json()["daily_expenses_kes"] == item["restock_cost_kes"] * 2
+            assert ledger.json()["recent_entries"][0]["entry_type"] == "restock"
 
 
 @pytest.mark.asyncio

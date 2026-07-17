@@ -22,3 +22,6 @@
 - Switched the live Featherless configuration to `Qwen/Qwen3-32B` with non-thinking mode, added provider support for Featherless chat-template settings, and verified a live completion.
 - Added dashboard inventory management, expanded the catalogue, typed restock and product-addition APIs, and AI-backed customer decisions for limited-stock offers.
 - Consolidated Qwen orchestration into cached five-customer Gameplay Agent batches and explicit Tutor interventions, removing Mission Agent calls from the live path.
+- Added session-aware adaptive difficulty with a bounded accuracy window, typed state tracking, progress-level updates, and unit coverage.
+- Added the persisted duka cash ledger, supplier-cost-aware restocking, daily money totals, and dashboard ledger view.
+- Added tiered checkout questions for multiplication, 10% bundle discounts, and equal-sharing division, with skill-specific hints and feedback.

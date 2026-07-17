@@ -29,9 +29,17 @@ The current runtime generates structured, validated content for:
 
 - customer shopping scenarios;
 - learner-friendly, hint-first tutor guidance; and
-- achievable mission guidance.
+- customer responses when the requested stock is limited.
 
-Gameplay rules, basket validation, scoring, progress, and rewards remain deterministic backend responsibilities. Agent output is validated against the approved inventory and typed Pydantic contracts before it is used.
+Mission selection is deterministic in the current demo runtime.
+
+Gameplay rules, basket validation, scoring, progress, rewards, shop cash, and arithmetic answers remain deterministic backend responsibilities. Agent output is validated against the approved inventory and typed Pydantic contracts before it is used.
+
+## Educational AI Boundary
+
+Codex helped implement the typed ledger, adaptive difficulty progression, and tiered checkout challenges, including the corresponding automated checks and dashboard integration.
+
+Qwen3-32B is valuable for the child-facing parts of those features: natural customer stories, conversational wording, and hint-first tutoring. It is not used to calculate prices, change, discounts, division answers, or shop cash. Those values are deterministic so learners receive accurate feedback every time and the demo remains responsive within Featherless concurrency limits. GPT-5.6 Terra would strengthen the same conversational and adaptive teaching layer once its provider configuration is available; it is not required for arithmetic truth or ledger integrity.
 
 ## Planned OpenAI Runtime Migration
 

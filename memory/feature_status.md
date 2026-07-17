@@ -21,3 +21,6 @@
 | AI Collaboration Record | Done | A judge-friendly record distinguishes Codex/GPT-5.6 Terra development collaboration from the current Featherless GLM-5.2 live runtime and its planned OpenAI migration. |
 | Setup Route Guard | Done | The setup page checks the live shop record first and redirects existing learners to the dashboard instead of presenting setup again. |
 | Inventory Management & Customer Stock Offers | Done | Learners can restock and add catalogue products from the dashboard; limited-stock requests pause for an AI customer accept-or-replace response. |
+| Session-Aware Adaptive Difficulty | Done | A forgiving three-attempt accuracy window adjusts the recommended tier between 1 and 7 and carries it into challenges, progress, and the next Qwen scenario batch. |
+| Shop Cash Ledger | Done | Persisted shop cash records sales, stock purchases, current balance, daily revenue, expenses, and profit; stock purchases are blocked when funds are insufficient. |
+| Adaptive Checkout Numeracy | Done | Learners progress from change to quantity multiplication, 10% bundle discounts, and equal-sharing division challenges as their session tier grows. |

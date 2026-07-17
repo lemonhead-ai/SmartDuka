@@ -80,7 +80,9 @@ class ChallengeResponse(BaseModel):
     attempts: int
     hints_used: int
     total_kes: int
+    amount_due_kes: int
     amount_paid_kes: int
+    discount_kes: int = Field(ge=0)
 
 
 class HintResponse(BaseModel):

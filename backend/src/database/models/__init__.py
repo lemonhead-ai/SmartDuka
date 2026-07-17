@@ -1,4 +1,4 @@
-from .gameplay import GameSession, InventoryItem, OfflineEvent, Question, QuestionAttempt, Shop, ShopStock, StudentProgress
+from .gameplay import GameSession, InventoryItem, OfflineEvent, Question, QuestionAttempt, Shop, ShopLedgerEntry, ShopStock, StudentProgress
 from .student import Student
 
 __all__ = [
@@ -8,6 +8,7 @@ __all__ = [
     "Question",
     "QuestionAttempt",
     "Shop",
+    "ShopLedgerEntry",
     "ShopStock",
     "Student",
     "StudentProgress",

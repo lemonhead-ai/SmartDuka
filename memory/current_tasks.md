@@ -23,3 +23,14 @@
 15. [x] **Demo reliability pass**: Persist active gameplay state, reconcile offline events safely, and make a clean demo database start ready for judging.
 16. [x] **Inventory management**: Restock products, expand the duka catalogue, and handle customer responses to limited stock.
 17. [x] **Inference optimisation**: Replace the three-call runtime workflow with cached customer batches, on-demand tutoring, and deterministic mission selection.
+
+## Active Product Backlog
+
+18. [x] **Age-aware adaptive difficulty**: Track short-window accuracy and adjust the session challenge tier gradually.
+19. [x] **Budget and shop ledger**: Add learner budget, restocking cost, revenue, expenses, and daily totals.
+20. [x] **Advanced numeracy challenges**: Add discounts, bundles, division, and supplier decision scenarios.
+21. [ ] **Literacy gameplay**: Add reading, vocabulary, spelling, and conversational English activities.
+22. [ ] **Persistent motivation**: Add real daily missions, streaks, badges, and milestone persistence.
+23. [ ] **Learning summaries**: Add parent- and teacher-facing insight summaries.
+24. [ ] **Accessibility and performance**: Complete mobile, keyboard, audio preference, animation, and latency passes.
+25. [ ] **Release rehearsal**: Update documentation and verify the complete judging flow end to end.

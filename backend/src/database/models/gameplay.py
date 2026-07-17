@@ -38,6 +38,7 @@ class InventoryItem(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True)
     category: Mapped[str] = mapped_column(String(40), index=True)
     base_price_kes: Mapped[int] = mapped_column(Integer)
+    supplier_cost_kes: Mapped[int] = mapped_column(Integer, default=0)
     price_multiplier_percent: Mapped[int] = mapped_column(Integer, default=100)
     image_placeholder: Mapped[str] = mapped_column(String(200))
     stock: Mapped[int] = mapped_column(Integer, default=0)
@@ -52,6 +53,7 @@ class Shop(Base):
     student_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("students.id"), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(80))
     category: Mapped[str] = mapped_column(String(40), index=True)
+    cash_balance_kes: Mapped[int] = mapped_column(Integer, default=500)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -63,6 +65,19 @@ class ShopStock(Base):
     shop_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("shops.id"), index=True)
     inventory_item_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("inventory_items.id"), index=True)
     stock: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ShopLedgerEntry(Base):
+    __tablename__ = "shop_ledger_entries"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    shop_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("shops.id"), index=True)
+    entry_type: Mapped[str] = mapped_column(String(20), index=True)
+    amount_kes: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), server_default=func.now()
+    )
 
 
 class Question(Base):

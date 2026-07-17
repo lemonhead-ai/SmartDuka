@@ -39,6 +39,8 @@ class Database:
                 "missions_completed": "INTEGER NOT NULL DEFAULT 0",
                 "current_learning_level": "INTEGER NOT NULL DEFAULT 1",
             },
+            "inventory_items": {"supplier_cost_kes": "INTEGER NOT NULL DEFAULT 0"},
+            "shops": {"cash_balance_kes": "INTEGER NOT NULL DEFAULT 500"},
         }
         for table_name, columns in additions.items():
             if table_name not in table_names:

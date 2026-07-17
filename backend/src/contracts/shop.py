@@ -1,3 +1,5 @@
+from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -13,6 +15,7 @@ class CatalogItemResponse(BaseModel):
 
 class ShopStockItemResponse(CatalogItemResponse):
     stock: int = Field(ge=0)
+    restock_cost_kes: int = Field(ge=0)
 
 
 class ShopSetupRequest(BaseModel):
@@ -35,4 +38,22 @@ class ShopResponse(BaseModel):
     id: UUID
     name: str
     category: str
+    cash_balance_kes: int = Field(ge=0)
     items: list[ShopStockItemResponse]
+
+
+class ShopLedgerEntryResponse(BaseModel):
+    id: UUID
+    entry_type: Literal["sale", "restock", "new_stock"]
+    amount_kes: int
+    description: str
+    created_at: datetime
+
+
+class ShopLedgerResponse(BaseModel):
+    cash_balance_kes: int = Field(ge=0)
+    daily_revenue_kes: int = Field(ge=0)
+    daily_expenses_kes: int = Field(ge=0)
+    daily_profit_kes: int
+    sales_count: int = Field(ge=0)
+    recent_entries: list[ShopLedgerEntryResponse]

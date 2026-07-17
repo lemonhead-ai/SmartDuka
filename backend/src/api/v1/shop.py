@@ -4,6 +4,8 @@ from src.contracts.shop import (
     AddShopItemsRequest,
     CatalogItemResponse,
     RestockShopItemRequest,
+    ShopLedgerEntryResponse,
+    ShopLedgerResponse,
     ShopResponse,
     ShopSetupRequest,
     ShopStockItemResponse,
@@ -24,6 +26,7 @@ def stock_item_response(stock: object, item: object) -> ShopStockItemResponse:
         price_kes=ShopInventoryManager.price(item),
         image_placeholder=item.image_placeholder,
         stock=stock.stock,
+        restock_cost_kes=item.supplier_cost_kes,
     )
 
 
@@ -45,6 +48,7 @@ async def get_shop(db: DatabaseSession) -> ShopResponse:
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
     )
 
@@ -70,6 +74,7 @@ async def create_shop(payload: ShopSetupRequest, db: DatabaseSession) -> ShopRes
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
     )
 
@@ -86,14 +91,18 @@ async def add_shop_items(payload: AddShopItemsRequest, db: DatabaseSession) -> S
         item_id not in catalogue for item_id in payload.item_ids
     ):
         raise ApplicationError("Choose valid catalogue items.", status_code=422)
-    if not await repository.add_shop_items(shop, payload.item_ids, payload.initial_stock):
-        raise ApplicationError("Those products are already in your duka.", status_code=409)
+    try:
+        if not await repository.add_shop_items(shop, payload.item_ids, payload.initial_stock):
+            raise ApplicationError("Those products are already in your duka.", status_code=409)
+    except ValueError as error:
+        raise ApplicationError(str(error), status_code=409) from error
     await db.commit()
     stock = await repository.list_shop_stock(student.id)
     return ShopResponse(
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
     )
 
@@ -107,13 +116,47 @@ async def restock_shop_item(payload: RestockShopItemRequest, db: DatabaseSession
     shop = await repository.get_shop(student.id)
     if shop is None:
         raise ApplicationError("Create your duka before restocking.", status_code=409)
-    if await repository.restock_shop_item(student.id, payload.item_id, payload.quantity) is None:
-        raise ApplicationError("Add this product to your duka before restocking it.", status_code=404)
+    try:
+        if await repository.restock_shop_item(student.id, payload.item_id, payload.quantity) is None:
+            raise ApplicationError("Add this product to your duka before restocking it.", status_code=404)
+    except ValueError as error:
+        raise ApplicationError(str(error), status_code=409) from error
     await db.commit()
     stock = await repository.list_shop_stock(student.id)
     return ShopResponse(
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
+    )
+
+
+@router.get("/ledger", response_model=ShopLedgerResponse, summary="Read the duka cash ledger")
+async def shop_ledger(db: DatabaseSession) -> ShopLedgerResponse:
+    repository = GameplayRepository(db)
+    student = await repository.get_demo_student()
+    shop = await repository.get_shop(student.id) if student else None
+    if shop is None:
+        raise ApplicationError("Create your duka before viewing its ledger.", status_code=404)
+    daily_entries = await repository.daily_ledger_entries(shop.id)
+    revenue = sum(entry.amount_kes for entry in daily_entries if entry.amount_kes > 0)
+    expenses = -sum(entry.amount_kes for entry in daily_entries if entry.amount_kes < 0)
+    entries = await repository.list_ledger_entries(shop.id)
+    return ShopLedgerResponse(
+        cash_balance_kes=shop.cash_balance_kes,
+        daily_revenue_kes=revenue,
+        daily_expenses_kes=expenses,
+        daily_profit_kes=revenue - expenses,
+        sales_count=sum(entry.entry_type == "sale" for entry in daily_entries),
+        recent_entries=[
+            ShopLedgerEntryResponse(
+                id=entry.id,
+                entry_type=entry.entry_type,
+                amount_kes=entry.amount_kes,
+                description=entry.description,
+                created_at=entry.created_at,
+            )
+            for entry in entries
+        ],
     )

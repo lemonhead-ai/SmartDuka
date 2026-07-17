@@ -46,6 +46,7 @@ from src.services.gameplay.managers import (
     ScoringEngine,
     ShopInventoryManager,
     XpCoinsEngine,
+    AdaptiveDifficultyEngine,
 )
 
 
@@ -64,6 +65,7 @@ class GameplayEngine:
         self.achievements = AchievementEngine()
         self.missions = MissionProgressEngine()
         self.progress_tracker = ProgressTracker()
+        self.difficulty = AdaptiveDifficultyEngine()
 
     async def start_session(self) -> StartGameplaySessionResponse:
         student = await self._demo_student()
@@ -245,6 +247,18 @@ class GameplayEngine:
         state["coins_earned"] = int(state["coins_earned"]) + coins
         state["xp_earned"] = int(state["xp_earned"]) + xp
         state["stars_earned"] = int(state["stars_earned"]) + stars
+        state["difficulty_attempts"] = int(state.get("difficulty_attempts", 0)) + 1
+        state["difficulty_correct"] = int(state.get("difficulty_correct", 0)) + int(correct)
+        current_tier = int(state.get("recommended_tier") or student.difficulty_tier)
+        adjusted_tier = self.difficulty.adjust(
+            current_tier,
+            int(state["difficulty_attempts"]),
+            int(state["difficulty_correct"]),
+        )
+        state["recommended_tier"] = adjusted_tier
+        if adjusted_tier != current_tier:
+            state["difficulty_attempts"] = 0
+            state["difficulty_correct"] = 0
         await self._update_progress(student, state, coins, xp, stars, correct)
         await self._save(game_session, state)
         reward_message = state.get("reward_message")
@@ -284,7 +298,15 @@ class GameplayEngine:
                 int(recommended_tier)
                 if isinstance(recommended_tier, int)
                 else student.difficulty_tier,
-                customer=customer_data if isinstance(customer_data, dict) else None
+                customer=customer_data if isinstance(customer_data, dict) else None,
+                basket_lines=[
+                    {
+                        "name": line.item.name,
+                        "quantity": line.quantity,
+                        "price_kes": line.item.price_kes,
+                    }
+                    for line in basket.lines
+                ],
             )
             await self._save(game_session, state)
             return CheckoutResponse(
@@ -307,6 +329,11 @@ class GameplayEngine:
                     "An item is no longer available in the requested quantity.", status_code=409
                 )
             shop_stock.stock -= line.quantity
+        customer = state["current_customer"]
+        customer_name = str(customer.get("name", "a customer")) if isinstance(customer, dict) else "a customer"
+        await self.repository.record_sale(
+            student.id, int(challenge.get("amount_due_kes", basket.total_kes)), customer_name
+        )
         state["customers_served"] = int(state["customers_served"]) + 1
         state["achievements"] = self.achievements.update(
             int(state["customers_served"]),
@@ -419,7 +446,9 @@ class GameplayEngine:
         progress.coins_earned += coins
         progress.xp_earned += xp
         progress.stars_earned += stars
-        progress.current_learning_level = student.difficulty_tier
+        progress.current_learning_level = int(
+            state.get("recommended_tier") or student.difficulty_tier
+        )
 
     async def _save(self, game_session: GameSession, state: dict[str, object]) -> None:
         await self.repository.save_game_state(game_session, state)
@@ -483,7 +512,9 @@ class GameplayEngine:
                 # Localization remains represented in the context, but is
                 # bypassed for the hackathon's English-only runtime.
                 language="en",
-                difficulty_tier=student.difficulty_tier,
+                difficulty_tier=int(
+                    state.get("recommended_tier") or student.difficulty_tier
+                ),
             ),
             session=GameplaySessionContext(
                 session_id=game_session.id,
@@ -505,7 +536,6 @@ class GameplayEngine:
             ),
             available_goods=available_goods,
         )
-        return context
 
     async def _demo_student(self) -> Student:
         student = await self.repository.get_demo_student()
@@ -538,6 +568,8 @@ class GameplayEngine:
             "achievements": [],
             "mission_completed": False,
             "recommended_tier": None,
+            "difficulty_attempts": 0,
+            "difficulty_correct": 0,
             "agent_mission": None,
             "reward_message": None,
             "learning_insight": None,
@@ -596,7 +628,9 @@ class GameplayEngine:
             attempts=int(challenge["attempts"]),
             hints_used=int(challenge["hints_used"]),
             total_kes=int(challenge["total_kes"]),
+            amount_due_kes=int(challenge.get("amount_due_kes", challenge["total_kes"])),
             amount_paid_kes=int(challenge["amount_paid_kes"]),
+            discount_kes=int(challenge.get("discount_kes", 0)),
         )
 
     @staticmethod

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -11,6 +11,7 @@ from src.database.models import (
     Question,
     QuestionAttempt,
     Shop,
+    ShopLedgerEntry,
     ShopStock,
     Student,
     StudentProgress,
@@ -65,23 +66,97 @@ class GameplayRepository:
         new_ids = [item_id for item_id in item_ids if item_id not in existing_ids]
         if not new_ids:
             return []
+        items = list(
+            await self.session.scalars(
+                select(InventoryItem).where(InventoryItem.id.in_(new_ids))
+            )
+        )
+        restock_cost = sum(item.supplier_cost_kes * initial_stock for item in items)
+        if shop.cash_balance_kes < restock_cost:
+            raise ValueError("Your duka does not have enough cash for those products.")
         stock_rows = [
             ShopStock(shop_id=shop.id, inventory_item_id=item_id, stock=initial_stock)
             for item_id in new_ids
         ]
         self.session.add_all(stock_rows)
+        shop.cash_balance_kes -= restock_cost
+        self.session.add_all(
+            [
+                ShopLedgerEntry(
+                    shop_id=shop.id,
+                    entry_type="new_stock",
+                    amount_kes=-(item.supplier_cost_kes * initial_stock),
+                    description=f"Added {initial_stock} {item.name.lower()} to the shelf",
+                )
+                for item in items
+            ]
+        )
         await self.session.flush()
         return stock_rows
 
     async def restock_shop_item(
         self, student_id: UUID, item_id: UUID, quantity: int
     ) -> ShopStock | None:
+        shop = await self.get_shop(student_id)
+        if shop is None:
+            return None
         stock = await self.get_shop_stock(student_id, item_id)
         if stock is None:
             return None
+        item = await self.get_inventory_item(item_id)
+        if item is None:
+            return None
+        restock_cost = item.supplier_cost_kes * quantity
+        if shop.cash_balance_kes < restock_cost:
+            raise ValueError(
+                f"You need KES {restock_cost} to restock {quantity} {item.name.lower()}."
+            )
         stock.stock += quantity
+        shop.cash_balance_kes -= restock_cost
+        self.session.add(
+            ShopLedgerEntry(
+                shop_id=shop.id,
+                entry_type="restock",
+                amount_kes=-restock_cost,
+                description=f"Restocked {quantity} {item.name.lower()}",
+            )
+        )
         await self.session.flush()
         return stock
+
+    async def record_sale(self, student_id: UUID, total_kes: int, customer_name: str) -> None:
+        shop = await self.get_shop(student_id)
+        if shop is None:
+            raise ValueError("A duka is required to record a sale.")
+        shop.cash_balance_kes += total_kes
+        self.session.add(
+            ShopLedgerEntry(
+                shop_id=shop.id,
+                entry_type="sale",
+                amount_kes=total_kes,
+                description=f"Sale to {customer_name}",
+            )
+        )
+        await self.session.flush()
+
+    async def list_ledger_entries(self, shop_id: UUID, limit: int = 8) -> list[ShopLedgerEntry]:
+        entries = await self.session.scalars(
+            select(ShopLedgerEntry)
+            .where(ShopLedgerEntry.shop_id == shop_id)
+            .order_by(ShopLedgerEntry.created_at.desc())
+            .limit(limit)
+        )
+        return list(entries)
+
+    async def daily_ledger_entries(self, shop_id: UUID) -> list[ShopLedgerEntry]:
+        day_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        entries = await self.session.scalars(
+            select(ShopLedgerEntry).where(
+                ShopLedgerEntry.shop_id == shop_id,
+                ShopLedgerEntry.created_at >= day_start,
+            )
+        )
+        return list(entries)
 
     async def list_shop_stock(self, student_id: UUID) -> list[tuple[ShopStock, InventoryItem]]:
         result = await self.session.execute(

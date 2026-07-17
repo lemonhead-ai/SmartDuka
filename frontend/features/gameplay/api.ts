@@ -11,7 +11,8 @@ import type {
   SessionSummary,
   Session,
   CatalogItem,
-  Duka
+  Duka,
+  ShopLedger
 } from "@/features/gameplay/types";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -73,6 +74,7 @@ export const gameplayApi = {
   sessionSummary: (sessionId: string) => request<SessionSummary>(`/gameplay/sessions/${sessionId}/summary`),
   catalog: () => request<CatalogItem[]>("/shop/catalog"),
   shop: () => request<Duka>("/shop"),
+  ledger: () => request<ShopLedger>("/shop/ledger"),
   createShop: (name: string, category: string, itemIds: string[]) => request<Duka>("/shop", { method: "POST", body: JSON.stringify({ name, category, item_ids: itemIds }) }),
   addShopItems: (itemIds: string[]) => request<Duka>("/shop/items", { method: "POST", body: JSON.stringify({ item_ids: itemIds }) }),
   restock: (itemId: string, quantity: number) => request<Duka>("/shop/restock", { method: "POST", body: JSON.stringify({ item_id: itemId, quantity }) })
