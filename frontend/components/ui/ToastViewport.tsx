@@ -7,10 +7,10 @@ import { useEffect } from "react";
 import { useToastStore } from "@/features/feedback/toast-store";
 
 const buddy = {
-  success: { name: "Asha", face: "bg-green-400", bubble: "border-green-200 bg-green-50", text: "text-green-800" },
-  error: { name: "Kito", face: "bg-red-400", bubble: "border-red-200 bg-red-50", text: "text-red-800" },
+  success: { name: "Milo", face: "bg-green-400", bubble: "border-green-200 bg-green-50", text: "text-green-800" },
+  error: { name: "Milo", face: "bg-red-400", bubble: "border-red-200 bg-red-50", text: "text-red-800" },
   warning: { name: "Milo", face: "bg-amber-400", bubble: "border-yellow-200 bg-yellow-50", text: "text-yellow-900" },
-  info: { name: "Nia", face: "bg-blue-400", bubble: "border-blue-200 bg-blue-50", text: "text-blue-900" }
+  info: { name: "Milo", face: "bg-blue-400", bubble: "border-blue-200 bg-blue-50", text: "text-blue-900" }
 };
 
 export function ToastViewport() {
@@ -37,8 +37,8 @@ function CartoonBuddy({ name, tone }: { name: string; tone: string }) {
   if (name === "Milo") {
     return (
       <div className="shrink-0 text-center">
-        <div className="relative size-14 overflow-hidden rounded-[22px] border-4 border-white bg-[#0B3D2E] shadow-elevated" aria-label="Milo, your learning buddy" role="img">
-          <Image src="/mascots/milo.png" alt="" fill sizes="56px" className="object-cover object-center" priority />
+        <div className="relative size-14" aria-label="Milo, your learning buddy" role="img">
+          <Image src="/mascots/milo.png" alt="" fill sizes="56px" className="object-contain" priority />
         </div>
         <span className="mt-1 block text-[10px] font-bold text-muted">Milo</span>
       </div>
