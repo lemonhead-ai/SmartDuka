@@ -16,6 +16,17 @@
   --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-white: #1C1C1E;
+  --color-grey-soft: #000000;
+  --color-grey-mid: #2C2C2E;
+  --color-grey-text: #8E8E93;
+  --color-black: #FFFFFF;
+  --color-accent: #30D158;
+  --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.8), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 * { box-sizing: border-box; }
 html, body {
   min-height: 100%;
@@ -37,3 +48,21 @@ button, a { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04); z-index: 50;
   margin-top: 16px; margin-bottom: 16px;
 }
+
+:root[data-theme="dark"] .tahoe-sidebar {
+  background: rgba(28, 28, 30, 0.86);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .bg-white { background-color: var(--color-white) !important; }
+:root[data-theme="dark"] .bg-ink { background-color: #30D158 !important; color: #000000 !important; }
+:root[data-theme="dark"] .text-white { color: #000000 !important; }
+:root[data-theme="dark"] .bg-yellow-50 { background-color: #3c3214 !important; }
+:root[data-theme="dark"] .bg-green-50 { background-color: #143723 !important; }
+:root[data-theme="dark"] .bg-red-50 { background-color: #401b1b !important; }
+
+/* Theme-based Logo Switching */
+.logo-light { display: block; }
+.logo-dark { display: none; }
+:root[data-theme="dark"] .logo-light { display: none; }
+:root[data-theme="dark"] .logo-dark { display: block; }

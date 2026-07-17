@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#FF8A3D" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><Providers>{children}</Providers></body></html>;
+  return <html lang="en" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: "try{const p=localStorage.getItem('smart-duka-theme')||'system';const t=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{}" }} /></head><body><Providers>{children}</Providers></body></html>;
 }

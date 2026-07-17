@@ -9,10 +9,12 @@ import { Award01Icon, FireIcon, PencilEdit01Icon, Settings02Icon, Store01Icon, L
 import { gameplayApi } from "@/features/gameplay/api";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
 import { avatarChoices, shopThemes, useKidProfileStore } from "@/features/kids/store";
+import { useThemePreference, type ThemePreference } from "@/components/theme/ThemeProvider";
 
 export default function ProfilePage() {
   const router = useRouter();
   const clearSession = useGameplaySessionStore((state) => state.clearSession);
+  const { preference: themePreference, setPreference: setThemePreference } = useThemePreference();
   const { avatar, setAvatar, shopName, setShopName, shopTheme, setShopTheme } = useKidProfileStore();
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
   const progress = progressQuery.data;
@@ -56,6 +58,18 @@ export default function ProfilePage() {
           <PencilEdit01Icon size={17} color="currentColor" /> Edit profile
         </button>
       </header>
+
+      <section className="rounded-[24px] border border-line bg-surface p-6">
+        <p className="text-sm font-medium text-muted">Appearance</p>
+        <h2 className="mt-1 text-xl font-semibold">Choose your colour mode</h2>
+        <p className="mt-2 text-sm text-muted">System follows your device automatically.</p>
+        <div className="mt-5 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Colour mode">
+          {(["system", "light", "dark"] as ThemePreference[]).map((option) => {
+            const active = themePreference === option;
+            return <button key={option} type="button" role="radio" aria-checked={active} onClick={() => setThemePreference(option)} className={`rounded-2xl border px-3 py-3 text-sm font-semibold capitalize transition-colors ${active ? "border-accent bg-accent text-white" : "border-line bg-canvas text-ink hover:bg-line"}`}>{option}</button>;
+          })}
+        </div>
+      </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
         <article className="rounded-[24px] border border-line bg-surface p-6 sm:p-8">

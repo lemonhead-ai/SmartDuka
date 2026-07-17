@@ -13,6 +13,13 @@ const buddy = {
   info: { name: "Milo", face: "bg-blue-400", bubble: "border-blue-200 bg-blue-50", text: "text-blue-900" }
 };
 
+const messageTones = {
+  success: { bubble: "bg-green-100 dark:bg-green-900", sender: "text-green-800 dark:text-green-200", tail: "fill-green-100 dark:fill-green-900" },
+  error: { bubble: "bg-red-100 dark:bg-red-900", sender: "text-red-800 dark:text-red-200", tail: "fill-red-100 dark:fill-red-900" },
+  warning: { bubble: "bg-yellow-100 dark:bg-yellow-900", sender: "text-yellow-800 dark:text-yellow-200", tail: "fill-yellow-100 dark:fill-yellow-900" },
+  info: { bubble: "bg-blue-100 dark:bg-blue-900", sender: "text-blue-800 dark:text-blue-200", tail: "fill-blue-100 dark:fill-blue-900" },
+};
+
 export function ToastViewport() {
   const { toast, dismissToast } = useToastStore();
 
@@ -23,6 +30,8 @@ export function ToastViewport() {
   }, [dismissToast, toast]);
 
   const character = toast ? buddy[toast.kind] : buddy.info;
+  const isMiloMessage = character.name === "Milo";
+  const messageTone = toast ? messageTones[toast.kind] : messageTones.info;
 
   return (
     <AnimatePresence mode="wait">
@@ -41,14 +50,20 @@ export function ToastViewport() {
           <CartoonBuddy name={character.name} tone={character.face} />
 
           {/* iMessage Bubble on the Right */}
-          <div className={`relative min-w-0 flex-1 rounded-[22px] border-2 px-4 py-3 shadow-elevated sm:px-5 sm:py-4 ${character.bubble}`}>
+          <div className={`relative min-w-0 flex-1 px-4 py-3 shadow-elevated sm:px-5 sm:py-4 ${isMiloMessage ? `rounded-[28px] rounded-bl-lg ${messageTone.bubble}` : `rounded-[22px] border-2 ${character.bubble}`}`}>
             {/* Left-pointing Tail */}
-            <span className={`absolute -left-2 bottom-4 size-4 rotate-45 border-l-2 border-b-2 ${character.bubble}`} aria-hidden="true" />
+            {isMiloMessage ? (
+              <svg className={`absolute -bottom-px -left-[13px] h-5 w-5 ${messageTone.tail}`} viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M20 0C10 1 8 10 0 19c10 0 18-6 20-19Z" />
+              </svg>
+            ) : (
+              <span className={`absolute -left-2 bottom-4 size-4 rotate-45 border-b-2 border-l-2 ${character.bubble}`} aria-hidden="true" />
+            )}
             
             <div className="relative z-10 flex items-start gap-3">
               <div className="min-w-0 flex-1">
-                <p className={`text-[11px] font-black uppercase tracking-[0.14em] ${character.text}`}>{character.name} says</p>
-                <p className="mt-1 break-words text-sm font-semibold leading-relaxed text-ink">{toast.message}</p>
+                <p className={`text-[11px] ${isMiloMessage ? `font-semibold tracking-[0.04em] ${messageTone.sender}` : `font-black uppercase tracking-[0.14em] ${character.text}`}`}>{isMiloMessage ? character.name : `${character.name} says`}</p>
+                <p className="mt-1 break-words text-[15px] font-medium leading-relaxed text-ink">{toast.message}</p>
               </div>
               <button 
                 type="button" 
@@ -73,7 +88,6 @@ function CartoonBuddy({ name, tone }: { name: string; tone: string }) {
         <div className="relative size-14" aria-label="Milo, your learning buddy" role="img">
           <Image src="/mascots/milo.png" alt="" fill sizes="56px" className="object-contain" priority />
         </div>
-        <span className="mt-1 block text-[10px] font-bold text-muted">Milo</span>
       </div>
     );
   }
@@ -86,7 +100,6 @@ function CartoonBuddy({ name, tone }: { name: string; tone: string }) {
         <span className="absolute bottom-[13px] left-1/2 h-2 w-5 -translate-x-1/2 rounded-b-full border-b-2 border-ink" />
         <span className="absolute -top-2 left-1/2 size-3 -translate-x-1/2 rounded-full border-2 border-white bg-ink" />
       </div>
-      <span className="mt-1 block text-[10px] font-bold text-muted">{name}</span>
     </div>
   );
 }
