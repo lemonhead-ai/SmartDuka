@@ -4,13 +4,14 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 from uuid import uuid4
 
-from src.agents.base.prompt_loader import PromptLoader
-from src.agents.customer_agent.agent import CustomerAgent
 from src.agents.difficulty_agent.agent import DifficultyAgent
 from src.agents.insight_agent.agent import InsightAgent
 from src.agents.localization_agent.agent import LocalizationAgent
-from src.agents.mission_agent.agent import MissionAgent
 from src.agents.reward_agent.agent import RewardAgent
+
+from src.agents.base.prompt_loader import PromptLoader
+from src.agents.customer_agent.agent import CustomerAgent
+from src.agents.mission_agent.agent import MissionAgent
 from src.agents.shared.context import (
     AgentContext,
     GameplaySessionContext,

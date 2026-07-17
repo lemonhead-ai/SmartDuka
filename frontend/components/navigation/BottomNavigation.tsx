@@ -22,7 +22,7 @@ export function BottomNavigation() {
 
   return (
     <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center lg:hidden px-4">
-      <nav className="flex items-center gap-1 rounded-full bg-white/60 p-2 backdrop-blur-xl saturate-150 shadow-elevated border border-white/50">
+      <nav className="flex items-center gap-1 rounded-full bg-gradient-to-b from-white/45 to-white/15 p-2 backdrop-blur-2xl saturate-190 shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-white/40">
         {items.map(({ href, icon: Icon, label }) => {
           const isActive = pathname === href || pathname?.startsWith(`${href}/`);
           
@@ -35,19 +35,26 @@ export function BottomNavigation() {
               <motion.div
                 layout
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className={`flex items-center justify-center h-12 rounded-full px-4 transition-colors ${
+                className={`relative flex items-center justify-center h-12 rounded-full px-4 transition-colors duration-300 ${
                   isActive 
-                    ? 'bg-[#10B981]/15 text-[#047857]' 
-                    : 'text-ink/60 hover:text-ink/90 bg-transparent'
+                    ? 'text-[#047857]' 
+                    : 'text-ink/60 hover:text-ink/90'
                 }`}
               >
-                <Icon size={24} color="currentColor" className="shrink-0" />
+                {isActive && (
+                  <motion.div
+                    layoutId="activeBottomTabIndicator"
+                    className="absolute inset-0 bg-gradient-to-tr from-[#10B981]/20 to-[#10B981]/5 border border-[#10B981]/25 rounded-full shadow-inner z-0"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <Icon size={24} color="currentColor" className="shrink-0 relative z-10" />
                 {isActive && (
                   <motion.span 
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: "auto" }}
                     exit={{ opacity: 0, width: 0 }}
-                    className="ml-2 text-sm font-semibold whitespace-nowrap overflow-hidden"
+                    className="ml-2 text-sm font-semibold whitespace-nowrap overflow-hidden relative z-10"
                   >
                     {label}
                   </motion.span>

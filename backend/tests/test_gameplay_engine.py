@@ -1,9 +1,11 @@
 from pathlib import Path
+from uuid import UUID
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from src.core.config import Settings
+from src.database.repositories.gameplay import GameplayRepository
 from src.main import create_application
 from src.services.gameplay.managers import (
     AchievementEngine,
@@ -141,7 +143,9 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_restock_records_an_expense_and_protects_the_duka_cash_balance(tmp_path: Path) -> None:
+async def test_restock_records_an_expense_and_protects_the_duka_cash_balance(
+    tmp_path: Path,
+) -> None:
     database_path = tmp_path / "ledger.db"
     app = create_application(
         Settings(
@@ -162,12 +166,75 @@ async def test_restock_records_an_expense_and_protects_the_duka_cash_balance(tmp
                 "/api/v1/shop/restock", json={"item_id": item["id"], "quantity": 2}
             )
             assert restocked.status_code == 200
-            assert restocked.json()["cash_balance_kes"] == cash_before - item["restock_cost_kes"] * 2
+            assert (
+                restocked.json()["cash_balance_kes"] == cash_before - item["restock_cost_kes"] * 2
+            )
 
             ledger = await client.get("/api/v1/shop/ledger")
             assert ledger.status_code == 200
             assert ledger.json()["daily_expenses_kes"] == item["restock_cost_kes"] * 2
             assert ledger.json()["recent_entries"][0]["entry_type"] == "restock"
+
+
+@pytest.mark.asyncio
+async def test_stock_decision_persists_before_the_next_basket_validation(tmp_path: Path) -> None:
+    database_path = tmp_path / "stock-decision.db"
+    app = create_application(
+        Settings(
+            database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}",
+            featherless_api_key=None,
+        )
+    )
+
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            session_id = (await client.post("/api/v1/gameplay/sessions")).json()["session_id"]
+            async with app.state.database.session_factory() as database_session:
+                repository = GameplayRepository(database_session)
+                student = await repository.get_demo_student()
+                assert student is not None
+                stock_rows = await repository.list_shop_stock(student.id)
+                stock, item = next(row for row in stock_rows if row[1].name == "Juice")
+                stock.stock = 1
+                game_session = await repository.get_active_session(UUID(session_id))
+                assert game_session is not None
+                game_session.game_state = {
+                    "current_customer": {
+                        "id": "customer-1",
+                        "name": "Wanjiru",
+                        "personality": "friendly",
+                        "greeting": "Jambo!",
+                        "request": "I need 3 juice, please.",
+                        "requested_items": [
+                            {"item_id": str(item.id), "name": item.name, "quantity": 3}
+                        ],
+                        "stock_offer": {
+                            "item_id": str(item.id),
+                            "name": item.name,
+                            "requested_quantity": 3,
+                            "available_quantity": 1,
+                            "status": "pending",
+                            "message": "Only one juice is left.",
+                        },
+                    },
+                    "basket": [],
+                    "challenge": None,
+                }
+                await database_session.commit()
+
+            resolved = await client.post(
+                f"/api/v1/gameplay/sessions/{session_id}/customers/stock-offer"
+            )
+            assert resolved.status_code == 200
+            assert resolved.json()["customer"]["requested_items"][0]["quantity"] == 1
+
+            basket = await client.post(
+                f"/api/v1/gameplay/sessions/{session_id}/basket/items",
+                json={"item_id": str(item.id), "quantity": 1},
+            )
+            assert basket.status_code == 200
+            assert basket.json()["validation"]["is_valid"] is True
 
 
 @pytest.mark.asyncio

@@ -188,11 +188,7 @@ class MathChallengeManager:
 
         if normalized_tier >= 3:
             quantity_line = next(
-                (
-                    line
-                    for line in lines
-                    if int(line.get("quantity", 0)) >= 2
-                ),
+                (line for line in lines if int(line.get("quantity", 0)) >= 2),
                 None,
             )
             if quantity_line is not None:

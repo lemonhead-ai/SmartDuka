@@ -46,8 +46,7 @@ class Database:
             if table_name not in table_names:
                 continue
             existing = {
-                row[1]
-                for row in connection.exec_driver_sql(f"PRAGMA table_info({table_name})")
+                row[1] for row in connection.exec_driver_sql(f"PRAGMA table_info({table_name})")
             }
             for column_name, definition in columns.items():
                 if column_name not in existing:

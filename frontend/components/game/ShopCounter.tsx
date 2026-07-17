@@ -11,6 +11,13 @@ import { triggerSensoryFeedback } from "@/features/feedback/sensory-feedback";
 import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
 import type { ApiError, Basket, Checkout, SessionSummary } from "@/features/gameplay/types";
+import { StockConversationPanel } from "@/components/game/StockConversationPanel";
+
+type StockConversation = {
+  customerId: string;
+  availabilityMessage: string;
+  reply?: string;
+};
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -22,10 +29,12 @@ function errorMessage(error: unknown): string {
 export function ShopCounter() {
   const { sessionId, setSessionId, customer, basket, challenge, setCustomer, setBasket, setChallenge, clearCurrentCustomer } = useGameplaySessionStore();
   const showToast = useToastStore((state) => state.showToast);
+  const dismissToast = useToastStore((state) => state.dismissToast);
   const [answer, setAnswer] = useState("");
   const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary } | null>(null);
   const [offlineScenario, setOfflineScenario] = useState<CachedScenario | null>(null);
   const [offlineBasket, setOfflineBasket] = useState<Record<string, number>>({});
+  const [stockConversation, setStockConversation] = useState<StockConversation | null>(null);
 
   const notify = (kind: ToastKind, message: string) => {
     triggerSensoryFeedback(kind);
@@ -48,6 +57,7 @@ export function ShopCounter() {
       setChallenge(null);
       setCompletion(null);
       setAnswer("");
+      setStockConversation(null);
       notify("info", `${result.customer.name} is ready at the counter.`);
     },
     onError: (error) => notify("error", errorMessage(error))
@@ -96,10 +106,21 @@ export function ShopCounter() {
   });
   const stockOfferMutation = useMutation({
     mutationFn: () => gameplayApi.resolveStockOffer(sessionId ?? ""),
+    onMutate: () => {
+      if (!customer?.stock_offer) return;
+      dismissToast();
+      setStockConversation({
+        customerId: customer.id,
+        availabilityMessage: `I only have ${customer.stock_offer.available_quantity} ${customer.stock_offer.name.toLowerCase()} left. Would you like to take that amount instead?`
+      });
+    },
     onSuccess: (result) => {
       setCustomer(result.customer);
       setBasket(result.basket);
-      notify("info", result.customer.greeting);
+      setStockConversation((conversation) => conversation?.customerId === result.customer.id
+        ? { ...conversation, reply: result.customer.greeting }
+        : conversation);
+      notify("success", `${result.customer.name}: ${result.customer.greeting}`);
     },
     onError: (error) => notify("error", errorMessage(error))
   });
@@ -165,7 +186,14 @@ export function ShopCounter() {
   }
 
   if (customer?.stock_offer?.status === "pending") {
-    return <section className="rounded-[24px] border border-line bg-surface p-6"><p className="text-sm font-medium text-muted">Stock check</p><h1 className="mt-1 text-2xl font-semibold">{customer.name} is waiting</h1><p className="mt-4 rounded-[20px] bg-canvas p-4">{customer.stock_offer.message}</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => stockOfferMutation.mutate()} disabled={stockOfferMutation.isPending} className="mt-5 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{stockOfferMutation.isPending ? "Asking customer…" : `Tell ${customer.name}`}</motion.button></section>;
+    return (
+      <StockConversationPanel
+        customer={customer}
+        offer={customer.stock_offer}
+        isThinking={stockOfferMutation.isPending}
+        onSend={() => stockOfferMutation.mutate()}
+      />
+    );
   }
 
   if (!customer) {

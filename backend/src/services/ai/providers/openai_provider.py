@@ -1,5 +1,6 @@
-from openai import AsyncOpenAI
 from typing import Any
+
+from openai import AsyncOpenAI
 
 
 class OpenAIProvider:

@@ -118,10 +118,38 @@ async def seed_demo_data(session: AsyncSession) -> None:
         await session.flush()
 
     expansion_products = [
-        InventoryItem(name="Bread", category="snacks", base_price_kes=55, image_placeholder="bread", stock=24, educational_tags=["money", "addition"]),
-        InventoryItem(name="Egg", category="household_items", base_price_kes=18, image_placeholder="egg", stock=36, educational_tags=["counting", "multiplication"]),
-        InventoryItem(name="Sugar", category="household_items", base_price_kes=75, image_placeholder="sugar", stock=18, educational_tags=["money", "subtraction"]),
-        InventoryItem(name="Pencil", category="school_supplies", base_price_kes=15, image_placeholder="pencil", stock=40, educational_tags=["counting", "money"]),
+        InventoryItem(
+            name="Bread",
+            category="snacks",
+            base_price_kes=55,
+            image_placeholder="bread",
+            stock=24,
+            educational_tags=["money", "addition"],
+        ),
+        InventoryItem(
+            name="Egg",
+            category="household_items",
+            base_price_kes=18,
+            image_placeholder="egg",
+            stock=36,
+            educational_tags=["counting", "multiplication"],
+        ),
+        InventoryItem(
+            name="Sugar",
+            category="household_items",
+            base_price_kes=75,
+            image_placeholder="sugar",
+            stock=18,
+            educational_tags=["money", "subtraction"],
+        ),
+        InventoryItem(
+            name="Pencil",
+            category="school_supplies",
+            base_price_kes=15,
+            image_placeholder="pencil",
+            stock=40,
+            educational_tags=["counting", "money"],
+        ),
     ]
     existing_names = set(await session.scalars(select(InventoryItem.name)))
     session.add_all([item for item in expansion_products if item.name not in existing_names])
@@ -155,7 +183,8 @@ async def seed_demo_data(session: AsyncSession) -> None:
         session.add_all(
             [
                 ShopStock(shop_id=shop.id, inventory_item_id=item.id, stock=item.stock)
-                for item in inventory if item.name not in expansion_names
+                for item in inventory
+                if item.name not in expansion_names
             ]
         )
     await session.commit()

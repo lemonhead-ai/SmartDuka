@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
@@ -11,6 +12,7 @@ from src.agents.shared.context import (
     MissionContext,
     ProgressContext,
 )
+from src.agents.shared.outputs import CustomerScenarioOutput, TutorAgentOutput
 from src.contracts.gameplay_engine import (
     AnswerChallengeResponse,
     BasketLineResponse,
@@ -32,10 +34,10 @@ from src.contracts.gameplay_engine import (
 from src.core.exceptions import ApplicationError
 from src.database.models import GameSession, InventoryItem, Student, StudentProgress
 from src.database.repositories.gameplay import GameplayRepository
-from src.agents.shared.outputs import CustomerScenarioOutput, TutorAgentOutput
 from src.services.ai.orchestrator import AIOrchestrator
 from src.services.gameplay.managers import (
     AchievementEngine,
+    AdaptiveDifficultyEngine,
     BasketLine,
     BasketManager,
     BasketValidationManager,
@@ -46,7 +48,6 @@ from src.services.gameplay.managers import (
     ScoringEngine,
     ShopInventoryManager,
     XpCoinsEngine,
-    AdaptiveDifficultyEngine,
 )
 
 
@@ -91,7 +92,9 @@ class GameplayEngine:
         shop_stock = await self.repository.list_shop_stock(student.id)
         items = [item for _, item in shop_stock]
         if not items:
-            raise ApplicationError("Add products to your duka before serving customers.", status_code=409)
+            raise ApplicationError(
+                "Add products to your duka before serving customers.", status_code=409
+            )
         scenario = await self._next_customer_scenario(game_session, student, state)
         if scenario is None:
             # A malformed or unavailable AI response should not prevent a child from
@@ -111,13 +114,21 @@ class GameplayEngine:
 
         matched = {item.name.casefold(): item for item in items}
         requested_items = [
-            {"item_id": str(matched[order.item_name.casefold()].id), "name": matched[order.item_name.casefold()].name, "quantity": order.quantity}
+            {
+                "item_id": str(matched[order.item_name.casefold()].id),
+                "name": matched[order.item_name.casefold()].name,
+                "quantity": order.quantity,
+            }
             for order in scenario.shopping_list
             if order.item_name.casefold() in matched
         ]
         if len(requested_items) != len(scenario.shopping_list):
-            raise ApplicationError("Customer Agent selected a product outside this duka.", status_code=502)
-        request = ", ".join(f"{item['quantity']} {str(item['name']).lower()}" for item in requested_items)
+            raise ApplicationError(
+                "Customer Agent selected a product outside this duka.", status_code=502
+            )
+        request = ", ".join(
+            f"{item['quantity']} {str(item['name']).lower()}" for item in requested_items
+        )
         state["current_customer"] = {
             "id": str(uuid4()),
             "name": scenario.customer_name,
@@ -144,7 +155,9 @@ class GameplayEngine:
         customer = self._require_customer(state)
         offer = customer.get("stock_offer")
         if not isinstance(offer, dict) or offer.get("status") != "pending":
-            raise ApplicationError("There is no pending stock offer for this customer.", status_code=409)
+            raise ApplicationError(
+                "There is no pending stock offer for this customer.", status_code=409
+            )
         stock_rows = await self.repository.list_shop_stock(student.id)
         item_by_name = {item.name.casefold(): (stock, item) for stock, item in stock_rows}
         available_goods = [item.name for stock, item in stock_rows if stock.stock > 0]
@@ -155,22 +168,47 @@ class GameplayEngine:
             replacement = item_by_name.get((decision.replacement_item_name or "").casefold())
             if replacement is not None and replacement[0].stock > 0:
                 stock, item = replacement
-                target.update({"item_id": str(item.id), "name": item.name, "quantity": min(int(target["quantity"]), stock.stock)})
+                target.update(
+                    {
+                        "item_id": str(item.id),
+                        "name": item.name,
+                        "quantity": min(int(target["quantity"]), stock.stock),
+                    }
+                )
                 offer.update({"status": "replaced", "message": decision.dialogue})
             else:
                 target["quantity"] = int(offer["available_quantity"])
-                offer.update({"status": "accepted", "message": "I can take what you have today, thank you."})
+                offer.update(
+                    {"status": "accepted", "message": "I can take what you have today, thank you."}
+                )
         else:
             target["quantity"] = int(offer["available_quantity"])
-            offer.update({"status": "accepted", "message": decision.dialogue if decision else "I can take what you have today, thank you."})
-        customer["request"] = "I need " + ", ".join(f"{item['quantity']} {str(item['name']).lower()}" for item in requested) + ", please."
+            offer.update(
+                {
+                    "status": "accepted",
+                    "message": decision.dialogue
+                    if decision
+                    else "I can take what you have today, thank you.",
+                }
+            )
+        customer["request"] = (
+            "I need "
+            + ", ".join(f"{item['quantity']} {str(item['name']).lower()}" for item in requested)
+            + ", please."
+        )
         customer["greeting"] = str(offer["message"])
         await self._save(game_session, state)
-        return ResolveStockOfferResponse(customer=CustomerResponse.model_validate(customer), basket=await self._basket_response(state))
+        return ResolveStockOfferResponse(
+            customer=CustomerResponse.model_validate(customer),
+            basket=await self._basket_response(state),
+        )
 
     async def list_inventory(self, session_id: UUID) -> list[InventoryItemResponse]:
         _, student = await self._session_and_student(session_id)
-        return [self._item_response(item, stock.stock) for stock, item in await self.repository.list_shop_stock(student.id)]
+        return [
+            self._item_response(item, stock.stock)
+            for stock, item in await self.repository.list_shop_stock(student.id)
+        ]
 
     async def get_basket(self, session_id: UUID) -> BasketResponse:
         game_session, student = await self._session_and_student(session_id)
@@ -330,7 +368,9 @@ class GameplayEngine:
                 )
             shop_stock.stock -= line.quantity
         customer = state["current_customer"]
-        customer_name = str(customer.get("name", "a customer")) if isinstance(customer, dict) else "a customer"
+        customer_name = (
+            str(customer.get("name", "a customer")) if isinstance(customer, dict) else "a customer"
+        )
         await self.repository.record_sale(
             student.id, int(challenge.get("amount_due_kes", basket.total_kes)), customer_name
         )
@@ -451,7 +491,10 @@ class GameplayEngine:
         )
 
     async def _save(self, game_session: GameSession, state: dict[str, object]) -> None:
-        await self.repository.save_game_state(game_session, state)
+        # SQLAlchemy does not reliably detect nested in-place changes to a JSON
+        # column. Assigning a fresh value guarantees customer decisions persist
+        # before the next basket request reloads the session.
+        await self.repository.save_game_state(game_session, deepcopy(state))
         await self.session.commit()
 
     async def _next_customer_scenario(
@@ -512,9 +555,7 @@ class GameplayEngine:
                 # Localization remains represented in the context, but is
                 # bypassed for the hackathon's English-only runtime.
                 language="en",
-                difficulty_tier=int(
-                    state.get("recommended_tier") or student.difficulty_tier
-                ),
+                difficulty_tier=int(state.get("recommended_tier") or student.difficulty_tier),
             ),
             session=GameplaySessionContext(
                 session_id=game_session.id,
@@ -641,32 +682,68 @@ class GameplayEngine:
         return customer
 
     @staticmethod
-    def _prepare_stock_offer(customer: object, stock_rows: list[tuple[object, InventoryItem]]) -> None:
+    def _prepare_stock_offer(
+        customer: object, stock_rows: list[tuple[object, InventoryItem]]
+    ) -> None:
         if not isinstance(customer, dict):
             return
         stock_by_id = {str(item.id): stock.stock for stock, item in stock_rows}
         for requested in customer.get("requested_items", []):
-            if isinstance(requested, dict) and int(requested["quantity"]) > stock_by_id.get(str(requested["item_id"]), 0):
+            if isinstance(requested, dict) and int(requested["quantity"]) > stock_by_id.get(
+                str(requested["item_id"]), 0
+            ):
                 available = stock_by_id.get(str(requested["item_id"]), 0)
-                customer["stock_offer"] = {"item_id": str(requested["item_id"]), "name": requested["name"], "requested_quantity": requested["quantity"], "available_quantity": available, "status": "pending", "message": f"We only have {available} {str(requested['name']).lower()} left. Would you like to offer that amount to the customer?"}
+                customer["stock_offer"] = {
+                    "item_id": str(requested["item_id"]),
+                    "name": requested["name"],
+                    "requested_quantity": requested["quantity"],
+                    "available_quantity": available,
+                    "status": "pending",
+                    "message": f"We only have {available} {str(requested['name']).lower()} left. Would you like to offer that amount to the customer?",
+                }
                 return
         customer["stock_offer"] = None
 
-    async def _stock_offer_decision(self, game_session: GameSession, student: Student, state: dict[str, object], available_goods: list[str]) -> object | None:
+    async def _stock_offer_decision(
+        self,
+        game_session: GameSession,
+        student: Student,
+        state: dict[str, object],
+        available_goods: list[str],
+    ) -> object | None:
         if self.orchestrator is None:
             return None
         customer = self._require_customer(state)
         offer = customer["stock_offer"]
         try:
-            return await self.orchestrator.resolve_stock_offer(AgentContext(
-                learner=LearnerProfile(student_id=student.id, age=student.age, language="en", difficulty_tier=student.difficulty_tier),
-                session=GameplaySessionContext(session_id=game_session.id, started_at=game_session.started_at or datetime.now(UTC), transactions_completed=int(state["customers_served"])),
-                progress=ProgressContext(basket_feedback=f"{customer['name']} requested {offer['requested_quantity']} {offer['name']}; only {offer['available_quantity']} are available. Decide whether to accept the offered amount or request a replacement."),
-                mission=MissionContext(progress_value=int(state["customers_served"]), target_value=3, mission_type="sales"),
-                available_goods=available_goods,
-            ))
+            return await self.orchestrator.resolve_stock_offer(
+                AgentContext(
+                    learner=LearnerProfile(
+                        student_id=student.id,
+                        age=student.age,
+                        language="en",
+                        difficulty_tier=student.difficulty_tier,
+                    ),
+                    session=GameplaySessionContext(
+                        session_id=game_session.id,
+                        started_at=game_session.started_at or datetime.now(UTC),
+                        transactions_completed=int(state["customers_served"]),
+                    ),
+                    progress=ProgressContext(
+                        basket_feedback=f"{customer['name']} requested {offer['requested_quantity']} {offer['name']}; only {offer['available_quantity']} are available. Decide whether to accept the offered amount or request a replacement."
+                    ),
+                    mission=MissionContext(
+                        progress_value=int(state["customers_served"]),
+                        target_value=3,
+                        mission_type="sales",
+                    ),
+                    available_goods=available_goods,
+                )
+            )
         except Exception:
-            logging.getLogger(__name__).exception("Customer stock decision failed; using a safe local response.")
+            logging.getLogger(__name__).exception(
+                "Customer stock decision failed; using a safe local response."
+            )
             return None
 
     @staticmethod

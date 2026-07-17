@@ -50,7 +50,9 @@ class Shop(Base):
     __tablename__ = "shops"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
-    student_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("students.id"), unique=True, index=True)
+    student_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("students.id"), unique=True, index=True
+    )
     name: Mapped[str] = mapped_column(String(80))
     category: Mapped[str] = mapped_column(String(40), index=True)
     cash_balance_kes: Mapped[int] = mapped_column(Integer, default=500)
@@ -63,7 +65,9 @@ class ShopStock(Base):
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     shop_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("shops.id"), index=True)
-    inventory_item_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("inventory_items.id"), index=True)
+    inventory_item_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("inventory_items.id"), index=True
+    )
     stock: Mapped[int] = mapped_column(Integer, default=0)
 
 

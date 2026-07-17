@@ -64,16 +64,12 @@ async def resolve_stock_offer(
     response_model=list[InventoryItemResponse],
     summary="List available shop inventory",
 )
-async def list_inventory(
-    session_id: UUID, db: DatabaseSession
-) -> list[InventoryItemResponse]:
+async def list_inventory(session_id: UUID, db: DatabaseSession) -> list[InventoryItemResponse]:
     return await GameplayEngine(db).list_inventory(session_id)
 
 
 @router.get("/sessions/{session_id}/basket", response_model=BasketResponse, summary="Get basket")
-async def get_basket(
-    session_id: UUID, db: DatabaseSession
-) -> BasketResponse:
+async def get_basket(session_id: UUID, db: DatabaseSession) -> BasketResponse:
     return await GameplayEngine(db).get_basket(session_id)
 
 
@@ -85,9 +81,7 @@ async def add_basket_item(
     payload: BasketItemRequest,
     db: DatabaseSession,
 ) -> BasketResponse:
-    return await GameplayEngine(db).add_basket_item(
-        session_id, payload.item_id, payload.quantity
-    )
+    return await GameplayEngine(db).add_basket_item(session_id, payload.item_id, payload.quantity)
 
 
 @router.delete(
@@ -108,9 +102,7 @@ async def remove_basket_item(
     response_model=ChallengeResponse | None,
     summary="Get the active math challenge",
 )
-async def current_challenge(
-    session_id: UUID, db: DatabaseSession
-) -> ChallengeResponse | None:
+async def current_challenge(session_id: UUID, db: DatabaseSession) -> ChallengeResponse | None:
     return await GameplayEngine(db).current_challenge(session_id)
 
 
@@ -137,9 +129,7 @@ async def request_hint(
 @router.post(
     "/sessions/{session_id}/checkout", response_model=CheckoutResponse, summary="Checkout basket"
 )
-async def checkout(
-    session_id: UUID, db: DatabaseSession
-) -> CheckoutResponse:
+async def checkout(session_id: UUID, db: DatabaseSession) -> CheckoutResponse:
     return await GameplayEngine(db).checkout(session_id)
 
 
@@ -148,14 +138,10 @@ async def checkout(
     response_model=SessionSummaryResponse,
     summary="Get session summary",
 )
-async def session_summary(
-    session_id: UUID, db: DatabaseSession
-) -> SessionSummaryResponse:
+async def session_summary(session_id: UUID, db: DatabaseSession) -> SessionSummaryResponse:
     return await GameplayEngine(db).summary(session_id)
 
 
 @router.get("/progress", response_model=PlayerProgressResponse, summary="Get demo learner progress")
-async def player_progress(
-    db: DatabaseSession
-) -> PlayerProgressResponse:
+async def player_progress(db: DatabaseSession) -> PlayerProgressResponse:
     return await GameplayEngine(db).player_progress()

@@ -14,15 +14,15 @@ from src.agents.shared.context import (
 from src.agents.shared.outputs import CustomerAgentOutput, CustomerScenarioOutput
 from src.contracts.sync import (
     CachedScenarioResponse,
-    SyncConflictResponse,
     MissionSnapshot,
     SyncBootstrapRequest,
+    SyncConflictResponse,
     SyncUploadRequest,
     SyncUploadResponse,
 )
+from src.core.exceptions import ApplicationError
 from src.database.models import InventoryItem, Student
 from src.database.repositories.gameplay import GameplayRepository
-from src.core.exceptions import ApplicationError
 from src.services.ai.orchestrator import AIOrchestrator
 from src.services.gameplay.managers import ShopInventoryManager
 
@@ -71,7 +71,9 @@ class SyncService:
             raise ApplicationError("The demo learner is unavailable.", status_code=503)
         return student
 
-    async def _apply_event(self, student: Student, event_type: str, payload: dict[str, object]) -> None:
+    async def _apply_event(
+        self, student: Student, event_type: str, payload: dict[str, object]
+    ) -> None:
         if event_type != "transaction_completed" or payload.get("source") != "offline":
             return
         correct = bool(payload.get("correct", True))
@@ -124,15 +126,29 @@ class SyncService:
         self, student: Student, inventory: list[InventoryItem], attempts: int, correct: int
     ) -> CustomerAgentOutput:
         if self.orchestrator is None:
-            raise ApplicationError("AI sync is unavailable. Configure the Featherless provider and try again.", status_code=503)
+            raise ApplicationError(
+                "AI sync is unavailable. Configure the Featherless provider and try again.",
+                status_code=503,
+            )
         try:
-            return await self.orchestrator.generate_customer_batch(AgentContext(
-                learner=LearnerProfile(student_id=student.id, age=student.age, language="en", difficulty_tier=student.difficulty_tier),
-                session=GameplaySessionContext(session_id=uuid4(), started_at=datetime.now(UTC), transactions_completed=attempts),
-                progress=ProgressContext(attempts=attempts, correct_attempts=correct),
-                mission=MissionContext(progress_value=0, target_value=3, mission_type="sales"),
-                available_goods=[item.name for item in inventory],
-            ))
+            return await self.orchestrator.generate_customer_batch(
+                AgentContext(
+                    learner=LearnerProfile(
+                        student_id=student.id,
+                        age=student.age,
+                        language="en",
+                        difficulty_tier=student.difficulty_tier,
+                    ),
+                    session=GameplaySessionContext(
+                        session_id=uuid4(),
+                        started_at=datetime.now(UTC),
+                        transactions_completed=attempts,
+                    ),
+                    progress=ProgressContext(attempts=attempts, correct_attempts=correct),
+                    mission=MissionContext(progress_value=0, target_value=3, mission_type="sales"),
+                    available_goods=[item.name for item in inventory],
+                )
+            )
         except Exception as error:
             logger.exception("AI customer batch failed")
             raise ApplicationError(
@@ -141,7 +157,11 @@ class SyncService:
             ) from error
 
     def _scenarios(
-        self, student: Student, inventory: list[InventoryItem], customers: CustomerAgentOutput, now: datetime
+        self,
+        student: Student,
+        inventory: list[InventoryItem],
+        customers: CustomerAgentOutput,
+        now: datetime,
     ) -> list[CachedScenarioResponse]:
         by_name = {item.name.casefold(): item for item in inventory}
         generated = customers.scenarios
@@ -154,31 +174,55 @@ class SyncService:
         return [self._to_cached(student, scenario, by_name, now) for scenario in valid]
 
     @staticmethod
-    def _valid_scenario(scenario: CustomerScenarioOutput, by_name: dict[str, InventoryItem]) -> bool:
+    def _valid_scenario(
+        scenario: CustomerScenarioOutput, by_name: dict[str, InventoryItem]
+    ) -> bool:
         total = sum(
             ShopInventoryManager.price(by_name[item.item_name.casefold()]) * item.quantity
             for item in scenario.shopping_list
             if item.item_name.casefold() in by_name
         )
-        return len(scenario.shopping_list) > 0 and all(
-            item.item_name.casefold() in by_name for item in scenario.shopping_list
-        ) and scenario.payment_amount_kes >= total
+        return (
+            len(scenario.shopping_list) > 0
+            and all(item.item_name.casefold() in by_name for item in scenario.shopping_list)
+            and scenario.payment_amount_kes >= total
+        )
 
     @staticmethod
     def _to_cached(
-        student: Student, scenario: CustomerScenarioOutput, by_name: dict[str, InventoryItem], now: datetime
+        student: Student,
+        scenario: CustomerScenarioOutput,
+        by_name: dict[str, InventoryItem],
+        now: datetime,
     ) -> CachedScenarioResponse:
         items = [
-            {"id": str(item.id), "name": item.name, "quantity": order.quantity, "unitPriceKes": ShopInventoryManager.price(item)}
+            {
+                "id": str(item.id),
+                "name": item.name,
+                "quantity": order.quantity,
+                "unitPriceKes": ShopInventoryManager.price(item),
+            }
             for order in scenario.shopping_list
             if (item := by_name.get(order.item_name.casefold()))
         ]
         request = ", ".join(f"{item['quantity']} × {item['name']}" for item in items)
         return CachedScenarioResponse(
-            id=str(uuid4()), child_id=str(student.id), title="Customer at the counter",
+            id=str(uuid4()),
+            child_id=str(student.id),
+            title="Customer at the counter",
             customer_name=scenario.customer_name,
-            customer_mood="rushed" if scenario.mood == "rushed" else "curious" if scenario.mood == "curious" else "calm",
+            customer_mood="rushed"
+            if scenario.mood == "rushed"
+            else "curious"
+            if scenario.mood == "curious"
+            else "calm",
             difficulty_tier=student.difficulty_tier,
-            payload={"greeting": scenario.dialogue, "shoppingRequest": request, "items": items, "paymentAmountKes": scenario.payment_amount_kes},
-            cached_at=int(now.timestamp() * 1000), expires_at=int((now + timedelta(days=7)).timestamp() * 1000),
+            payload={
+                "greeting": scenario.dialogue,
+                "shoppingRequest": request,
+                "items": items,
+                "paymentAmountKes": scenario.payment_amount_kes,
+            },
+            cached_at=int(now.timestamp() * 1000),
+            expires_at=int((now + timedelta(days=7)).timestamp() * 1000),
         )

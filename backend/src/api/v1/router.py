@@ -4,8 +4,8 @@ from src.contracts.errors import ErrorResponse
 
 from .gameplay import router as gameplay_router
 from .health import router as health_router
-from .sync import router as sync_router
 from .shop import router as shop_router
+from .sync import router as sync_router
 
 api_router = APIRouter(
     responses={

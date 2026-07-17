@@ -11,7 +11,11 @@ from src.agents.shared.context import (
     MissionContext,
     ProgressContext,
 )
-from src.agents.shared.outputs import CustomerAgentOutput, StockOfferDecisionOutput, TutorAgentOutput
+from src.agents.shared.outputs import (
+    CustomerAgentOutput,
+    StockOfferDecisionOutput,
+    TutorAgentOutput,
+)
 from src.services.ai.orchestrator import AIOrchestrator
 
 
@@ -37,7 +41,8 @@ async def test_orchestrator_runs_customer_batches_and_tutor_interventions_separa
                         "checkout_question": "I paid KES 50. What change do I get?",
                         "mood": "friendly",
                     }
-                ] * 5,
+                ]
+                * 5,
             )
         ),
         tutor=FixedAgent(

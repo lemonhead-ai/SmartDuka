@@ -44,7 +44,7 @@ class StructuredAgent[OutputModel: BaseModel]:
             if cleaned_output.startswith("```"):
                 first_newline = cleaned_output.find("\n")
                 if first_newline != -1:
-                    cleaned_output = cleaned_output[first_newline+1:]
+                    cleaned_output = cleaned_output[first_newline + 1 :]
                 last_backticks = cleaned_output.rfind("```")
                 if last_backticks != -1:
                     cleaned_output = cleaned_output[:last_backticks]

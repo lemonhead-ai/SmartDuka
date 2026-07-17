@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import { useEffect } from "react";
 
 import { useToastStore } from "@/features/feedback/toast-store";
@@ -33,5 +34,16 @@ export function ToastViewport() {
 }
 
 function CartoonBuddy({ name, tone }: { name: string; tone: string }) {
+  if (name === "Milo") {
+    return (
+      <div className="shrink-0 text-center">
+        <div className="relative size-14 overflow-hidden rounded-[22px] border-4 border-white bg-[#0B3D2E] shadow-elevated" aria-label="Milo, your learning buddy" role="img">
+          <Image src="/mascots/milo.png" alt="" fill sizes="56px" className="object-cover object-center" priority />
+        </div>
+        <span className="mt-1 block text-[10px] font-bold text-muted">Milo</span>
+      </div>
+    );
+  }
+
   return <div className="shrink-0 text-center"><div className={`relative grid size-14 place-items-center rounded-[21px] border-4 border-white ${tone} shadow-elevated`} aria-label={`${name}, your learning buddy`} role="img"><span className="absolute left-[16px] top-[19px] size-2 rounded-full bg-ink" /><span className="absolute right-[16px] top-[19px] size-2 rounded-full bg-ink" /><span className="absolute bottom-[13px] left-1/2 h-2 w-5 -translate-x-1/2 rounded-b-full border-b-2 border-ink" /><span className="absolute -top-2 left-1/2 size-3 -translate-x-1/2 rounded-full border-2 border-white bg-ink" /></div><span className="mt-1 block text-[10px] font-bold text-muted">{name}</span></div>;
 }

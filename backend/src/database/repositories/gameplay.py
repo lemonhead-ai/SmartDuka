@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from src.database.models import (
     GameSession,
@@ -35,6 +36,7 @@ class GameplayRepository:
 
     async def save_game_state(self, game_session: GameSession, state: dict[str, object]) -> None:
         game_session.game_state = state
+        flag_modified(game_session, "game_state")
         await self.session.flush()
 
     async def list_inventory(self) -> list[InventoryItem]:
@@ -48,11 +50,18 @@ class GameplayRepository:
     async def get_shop(self, student_id: UUID) -> Shop | None:
         return await self.session.scalar(select(Shop).where(Shop.student_id == student_id))
 
-    async def create_shop(self, student_id: UUID, name: str, category: str, item_ids: list[UUID]) -> Shop:
+    async def create_shop(
+        self, student_id: UUID, name: str, category: str, item_ids: list[UUID]
+    ) -> Shop:
         shop = Shop(student_id=student_id, name=name, category=category)
         self.session.add(shop)
         await self.session.flush()
-        self.session.add_all([ShopStock(shop_id=shop.id, inventory_item_id=item_id, stock=12) for item_id in item_ids])
+        self.session.add_all(
+            [
+                ShopStock(shop_id=shop.id, inventory_item_id=item_id, stock=12)
+                for item_id in item_ids
+            ]
+        )
         await self.session.flush()
         return shop
 
@@ -67,9 +76,7 @@ class GameplayRepository:
         if not new_ids:
             return []
         items = list(
-            await self.session.scalars(
-                select(InventoryItem).where(InventoryItem.id.in_(new_ids))
-            )
+            await self.session.scalars(select(InventoryItem).where(InventoryItem.id.in_(new_ids)))
         )
         restock_cost = sum(item.supplier_cost_kes * initial_stock for item in items)
         if shop.cash_balance_kes < restock_cost:
@@ -163,7 +170,11 @@ class GameplayRepository:
             select(ShopStock, InventoryItem)
             .join(Shop, ShopStock.shop_id == Shop.id)
             .join(InventoryItem, ShopStock.inventory_item_id == InventoryItem.id)
-            .where(Shop.student_id == student_id, ShopStock.stock > 0, InventoryItem.is_active.is_(True))
+            .where(
+                Shop.student_id == student_id,
+                ShopStock.stock > 0,
+                InventoryItem.is_active.is_(True),
+            )
             .order_by(InventoryItem.name)
         )
         return list(result.tuples())

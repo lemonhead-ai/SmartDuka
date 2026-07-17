@@ -11,9 +11,9 @@ from src.contracts.shop import (
     ShopStockItemResponse,
 )
 from src.core.exceptions import ApplicationError
+from src.database.repositories.gameplay import GameplayRepository
 from src.dependencies.database import DatabaseSession
 from src.services.gameplay.managers import ShopInventoryManager
-from src.database.repositories.gameplay import GameplayRepository
 
 router = APIRouter(prefix="/shop", tags=["shop"])
 
@@ -33,7 +33,16 @@ def stock_item_response(stock: object, item: object) -> ShopStockItemResponse:
 @router.get("/catalog", response_model=list[CatalogItemResponse])
 async def catalog(db: DatabaseSession) -> list[CatalogItemResponse]:
     items = await GameplayRepository(db).list_inventory()
-    return [CatalogItemResponse(id=item.id, name=item.name, category=item.category, price_kes=ShopInventoryManager.price(item), image_placeholder=item.image_placeholder) for item in items]
+    return [
+        CatalogItemResponse(
+            id=item.id,
+            name=item.name,
+            category=item.category,
+            price_kes=ShopInventoryManager.price(item),
+            image_placeholder=item.image_placeholder,
+        )
+        for item in items
+    ]
 
 
 @router.get("", response_model=ShopResponse)
@@ -63,11 +72,15 @@ async def create_shop(payload: ShopSetupRequest, db: DatabaseSession) -> ShopRes
         raise ApplicationError("This learner already has a duka.", status_code=409)
     catalogue = {item.id: item for item in await repository.list_inventory()}
     selected = [catalogue.get(item_id) for item_id in payload.item_ids]
-    if len(set(payload.item_ids)) != len(payload.item_ids) or any(item is None for item in selected):
+    if len(set(payload.item_ids)) != len(payload.item_ids) or any(
+        item is None for item in selected
+    ):
         raise ApplicationError("Choose valid catalogue items.", status_code=422)
     if any(item.category != payload.category for item in selected if item):
         raise ApplicationError("Choose products from one shop category.", status_code=422)
-    shop = await repository.create_shop(student.id, payload.name.strip(), payload.category, payload.item_ids)
+    shop = await repository.create_shop(
+        student.id, payload.name.strip(), payload.category, payload.item_ids
+    )
     await db.commit()
     stock = await repository.list_shop_stock(student.id)
     return ShopResponse(
@@ -117,8 +130,13 @@ async def restock_shop_item(payload: RestockShopItemRequest, db: DatabaseSession
     if shop is None:
         raise ApplicationError("Create your duka before restocking.", status_code=409)
     try:
-        if await repository.restock_shop_item(student.id, payload.item_id, payload.quantity) is None:
-            raise ApplicationError("Add this product to your duka before restocking it.", status_code=404)
+        if (
+            await repository.restock_shop_item(student.id, payload.item_id, payload.quantity)
+            is None
+        ):
+            raise ApplicationError(
+                "Add this product to your duka before restocking it.", status_code=404
+            )
     except ValueError as error:
         raise ApplicationError(str(error), status_code=409) from error
     await db.commit()
