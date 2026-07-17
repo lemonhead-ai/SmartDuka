@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -13,10 +14,12 @@ const items = [{ href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" 
 type GameNavigationProps = { onWidthChange?: (width: number) => void };
 
 export function GameNavigation({ onWidthChange }: GameNavigationProps) {
+  const pathname = usePathname();
   const [expanded, setExpanded] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [resizing, setResizing] = useState(false);
   const [localName, setLocalName] = useState("");
+  const [activePath, setActivePath] = useState(pathname);
 
   useEffect(() => {
     const savedName = window.localStorage.getItem("smart-duka-profile-name");
@@ -41,6 +44,10 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
     onWidthChange?.(expanded ? sidebarWidth : 68);
   }, [expanded, onWidthChange, sidebarWidth]);
 
+  useEffect(() => {
+    setActivePath(pathname);
+  }, [pathname]);
+
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
   const displayName = localName || progressQuery.data?.student_name || "Shopkeeper";
   const nameParts = displayName.trim().split(" ");
@@ -59,27 +66,54 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
         </button>
       </div>
 
-      <nav className="mt-10 space-y-1">
-        {items.map(({ href, icon: Icon, label }) => (
-          <motion.div key={href} whileHover={{ backgroundColor: "rgba(0,0,0,0.04)" }} transition={{ duration: 0.15 }} className="overflow-hidden rounded-[14px]">
-            <Link href={href} className="flex items-center gap-3 px-[14px] py-[10px] font-medium text-ink">
-              <Icon size={24} color="currentColor" className="shrink-0" />
-              <motion.span animate={{ opacity: expanded ? 1 : 0 }} transition={{ duration: 0.15, delay: expanded ? 0.1 : 0 }} className="whitespace-nowrap">
-                {label}
-              </motion.span>
-            </Link>
-          </motion.div>
-        ))}
+      <nav className={`mt-10 space-y-1 ${expanded ? "" : "flex flex-col items-center"}`}>
+        {items.map(({ href, icon: Icon, label }) => {
+          const isActive = activePath === href || activePath?.startsWith(`${href}/`);
+          return (
+            <div
+              key={href}
+              className={`relative rounded-[14px] transition-colors duration-150 ${
+                isActive ? "shadow-sm" : "hover:bg-[rgba(0,0,0,0.04)]"
+              } ${expanded ? "" : "size-11"}`}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="activeSidebarTabIndicator"
+                  className="absolute inset-0 bg-accent z-0 rounded-[14px]"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <Link
+                href={href}
+                onClick={() => setActivePath(href)}
+                aria-current={isActive ? "page" : undefined}
+                aria-label={!expanded ? label : undefined}
+                className={expanded
+                  ? `relative z-10 flex items-center gap-3 px-[14px] py-[10px] font-medium transition-colors duration-200 ${isActive ? "text-white" : "text-ink"}`
+                  : `relative z-10 flex size-11 items-center justify-center transition-colors duration-200 ${isActive ? "text-white" : "text-ink"}`}
+              >
+                <Icon size={24} color="currentColor" className="shrink-0" />
+                {expanded && (
+                  <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="whitespace-nowrap">
+                    {label}
+                  </motion.span>
+                )}
+              </Link>
+            </div>
+          );
+        })}
       </nav>
 
-      <div className="mt-auto overflow-hidden rounded-[14px]">
-        <Link href="/profile" className="flex items-center gap-3 px-[10px] py-[10px] hover:bg-[rgba(0,0,0,0.04)] transition-colors">
+      <div className={`mt-auto overflow-hidden rounded-[14px] ${expanded ? "" : "size-11"}`}>
+        <Link href="/profile" aria-label={!expanded ? "Profile" : undefined} className={expanded ? "flex items-center gap-3 px-[10px] py-[10px] hover:bg-[rgba(0,0,0,0.04)] transition-colors" : "flex items-center justify-center size-11 hover:bg-[rgba(0,0,0,0.04)] transition-colors"}>
           <div className="grid size-8 shrink-0 place-items-center rounded-full bg-line text-[11px] font-bold text-ink">
             {initials}
           </div>
-          <motion.span animate={{ opacity: expanded ? 1 : 0 }} transition={{ duration: 0.15 }} className="whitespace-nowrap font-medium text-sm text-ink truncate">
-            {displayName}
-          </motion.span>
+          {expanded && (
+            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="whitespace-nowrap font-medium text-sm text-ink truncate">
+              {displayName}
+            </motion.span>
+          )}
         </Link>
       </div>
       {expanded && (

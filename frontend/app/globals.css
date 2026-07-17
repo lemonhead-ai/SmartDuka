@@ -10,7 +10,7 @@
   --color-grey-mid: #E8E8ED;
   --color-grey-text: #6E6E73;
   --color-black: #1D1D1F;
-  --color-accent: #0071E3;
+  --color-accent: #0e5337;
   --radius-button: 14px;
   --radius-card: 24px;
   --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
@@ -29,7 +29,7 @@ body { min-height: 100dvh; margin: 0; background: var(--color-grey-soft); color:
 *::-webkit-scrollbar { display: none; }
 main, section, article { min-width: 0; }
 button, a { -webkit-tap-highlight-color: transparent; }
-.game-main { --sidebar-offset: 256px; }
+.game-main { --sidebar-offset: 248px; }
 @media (min-width: 1024px) {
   .game-main { margin-left: var(--sidebar-offset); width: calc(100% - var(--sidebar-offset)); }
 }
