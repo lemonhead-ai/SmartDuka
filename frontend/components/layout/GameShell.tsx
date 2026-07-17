@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
-
 import { GameNavigation } from "@/components/navigation/GameNavigation";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 
 export function GameShell({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [sidebarWidth, setSidebarWidth] = useState(240);
-
   return (
-    <div className="min-h-dvh max-w-full overflow-x-clip bg-canvas pb-20 lg:pb-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
-      <GameNavigation onWidthChange={setSidebarWidth} />
-      <main className="game-main mx-auto w-full max-w-7xl px-5 py-6 sm:px-8 lg:px-10 lg:py-9 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" style={{ "--sidebar-offset": `${sidebarWidth + 8}px` } as React.CSSProperties}>
-        {children}
-      </main>
+    <div className="min-h-dvh w-full overflow-x-clip bg-canvas pb-20 lg:pb-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+      <div className="mx-auto max-w-[1440px] w-full px-4 sm:px-6 lg:px-8 flex gap-6 min-h-dvh relative">
+        <GameNavigation />
+        <main className="flex-1 min-w-0 py-6 lg:py-9 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          {children}
+        </main>
+      </div>
       <BottomNavigation />
     </div>
   );
