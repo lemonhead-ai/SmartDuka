@@ -21,9 +21,9 @@ The human team remains responsible for product direction, educational decisions,
 
 ## Current Live Agent Runtime
 
-The live Smart Duka agent runtime currently uses Featherless AI with the `zai-org/GLM-5.2` model.
+The live Smart Duka agent runtime currently uses Featherless AI with the `Qwen/Qwen3-32B` model.
 
-Featherless is configured through server-side environment variables only. The browser never receives the provider API key. At application startup, the backend creates the configured agent bundle and injects the orchestrator into the gameplay and sync services through FastAPI dependencies.
+Featherless is configured through server-side environment variables only. The browser never receives the provider API key. Qwen3 non-thinking mode is enabled (`enable_thinking=false`) for this short, structured educational-content workload. At application startup, the backend creates the configured agent bundle and injects the orchestrator into the gameplay and sync services through FastAPI dependencies.
 
 The current runtime generates structured, validated content for:
 
@@ -44,7 +44,7 @@ The provider abstraction already keeps model configuration separate from the gam
 3. running the existing agent, sync, gameplay, and smoke-test checks; and
 4. updating this record to mark GPT-5.6 Terra as the active live runtime.
 
-Until those steps are complete, Featherless AI with GLM-5.2 is the active production/demo agent provider.
+Until those steps are complete, Featherless AI with Qwen3-32B is the active production/demo agent provider.
 
 ## Evidence in This Repository
 

@@ -5,7 +5,7 @@
 | Project Scaffolding | Done | Basic dependencies and config files set up |
 | Next.js App Shell | Done | Responsive game shell, dashboard, shop route, navigation, shared components, and placeholder routes are in place. |
 | Offline Storage (IndexedDB) | Done | Event queue, scenario cache, expiry cleanup, persisted replay status, and server conflict handling are implemented with native IndexedDB. |
-| Agent Orchestration Pipeline | Done | Featherless-backed GLM-5.2 agent bundle is initialized at startup and injected into gameplay requests; sync integration remains a later concern. |
+| Agent Orchestration Pipeline | Done | Featherless-backed Qwen3-32B agent bundle is initialized at startup with non-thinking mode and injected into gameplay and sync requests. |
 | Sync Manager | Done | Syncs pending events on connectivity restoration, acknowledges idempotent retries, surfaces non-retryable conflicts, and caches returned agent content safely. |
 | Database Models & Seed | Done | Demo-ready async SQLite models and persistent startup seed cover student, session, question, attempt, and progress. |
 | Unit Tests | Done | Backend suite covers foundations, agents, and the persistent gameplay loop. |
@@ -20,3 +20,4 @@
 | Demo Loop Recovery & Readiness | Done | Session state survives browser reloads, checkout shows real reward and mission progress, clean demo databases auto-upgrade, and the seeded duka is ready immediately. |
 | AI Collaboration Record | Done | A judge-friendly record distinguishes Codex/GPT-5.6 Terra development collaboration from the current Featherless GLM-5.2 live runtime and its planned OpenAI migration. |
 | Setup Route Guard | Done | The setup page checks the live shop record first and redirects existing learners to the dashboard instead of presenting setup again. |
+| Inventory Management & Customer Stock Offers | Done | Learners can restock and add catalogue products from the dashboard; limited-stock requests pause for an AI customer accept-or-replace response. |

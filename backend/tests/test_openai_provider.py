@@ -15,7 +15,11 @@ class FakeOpenAIClient:
 
 
 class FakeChatCompletions:
-    async def create(self, **_: object) -> object:
+    def __init__(self) -> None:
+        self.arguments: dict[str, object] | None = None
+
+    async def create(self, **kwargs: object) -> object:
+        self.arguments = kwargs
         return SimpleNamespace(
             choices=[SimpleNamespace(message=SimpleNamespace(content='{"status":"ok"}'))]
         )
@@ -42,8 +46,12 @@ async def test_openai_provider_returns_output_text() -> None:
 
 @pytest.mark.asyncio
 async def test_featherless_provider_uses_chat_completions() -> None:
+    completions = FakeChatCompletions()
     provider = OpenAIProvider(
-        api_key="test", client=FakeFeatherlessClient(), use_responses_api=False
+        api_key="test",
+        client=SimpleNamespace(chat=SimpleNamespace(completions=completions)),
+        use_responses_api=False,
+        chat_template_kwargs={"enable_thinking": False},
     )
 
     result = await provider.complete(
@@ -55,3 +63,7 @@ async def test_featherless_provider_uses_chat_completions() -> None:
     )
 
     assert result == '{"status":"ok"}'
+    assert completions.arguments is not None
+    assert completions.arguments["extra_body"] == {
+        "chat_template_kwargs": {"enable_thinking": False}
+    }

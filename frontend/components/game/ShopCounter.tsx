@@ -94,6 +94,15 @@ export function ShopCounter() {
     onSuccess: (result) => notify("info", `${result.hint} ${result.encouragement}`),
     onError: (error) => notify("error", errorMessage(error))
   });
+  const stockOfferMutation = useMutation({
+    mutationFn: () => gameplayApi.resolveStockOffer(sessionId ?? ""),
+    onSuccess: (result) => {
+      setCustomer(result.customer);
+      setBasket(result.basket);
+      notify("info", result.customer.greeting);
+    },
+    onError: (error) => notify("error", errorMessage(error))
+  });
   const answerMutation = useMutation({
     mutationFn: () => gameplayApi.answerChallenge(sessionId ?? "", Number(answer)),
     onSuccess: (result) => {
@@ -153,6 +162,10 @@ export function ShopCounter() {
 
   if (completion) {
     return <motion.section initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="rounded-[24px] border border-line bg-surface p-6 text-center"><p className="text-sm font-medium text-muted">Sale complete</p><h1 className="mt-1 text-2xl font-semibold">{completion.checkout.reward?.message ?? "Wonderful work at the counter!"}</h1><div className="mt-6 grid grid-cols-3 gap-3"><div className="rounded-[16px] bg-canvas p-3"><p className="text-sm text-muted">Coins</p><p className="text-xl font-semibold">{completion.summary.coins_earned}</p></div><div className="rounded-[16px] bg-canvas p-3"><p className="text-sm text-muted">XP</p><p className="text-xl font-semibold">{completion.summary.xp_earned}</p></div><div className="rounded-[16px] bg-canvas p-3"><p className="text-sm text-muted">Stars</p><p className="text-xl font-semibold">{completion.summary.stars_earned}</p></div></div><p className="mt-5 text-muted">Mission: {completion.summary.mission.title} ({completion.summary.mission.progress}/{completion.summary.mission.target})</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => { setCompletion(null); if (sessionId) nextCustomerMutation.mutate(sessionId); }} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white">Serve next customer</motion.button></motion.section>;
+  }
+
+  if (customer?.stock_offer?.status === "pending") {
+    return <section className="rounded-[24px] border border-line bg-surface p-6"><p className="text-sm font-medium text-muted">Stock check</p><h1 className="mt-1 text-2xl font-semibold">{customer.name} is waiting</h1><p className="mt-4 rounded-[20px] bg-canvas p-4">{customer.stock_offer.message}</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => stockOfferMutation.mutate()} disabled={stockOfferMutation.isPending} className="mt-5 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{stockOfferMutation.isPending ? "Asking customer…" : `Tell ${customer.name}`}</motion.button></section>;
   }
 
   if (!customer) {

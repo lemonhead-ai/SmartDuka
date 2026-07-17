@@ -142,7 +142,17 @@ class BasketValidationManager:
 
 class MathChallengeManager:
     def create_checkout_challenge(self, total_kes: int, tier: int, customer: dict[str, object] | None = None) -> dict[str, object]:
-        tender = max(total_kes, int(customer.get("payment_amount_kes", total_kes))) if customer else max(100, ((total_kes + 49) // 50) * 50)
+        if customer:
+            tender = int(customer.get("payment_amount_kes", 0))
+            if tender <= total_kes:
+                # If AI's guessed payment is too small, round up total to next 50/100
+                tender = ((total_kes + 49) // 50) * 50
+                if tender == total_kes:
+                    tender += 50
+        else:
+            tender = max(100, ((total_kes + 49) // 50) * 50)
+            if tender == total_kes:
+                tender += 50
         
         prompt = f"The basket total is KES {total_kes}. What is the total cost in KES?"
         if tender > total_kes:

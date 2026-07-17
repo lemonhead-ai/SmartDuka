@@ -19,3 +19,5 @@
 - Completed the selected demo reliability work: persisted active sessions, real checkout summary/reward feedback, idempotent offline event reconciliation with conflicts, clean SQLite upgrades, and automatic demo-shop setup.
 - Added an AI collaboration record covering Codex/GPT-5.6 Terra development assistance, the current Featherless GLM-5.2 runtime, and the planned OpenAI migration.
 - Updated the setup route so learners with an existing duka are directed to the dashboard; only learners without a shop see the setup form.
+- Switched the live Featherless configuration to `Qwen/Qwen3-32B` with non-thinking mode, added provider support for Featherless chat-template settings, and verified a live completion.
+- Added dashboard inventory management, expanded the catalogue, typed restock and product-addition APIs, and AI-backed customer decisions for limited-stock offers.

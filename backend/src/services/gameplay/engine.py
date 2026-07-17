@@ -24,6 +24,7 @@ from src.contracts.gameplay_engine import (
     MissionResponse,
     NextCustomerResponse,
     PlayerProgressResponse,
+    ResolveStockOfferResponse,
     RewardResponse,
     SessionSummaryResponse,
     StartGameplaySessionResponse,
@@ -97,6 +98,7 @@ class GameplayEngine:
             )
             state["basket"] = []
             state["challenge"] = None
+            self._prepare_stock_offer(state["current_customer"], shop_stock)
             await self._save(game_session, state)
             return NextCustomerResponse(
                 customer=CustomerResponse.model_validate(state["current_customer"]),
@@ -125,15 +127,45 @@ class GameplayEngine:
             "payment_amount_kes": scenario.payment_amount_kes,
         }
         state["agent_mission"] = {"title": advice.mission.title, "target": advice.mission.target_value}
-                
         state["basket"] = []
         state["challenge"] = None
+        self._prepare_stock_offer(state["current_customer"], shop_stock)
         await self._save(game_session, state)
         return NextCustomerResponse(
             customer=CustomerResponse.model_validate(state["current_customer"]),
             basket=await self._basket_response(state),
             mission=self._mission(state),
         )
+
+    async def resolve_stock_offer(self, session_id: UUID) -> ResolveStockOfferResponse:
+        game_session, student = await self._session_and_student(session_id)
+        state = self._state(game_session)
+        customer = self._require_customer(state)
+        offer = customer.get("stock_offer")
+        if not isinstance(offer, dict) or offer.get("status") != "pending":
+            raise ApplicationError("There is no pending stock offer for this customer.", status_code=409)
+        stock_rows = await self.repository.list_shop_stock(student.id)
+        item_by_name = {item.name.casefold(): (stock, item) for stock, item in stock_rows}
+        available_goods = [item.name for stock, item in stock_rows if stock.stock > 0]
+        decision = await self._stock_offer_decision(game_session, student, state, available_goods)
+        requested = [item for item in customer["requested_items"] if isinstance(item, dict)]
+        target = next(item for item in requested if str(item["item_id"]) == str(offer["item_id"]))
+        if decision is not None and not decision.accepts_available_quantity:
+            replacement = item_by_name.get((decision.replacement_item_name or "").casefold())
+            if replacement is not None and replacement[0].stock > 0:
+                stock, item = replacement
+                target.update({"item_id": str(item.id), "name": item.name, "quantity": min(int(target["quantity"]), stock.stock)})
+                offer.update({"status": "replaced", "message": decision.dialogue})
+            else:
+                target["quantity"] = int(offer["available_quantity"])
+                offer.update({"status": "accepted", "message": "I can take what you have today, thank you."})
+        else:
+            target["quantity"] = int(offer["available_quantity"])
+            offer.update({"status": "accepted", "message": decision.dialogue if decision else "I can take what you have today, thank you."})
+        customer["request"] = "I need " + ", ".join(f"{item['quantity']} {str(item['name']).lower()}" for item in requested) + ", please."
+        customer["greeting"] = str(offer["message"])
+        await self._save(game_session, state)
+        return ResolveStockOfferResponse(customer=CustomerResponse.model_validate(customer), basket=await self._basket_response(state))
 
     async def list_inventory(self, session_id: UUID) -> list[InventoryItemResponse]:
         _, student = await self._session_and_student(session_id)
@@ -532,9 +564,40 @@ class GameplayEngine:
         )
 
     @staticmethod
-    def _require_customer(state: dict[str, object]) -> None:
-        if state["current_customer"] is None:
+    def _require_customer(state: dict[str, object]) -> dict[str, object]:
+        customer = state["current_customer"]
+        if not isinstance(customer, dict):
             raise ApplicationError("Serve the next customer first.", status_code=409)
+        return customer
+
+    @staticmethod
+    def _prepare_stock_offer(customer: object, stock_rows: list[tuple[object, InventoryItem]]) -> None:
+        if not isinstance(customer, dict):
+            return
+        stock_by_id = {str(item.id): stock.stock for stock, item in stock_rows}
+        for requested in customer.get("requested_items", []):
+            if isinstance(requested, dict) and int(requested["quantity"]) > stock_by_id.get(str(requested["item_id"]), 0):
+                available = stock_by_id.get(str(requested["item_id"]), 0)
+                customer["stock_offer"] = {"item_id": str(requested["item_id"]), "name": requested["name"], "requested_quantity": requested["quantity"], "available_quantity": available, "status": "pending", "message": f"We only have {available} {str(requested['name']).lower()} left. Would you like to offer that amount to the customer?"}
+                return
+        customer["stock_offer"] = None
+
+    async def _stock_offer_decision(self, game_session: GameSession, student: Student, state: dict[str, object], available_goods: list[str]) -> object | None:
+        if self.orchestrator is None:
+            return None
+        customer = self._require_customer(state)
+        offer = customer["stock_offer"]
+        try:
+            return await self.orchestrator.resolve_stock_offer(AgentContext(
+                learner=LearnerProfile(student_id=student.id, age=student.age, language="en", difficulty_tier=student.difficulty_tier),
+                session=GameplaySessionContext(session_id=game_session.id, started_at=game_session.started_at or datetime.now(UTC), transactions_completed=int(state["customers_served"])),
+                progress=ProgressContext(basket_feedback=f"{customer['name']} requested {offer['requested_quantity']} {offer['name']}; only {offer['available_quantity']} are available. Decide whether to accept the offered amount or request a replacement."),
+                mission=MissionContext(progress_value=int(state["customers_served"]), target_value=3, mission_type="sales"),
+                available_goods=available_goods,
+            ))
+        except Exception:
+            logging.getLogger(__name__).exception("Customer stock decision failed; using a safe local response.")
+            return None
 
     @staticmethod
     def _require_challenge(state: dict[str, object]) -> dict[str, object]:

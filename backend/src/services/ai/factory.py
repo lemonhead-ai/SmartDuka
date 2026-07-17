@@ -12,6 +12,9 @@ def create_llm_provider(settings: Settings) -> LLMProvider:
             api_key=settings.featherless_api_key,
             base_url=settings.featherless_base_url,
             use_responses_api=False,
+            chat_template_kwargs={
+                "enable_thinking": settings.featherless_enable_thinking,
+            },
         )
     elif settings.llm_provider == "openai":
         if not settings.openai_api_key:

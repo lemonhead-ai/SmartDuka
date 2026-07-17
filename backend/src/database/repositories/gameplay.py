@@ -55,6 +55,34 @@ class GameplayRepository:
         await self.session.flush()
         return shop
 
+    async def add_shop_items(
+        self, shop: Shop, item_ids: list[UUID], initial_stock: int
+    ) -> list[ShopStock]:
+        existing = await self.session.scalars(
+            select(ShopStock.inventory_item_id).where(ShopStock.shop_id == shop.id)
+        )
+        existing_ids = set(existing)
+        new_ids = [item_id for item_id in item_ids if item_id not in existing_ids]
+        if not new_ids:
+            return []
+        stock_rows = [
+            ShopStock(shop_id=shop.id, inventory_item_id=item_id, stock=initial_stock)
+            for item_id in new_ids
+        ]
+        self.session.add_all(stock_rows)
+        await self.session.flush()
+        return stock_rows
+
+    async def restock_shop_item(
+        self, student_id: UUID, item_id: UUID, quantity: int
+    ) -> ShopStock | None:
+        stock = await self.get_shop_stock(student_id, item_id)
+        if stock is None:
+            return None
+        stock.stock += quantity
+        await self.session.flush()
+        return stock
+
     async def list_shop_stock(self, student_id: UUID) -> list[tuple[ShopStock, InventoryItem]]:
         result = await self.session.execute(
             select(ShopStock, InventoryItem)

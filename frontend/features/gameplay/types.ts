@@ -9,7 +9,10 @@ export type Customer = {
   greeting: string;
   request: string;
   requested_items: { item_id: string; name: string; quantity: number }[];
+  stock_offer: StockOffer | null;
 };
+
+export type StockOffer = { item_id: string; name: string; requested_quantity: number; available_quantity: number; status: "pending" | "accepted" | "replaced"; message: string };
 
 export type InventoryItem = {
   id: string;
@@ -104,4 +107,4 @@ export type PlayerProgress = {
 export type ApiError = { detail: string; request_id?: string; errors?: { field?: string; message: string }[] };
 
 export type CatalogItem = { id: string; name: string; category: string; price_kes: number; image_placeholder: string };
-export type Duka = { id: string; name: string; category: string; items: CatalogItem[] };
+export type Duka = { id: string; name: string; category: string; items: (CatalogItem & { stock: number })[] };

@@ -53,6 +53,15 @@ class BasketResponse(BaseModel):
     validation: BasketValidationResponse
 
 
+class StockOfferResponse(BaseModel):
+    item_id: UUID
+    name: str
+    requested_quantity: int = Field(ge=1)
+    available_quantity: int = Field(ge=0)
+    status: Literal["pending", "accepted", "replaced"]
+    message: str
+
+
 class CustomerResponse(BaseModel):
     id: str
     name: str
@@ -60,6 +69,7 @@ class CustomerResponse(BaseModel):
     greeting: str
     request: str
     requested_items: list[RequestedItemResponse]
+    stock_offer: StockOfferResponse | None = None
 
 
 class ChallengeResponse(BaseModel):
@@ -116,6 +126,11 @@ class NextCustomerResponse(BaseModel):
     customer: CustomerResponse
     basket: BasketResponse
     mission: MissionResponse
+
+
+class ResolveStockOfferResponse(BaseModel):
+    customer: CustomerResponse
+    basket: BasketResponse
 
 
 class CheckoutResponse(BaseModel):

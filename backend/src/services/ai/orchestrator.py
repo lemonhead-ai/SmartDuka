@@ -7,6 +7,7 @@ from src.agents.shared.context import AgentContext
 from src.agents.shared.outputs import (
     CustomerAgentOutput,
     MissionAgentOutput,
+    StockOfferDecisionOutput,
     TutorAgentOutput,
 )
 
@@ -43,3 +44,6 @@ class AIOrchestrator:
             tutor=results[1],  # type: ignore[arg-type]
             mission=results[2],  # type: ignore[arg-type]
         )
+
+    async def resolve_stock_offer(self, context: AgentContext) -> StockOfferDecisionOutput:
+        return await self.agents.stock_offer.run(context)

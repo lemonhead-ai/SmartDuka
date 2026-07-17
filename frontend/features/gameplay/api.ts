@@ -49,6 +49,7 @@ export const gameplayApi = {
     request<{ customer: Customer; basket: Basket }>(`/gameplay/sessions/${sessionId}/customers/next`, {
       method: "POST"
     }),
+  resolveStockOffer: (sessionId: string) => request<{ customer: Customer; basket: Basket }>(`/gameplay/sessions/${sessionId}/customers/stock-offer`, { method: "POST" }),
   inventory: (sessionId: string) => request<InventoryItem[]>(`/gameplay/sessions/${sessionId}/inventory`),
   addBasketItem: (sessionId: string, itemId: string) =>
     request<Basket>(`/gameplay/sessions/${sessionId}/basket/items`, {
@@ -72,5 +73,7 @@ export const gameplayApi = {
   sessionSummary: (sessionId: string) => request<SessionSummary>(`/gameplay/sessions/${sessionId}/summary`),
   catalog: () => request<CatalogItem[]>("/shop/catalog"),
   shop: () => request<Duka>("/shop"),
-  createShop: (name: string, category: string, itemIds: string[]) => request<Duka>("/shop", { method: "POST", body: JSON.stringify({ name, category, item_ids: itemIds }) })
+  createShop: (name: string, category: string, itemIds: string[]) => request<Duka>("/shop", { method: "POST", body: JSON.stringify({ name, category, item_ids: itemIds }) }),
+  addShopItems: (itemIds: string[]) => request<Duka>("/shop/items", { method: "POST", body: JSON.stringify({ item_ids: itemIds }) }),
+  restock: (itemId: string, quantity: number) => request<Duka>("/shop/restock", { method: "POST", body: JSON.stringify({ item_id: itemId, quantity }) })
 };

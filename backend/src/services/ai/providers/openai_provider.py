@@ -1,4 +1,5 @@
 from openai import AsyncOpenAI
+from typing import Any
 
 
 class OpenAIProvider:
@@ -8,9 +9,11 @@ class OpenAIProvider:
         base_url: str | None = None,
         client: AsyncOpenAI | None = None,
         use_responses_api: bool = True,
+        chat_template_kwargs: dict[str, object] | None = None,
     ) -> None:
         self.client = client or AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.use_responses_api = use_responses_api
+        self.chat_template_kwargs = chat_template_kwargs
 
     async def complete(
         self,
@@ -32,14 +35,21 @@ class OpenAIProvider:
             if not response.output_text:
                 raise RuntimeError("OpenAI returned no output text.")
             return response.output_text
-        response = await self.client.chat.completions.create(
-            model=model,
-            messages=[
+        completion_args: dict[str, Any] = {
+            "model": model,
+            "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=temperature,
-            max_tokens=max_output_tokens,
+            "temperature": temperature,
+            "max_tokens": max_output_tokens,
+        }
+        if self.chat_template_kwargs:
+            completion_args["extra_body"] = {
+                "chat_template_kwargs": self.chat_template_kwargs,
+            }
+        response = await self.client.chat.completions.create(
+            **completion_args,
         )
         content = response.choices[0].message.content
         if not content:

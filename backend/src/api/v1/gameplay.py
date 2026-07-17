@@ -13,6 +13,7 @@ from src.contracts.gameplay_engine import (
     InventoryItemResponse,
     NextCustomerResponse,
     PlayerProgressResponse,
+    ResolveStockOfferResponse,
     SessionSummaryResponse,
     StartGameplaySessionResponse,
 )
@@ -45,6 +46,17 @@ async def next_customer(
     session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
 ) -> NextCustomerResponse:
     return await GameplayEngine(db, orchestrator).next_customer(session_id)
+
+
+@router.post(
+    "/sessions/{session_id}/customers/stock-offer",
+    response_model=ResolveStockOfferResponse,
+    summary="Tell a customer about limited stock",
+)
+async def resolve_stock_offer(
+    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+) -> ResolveStockOfferResponse:
+    return await GameplayEngine(db, orchestrator).resolve_stock_offer(session_id)
 
 
 @router.get(

@@ -21,6 +21,12 @@ class CustomerAgentOutput(BaseModel):
     scenarios: list[CustomerScenarioOutput] = Field(min_length=5, max_length=5)
 
 
+class StockOfferDecisionOutput(BaseModel):
+    accepts_available_quantity: bool
+    replacement_item_name: str | None = None
+    dialogue: str = Field(min_length=3, max_length=240)
+
+
 class TutorAgentOutput(BaseModel):
     hint: str
     focus_skill: str
