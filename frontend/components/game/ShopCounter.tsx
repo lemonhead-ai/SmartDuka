@@ -287,7 +287,7 @@ export function ShopCounter() {
   if (customer?.stock_offer?.status === "pending") {
     return (
       <section className="rounded-[24px] border border-line bg-surface p-6">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
           <div className="rounded-[20px] bg-canvas p-5">
             <p className="text-xs font-semibold text-muted mb-2">Shopping List</p>
             <ul className="space-y-1">
@@ -316,38 +316,51 @@ export function ShopCounter() {
   return (
     <section className="rounded-[24px] border border-line bg-surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/dashboard#stock-room" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={customer.id}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className="mt-5 rounded-[20px] bg-canvas p-4"
-        >
-          <p className="text-xs font-semibold text-muted mb-2">Shopping List</p>
-          <ul className="space-y-2">
-            {customer.requested_items.map((item) => (
-              <li key={item.item_id} className="text-sm font-medium text-ink">
-                • {item.quantity} × {item.name}
-              </li>
-            ))}
-          </ul>
-        </motion.div>
-      </AnimatePresence>
-      <div className="mt-6 lg:float-right lg:ml-6 lg:w-72">
-        <CustomerConversationPanel customerName={customer.name} messages={customerConversation} onChatSubmit={(message) => chatMutation.mutate(message)} isThinking={chatMutation.isPending} />
+      
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+        {/* Left Column: Shopping List, Shelves, Basket, Checkout */}
+        <div className="space-y-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={customer.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="rounded-[20px] bg-canvas p-4"
+            >
+              <p className="text-xs font-semibold text-muted mb-2">Shopping List</p>
+              <ul className="space-y-2">
+                {customer.requested_items.map((item) => (
+                  <li key={item.item_id} className="text-sm font-medium text-ink">
+                    • {item.quantity} × {item.name}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </AnimatePresence>
+
+          {literacyChallenge && literacyChallenge.type !== "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
+          
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {inventoryQuery.data?.map((product) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={product.id} onClick={() => literacyChallenge?.type === "word_reading" && !literacyChallenge.complete ? literacyAnswerMutation.mutate({ answer: product.id, itemId: product.id }) : addItemMutation.mutate({ itemId: product.id, revision: customerRevision.current })} disabled={addItemMutation.isPending || literacyAnswerMutation.isPending || Boolean(challenge)} className="rounded-[20px] border border-line bg-canvas p-4 text-left disabled:opacity-50"><p className="font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">KES {product.price_kes} · {product.stock} left</p></motion.button>)}
+          </div>
+          {inventoryQuery.isLoading && <p className="text-sm text-muted" aria-live="polite">Loading inventory…</p>}
+          
+          <div className="rounded-[20px] bg-canvas p-4"><p className="font-medium">{basket?.lines.length ? basket.lines.map((line) => `${line.quantity} × ${line.item.name}`).join(", ") : "Add items to the basket."}</p>{basket?.lines.map((line) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={line.item.id} onClick={() => removeItemMutation.mutate({ itemId: line.item.id, revision: customerRevision.current })} className="mr-2 mt-3 rounded-[14px] border border-line px-3 py-2 text-sm">Remove {line.item.name}</motion.button>)}</div>
+          
+          {literacyChallenge?.type === "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
+          
+          {challenge && <div className="rounded-[20px] border border-line p-4"><p className="font-semibold">Math challenge</p><p className="mt-2">{challenge.prompt}</p><div className="mt-4 flex flex-wrap gap-3"><input value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && answer && !answerMutation.isPending) answerMutation.mutate(); }} inputMode="numeric" aria-label="Your answer" className="rounded-[14px] border border-line bg-white px-4 py-3" placeholder="Your answer" /><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => answerMutation.mutate()} disabled={!answer || answerMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">Submit answer</motion.button><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => hintMutation.mutate()} disabled={hintMutation.isPending} className="rounded-[14px] border border-line px-5 py-3 font-semibold disabled:opacity-50">Need a hint</motion.button></div></div>}
+          
+          <div className="flex flex-wrap justify-between gap-3 rounded-[20px] bg-line p-4"><p className="font-medium">{literacyNeedsAttention ? "Help with the customer's reading moment to unlock checkout." : basket?.validation.is_valid ? "The basket matches the request." : "Match the shopping request to unlock checkout."}</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => checkoutMutation.mutate()} disabled={!basket?.validation.is_valid || literacyNeedsAttention || checkoutMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{challenge ? "Complete checkout" : "Check basket"}</motion.button></div>
+        </div>
+
+        {/* Right Column: Larger Chat Area */}
+        <div>
+          <CustomerConversationPanel customerName={customer.name} messages={customerConversation} onChatSubmit={(message) => chatMutation.mutate(message)} isThinking={chatMutation.isPending} />
+        </div>
       </div>
-      {literacyChallenge && literacyChallenge.type !== "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {inventoryQuery.data?.map((product) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={product.id} onClick={() => literacyChallenge?.type === "word_reading" && !literacyChallenge.complete ? literacyAnswerMutation.mutate({ answer: product.id, itemId: product.id }) : addItemMutation.mutate({ itemId: product.id, revision: customerRevision.current })} disabled={addItemMutation.isPending || literacyAnswerMutation.isPending || Boolean(challenge)} className="rounded-[20px] border border-line bg-canvas p-4 text-left disabled:opacity-50"><p className="font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">KES {product.price_kes} · {product.stock} left</p></motion.button>)}
-      </div>
-      {inventoryQuery.isLoading && <p className="mt-4 text-sm text-muted" aria-live="polite">Loading inventory…</p>}
-      <div className="mt-6 rounded-[20px] bg-canvas p-4"><p className="font-medium">{basket?.lines.length ? basket.lines.map((line) => `${line.quantity} × ${line.item.name}`).join(", ") : "Add items to the basket."}</p>{basket?.lines.map((line) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={line.item.id} onClick={() => removeItemMutation.mutate({ itemId: line.item.id, revision: customerRevision.current })} className="mr-2 mt-3 rounded-[14px] border border-line px-3 py-2 text-sm">Remove {line.item.name}</motion.button>)}</div>
-      {literacyChallenge?.type === "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
-      <div className="clear-both" />
-      {challenge && <div className="mt-6 rounded-[20px] border border-line p-4"><p className="font-semibold">Math challenge</p><p className="mt-2">{challenge.prompt}</p><div className="mt-4 flex flex-wrap gap-3"><input value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && answer && !answerMutation.isPending) answerMutation.mutate(); }} inputMode="numeric" aria-label="Your answer" className="rounded-[14px] border border-line bg-white px-4 py-3" placeholder="Your answer" /><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => answerMutation.mutate()} disabled={!answer || answerMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">Submit answer</motion.button><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => hintMutation.mutate()} disabled={hintMutation.isPending} className="rounded-[14px] border border-line px-5 py-3 font-semibold disabled:opacity-50">Need a hint</motion.button></div></div>}
-      <div className="mt-6 flex flex-wrap justify-between gap-3 rounded-[20px] bg-line p-4"><p className="font-medium">{literacyNeedsAttention ? "Help with the customer's reading moment to unlock checkout." : basket?.validation.is_valid ? "The basket matches the request." : "Match the shopping request to unlock checkout."}</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => checkoutMutation.mutate()} disabled={!basket?.validation.is_valid || literacyNeedsAttention || checkoutMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{challenge ? "Complete checkout" : "Check basket"}</motion.button></div>
     </section>
   );
 }
