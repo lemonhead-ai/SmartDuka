@@ -8,9 +8,12 @@
    - [x] Create `app/(game)/shop/page.tsx` for the core game route scaffold.
 2. [x] **Task 2**: Write the IndexedDB offline event store and scenario cache in `/features/offline/`.
    - [x] Initialize IndexedDB schema in `features/offline/db.ts` (native IndexedDB).
-3. [ ] **Task 3**: Generate Customer Agent module and API route (Requires prompt from human team).
-4. [ ] **Task 4**: Generate Tutor Agent difficulty adjustment pipeline (Requires prompt from human team).
-5. [ ] **Task 5**: Generate Mission Agent module and `/adventure` screen (Requires prompt from human team).
+3. [x] **Task 3**: Generate Customer Agent module and API route.
+   - [x] Customer scenarios are generated through the cached Qwen gameplay batch and served through the versioned gameplay API.
+4. [x] **Task 4**: Generate Tutor Agent difficulty adjustment pipeline.
+   - [x] Tutor help runs on demand; the adaptive difficulty engine persists its recommended tier across gameplay challenges.
+5. [x] **Task 5**: Generate Mission Agent module and `/adventure` screen.
+   - [x] The agent framework and adventure UI are present; live mission selection is deterministic to preserve Featherless inference capacity.
 6. [x] **Task 6**: Write the sync manager for connectivity detection and upload/download queuing.
 7. [x] **Task 7**: Write SQLAlchemy models and seed data (demo gameplay scope).
 8. [x] **Task 8**: Write unit tests for core logic.
@@ -29,8 +32,15 @@
 18. [x] **Age-aware adaptive difficulty**: Track short-window accuracy and adjust the session challenge tier gradually.
 19. [x] **Budget and shop ledger**: Add learner budget, restocking cost, revenue, expenses, and daily totals.
 20. [x] **Advanced numeracy challenges**: Add discounts, bundles, division, and supplier decision scenarios.
-21. [ ] **Literacy gameplay**: Add reading, vocabulary, spelling, and conversational English activities.
-22. [ ] **Persistent motivation**: Add real daily missions, streaks, badges, and milestone persistence.
-23. [ ] **Learning summaries**: Add parent- and teacher-facing insight summaries.
-24. [ ] **Accessibility and performance**: Complete mobile, keyboard, audio preference, animation, and latency passes.
+21. [x] **Literacy gameplay**: Add customer-native word reading, shopping notes, spelling, and conversational English activities.
+22. [x] **Persistent motivation**: Add real daily missions, streaks, badges, and milestone persistence.
+   - [x] Persist daily goals, streaks, badges, and milestone completion on the learner profile.
+   - [x] Expose live motivation in the dashboard and adventure screens.
+23. [x] **Learning summaries**: Add parent- and teacher-facing insight summaries.
+   - [x] Provide concise family celebrations, a next step, teacher strengths, and support guidance from real learner data.
+   - [x] Show the live summary in the Profile screen.
+24. [x] **Accessibility and performance**: Complete mobile, keyboard, audio preference, animation, and latency passes.
+   - [x] Add a skip link, visible focus treatment, keyboard sidebar resizing, readable scrollbars, and live-region updates.
+   - [x] Make large text, reduced motion, and sound preferences system-wide.
+   - [x] Cache read queries and invalidate only the affected learner and shop views after gameplay changes.
 25. [ ] **Release rehearsal**: Update documentation and verify the complete judging flow end to end.

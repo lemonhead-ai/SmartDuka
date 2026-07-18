@@ -15,6 +15,7 @@ from src.agents.shared.context import (
 from src.agents.shared.outputs import CustomerScenarioOutput, TutorAgentOutput
 from src.contracts.gameplay_engine import (
     AnswerChallengeResponse,
+    AnswerLiteracyChallengeResponse,
     BasketLineResponse,
     BasketResponse,
     BasketValidationResponse,
@@ -23,7 +24,10 @@ from src.contracts.gameplay_engine import (
     CustomerResponse,
     HintResponse,
     InventoryItemResponse,
+    LearningSummaryResponse,
+    LiteracyChallengeResponse,
     MissionResponse,
+    MotivationResponse,
     NextCustomerResponse,
     PlayerProgressResponse,
     ResolveStockOfferResponse,
@@ -42,8 +46,11 @@ from src.services.gameplay.managers import (
     BasketManager,
     BasketValidationManager,
     CustomerQueueManager,
+    LearningSummaryManager,
+    LiteracyChallengeManager,
     MathChallengeManager,
     MissionProgressEngine,
+    MotivationManager,
     ProgressTracker,
     ScoringEngine,
     ShopInventoryManager,
@@ -65,13 +72,18 @@ class GameplayEngine:
         self.rewards = XpCoinsEngine()
         self.achievements = AchievementEngine()
         self.missions = MissionProgressEngine()
+        self.motivation = MotivationManager()
         self.progress_tracker = ProgressTracker()
         self.difficulty = AdaptiveDifficultyEngine()
+        self.literacy = LiteracyChallengeManager()
+        self.summary_builder = LearningSummaryManager()
 
     async def start_session(self) -> StartGameplaySessionResponse:
         student = await self._demo_student()
         if await self.repository.get_shop(student.id) is None:
             raise ApplicationError("Create your duka before starting a session.", status_code=409)
+        progress = await self._ensure_progress(student)
+        motivation = self._start_daily_motivation(progress, student)
         state = self._initial_state()
         game_session = await self.repository.create_session(student.id, state)
         await self.session.commit()
@@ -80,6 +92,7 @@ class GameplayEngine:
             student_name=student.display_name,
             started_at=game_session.started_at,
             mission=self._mission(state),
+            motivation=MotivationResponse.model_validate(motivation),
         )
 
     async def next_customer(self, session_id: UUID) -> NextCustomerResponse:
@@ -96,20 +109,24 @@ class GameplayEngine:
                 "Add products to your duka before serving customers.", status_code=409
             )
         scenario = await self._next_customer_scenario(game_session, student, state)
+        state["request_version"] = int(state.get("request_version", 0)) + 1
         if scenario is None:
             # A malformed or unavailable AI response should not prevent a child from
             # continuing the game. The local queue only uses the shop's real stock.
             state["current_customer"] = self.customer_queue.next(
                 int(state["customers_served"]), items
             )
+            state["current_customer"]["request_version"] = int(state["request_version"])
             state["basket"] = []
             state["challenge"] = None
             self._prepare_stock_offer(state["current_customer"], shop_stock)
+            self._prepare_literacy_challenge(state, student, items)
             await self._save(game_session, state)
             return NextCustomerResponse(
                 customer=CustomerResponse.model_validate(state["current_customer"]),
                 basket=await self._basket_response(state),
                 mission=self._mission(state),
+                literacy_challenge=self._literacy_response(state),
             )
 
         matched = {item.name.casefold(): item for item in items}
@@ -138,15 +155,18 @@ class GameplayEngine:
             "requested_items": requested_items,
             "checkout_question": scenario.checkout_question,
             "payment_amount_kes": scenario.payment_amount_kes,
+            "request_version": int(state["request_version"]),
         }
         state["basket"] = []
         state["challenge"] = None
         self._prepare_stock_offer(state["current_customer"], shop_stock)
+        self._prepare_literacy_challenge(state, student, items)
         await self._save(game_session, state)
         return NextCustomerResponse(
             customer=CustomerResponse.model_validate(state["current_customer"]),
             basket=await self._basket_response(state),
             mission=self._mission(state),
+            literacy_challenge=self._literacy_response(state),
         )
 
     async def resolve_stock_offer(self, session_id: UUID) -> ResolveStockOfferResponse:
@@ -197,10 +217,16 @@ class GameplayEngine:
             + ", please."
         )
         customer["greeting"] = str(offer["message"])
+        state["request_version"] = int(state.get("request_version", 0)) + 1
+        customer["request_version"] = int(state["request_version"])
+        self._prepare_literacy_challenge(
+            state, student, [item for _, item in stock_rows]
+        )
         await self._save(game_session, state)
         return ResolveStockOfferResponse(
             customer=CustomerResponse.model_validate(customer),
             basket=await self._basket_response(state),
+            literacy_challenge=self._literacy_response(state),
         )
 
     async def list_inventory(self, session_id: UUID) -> list[InventoryItemResponse]:
@@ -245,6 +271,51 @@ class GameplayEngine:
         challenge = self._state(game_session)["challenge"]
         return self._challenge_response(challenge) if isinstance(challenge, dict) else None
 
+    async def current_literacy_challenge(self, session_id: UUID) -> LiteracyChallengeResponse | None:
+        game_session, _ = await self._session_and_student(session_id)
+        return self._literacy_response(self._state(game_session))
+
+    async def submit_literacy_answer(
+        self, session_id: UUID, answer: str
+    ) -> AnswerLiteracyChallengeResponse:
+        game_session, student = await self._session_and_student(session_id)
+        state = self._state(game_session)
+        challenge = self._require_literacy_challenge(state)
+        if bool(challenge["complete"]):
+            raise ApplicationError("That customer message is already complete.", status_code=409)
+        if not self._literacy_is_available(state, challenge):
+            raise ApplicationError(
+                "Add the matching product to the basket before spelling it.", status_code=409
+            )
+
+        challenge["attempts"] = int(challenge["attempts"]) + 1
+        correct = self.literacy.is_correct(challenge, answer)
+        if correct:
+            challenge["complete"] = True
+        reward = await self._record_learning_attempt(
+            student,
+            state,
+            correct=correct,
+            attempts=int(challenge["attempts"]),
+            hints=0,
+            success_message="Your careful reading earns a reward!",
+            retry_message="Trying again strengthens your reading skills!",
+            activity="literacy",
+        )
+        await self._save(game_session, state)
+        response_challenge = self._literacy_response(state)
+        if response_challenge is None:
+            raise ApplicationError("Literacy challenge was not found.", status_code=409)
+        customer = self._require_customer(state)
+        return AnswerLiteracyChallengeResponse(
+            is_correct=correct,
+            feedback=self.literacy.feedback(challenge, correct, str(customer["name"])),
+            attempts=int(challenge["attempts"]),
+            challenge_complete=correct,
+            challenge=response_challenge,
+            rewards_preview=reward,
+        )
+
     async def request_hint(self, session_id: UUID) -> HintResponse:
         game_session, student = await self._session_and_student(session_id)
         state = self._state(game_session)
@@ -274,42 +345,20 @@ class GameplayEngine:
         if bool(challenge["complete"]):
             raise ApplicationError("The challenge is already complete.", status_code=409)
         challenge["attempts"] = int(challenge["attempts"]) + 1
-        state["questions_attempted"] = int(state["questions_attempted"]) + 1
         correct = answer == int(challenge["answer"])
         if correct:
             challenge["complete"] = True
-            state["correct_answers"] = int(state["correct_answers"]) + 1
-        coins, xp, stars = self.rewards.reward(
-            correct, int(challenge["attempts"]), int(challenge["hints_used"])
+        reward = await self._record_learning_attempt(
+            student,
+            state,
+            correct=correct,
+            attempts=int(challenge["attempts"]),
+            hints=int(challenge["hints_used"]),
+            success_message="Your persistence earns rewards!",
+            retry_message="Trying again builds your skills!",
+            activity="math",
         )
-        state["coins_earned"] = int(state["coins_earned"]) + coins
-        state["xp_earned"] = int(state["xp_earned"]) + xp
-        state["stars_earned"] = int(state["stars_earned"]) + stars
-        state["difficulty_attempts"] = int(state.get("difficulty_attempts", 0)) + 1
-        state["difficulty_correct"] = int(state.get("difficulty_correct", 0)) + int(correct)
-        current_tier = int(state.get("recommended_tier") or student.difficulty_tier)
-        adjusted_tier = self.difficulty.adjust(
-            current_tier,
-            int(state["difficulty_attempts"]),
-            int(state["difficulty_correct"]),
-        )
-        state["recommended_tier"] = adjusted_tier
-        if adjusted_tier != current_tier:
-            state["difficulty_attempts"] = 0
-            state["difficulty_correct"] = 0
-        await self._update_progress(student, state, coins, xp, stars, correct)
         await self._save(game_session, state)
-        reward_message = state.get("reward_message")
-        if not isinstance(reward_message, str):
-            reward_message = (
-                "Your persistence earns rewards!" if correct else "Trying again builds your skills!"
-            )
-        reward = RewardResponse(
-            coins=coins,
-            xp=xp,
-            stars=stars,
-            message=reward_message,
-        )
         return AnswerChallengeResponse(
             is_correct=correct,
             feedback=self.scoring.feedback(correct, int(challenge["attempts"]), challenge),
@@ -327,6 +376,15 @@ class GameplayEngine:
             raise ApplicationError("Add at least one item before checkout.", status_code=422)
         if not basket.validation.is_valid:
             raise ApplicationError(basket.validation.tutor_feedback, status_code=409)
+        literacy = state.get("literacy_challenge")
+        if (
+            isinstance(literacy, dict)
+            and not bool(literacy.get("complete"))
+            and self._literacy_is_available(state, literacy)
+        ):
+            raise ApplicationError(
+                "Finish the customer's quick reading moment before checking out.", status_code=409
+            )
         challenge = state["challenge"]
         if not isinstance(challenge, dict):
             recommended_tier = state.get("recommended_tier")
@@ -381,6 +439,16 @@ class GameplayEngine:
             int(challenge["hints_used"]),
             list(state["achievements"]),
         )
+        progress = await self._ensure_progress(student)
+        motivation_state = self._start_daily_motivation(progress, student)
+        motivation_state, mission_completed_today = self.motivation.record_event(
+            motivation_state, "sales"
+        )
+        motivation_state, new_badges = self.motivation.award_for_event(motivation_state, "sale")
+        if mission_completed_today:
+            progress.missions_completed += 1
+        progress.motivation_state = motivation_state
+        state["achievements"] = self._append_achievement_names(state["achievements"], new_badges)
         mission_before = bool(state["mission_completed"])
         state["mission_completed"] = int(state["customers_served"]) >= 3
         if bool(state["mission_completed"]) and not mission_before:
@@ -419,9 +487,9 @@ class GameplayEngine:
 
     async def player_progress(self) -> PlayerProgressResponse:
         student = await self._demo_student()
-        progress = await self.repository.get_progress(student.id)
-        if progress is None:
-            raise ApplicationError("Student progress was not found.", status_code=404)
+        progress = await self._ensure_progress(student)
+        motivation = self._start_daily_motivation(progress, student)
+        await self.session.commit()
         return PlayerProgressResponse(
             student_name=student.display_name,
             questions_attempted=progress.questions_attempted,
@@ -434,7 +502,36 @@ class GameplayEngine:
             missions_completed=progress.missions_completed,
             current_learning_level=progress.current_learning_level,
             skills_improving=self.progress_tracker.skills_improving(progress.questions_correct),
-            daily_streak_days=0,
+            daily_streak_days=int(motivation["current_streak_days"]),
+        )
+
+    async def motivation_summary(self) -> MotivationResponse:
+        student = await self._demo_student()
+        progress = await self._ensure_progress(student)
+        motivation = self._start_daily_motivation(progress, student)
+        await self.session.commit()
+        return MotivationResponse.model_validate(motivation)
+
+    async def learning_summary(self) -> LearningSummaryResponse:
+        student = await self._demo_student()
+        progress = await self._ensure_progress(student)
+        motivation = self._start_daily_motivation(progress, student)
+        await self.session.commit()
+        badges = motivation.get("badges", [])
+        return LearningSummaryResponse.model_validate(
+            self.summary_builder.build(
+                student_name=student.display_name,
+                questions_attempted=progress.questions_attempted,
+                correct_answers=progress.questions_correct,
+                hints_used=progress.hints_used,
+                learning_level=progress.current_learning_level,
+                streak_days=int(motivation["current_streak_days"]),
+                badges=[badge for badge in badges if isinstance(badge, dict)]
+                if isinstance(badges, list)
+                else [],
+                literacy_moments_completed=progress.literacy_moments_completed,
+                skills_improving=self.progress_tracker.skills_improving(progress.questions_correct),
+            )
         )
 
     async def _basket_response(self, state: dict[str, object]) -> BasketResponse:
@@ -465,6 +562,59 @@ class GameplayEngine:
             lines=responses,
             total_kes=sum(line.line_total_kes for line in responses),
             validation=BasketValidationResponse.model_validate(validation),
+            literacy_challenge=self._literacy_response(state),
+            request_version=(
+                int(customer.get("request_version", state.get("request_version", 0)))
+                if isinstance(customer, dict)
+                else int(state.get("request_version", 0))
+            ),
+        )
+
+    async def _record_learning_attempt(
+        self,
+        student: Student,
+        state: dict[str, object],
+        *,
+        correct: bool,
+        attempts: int,
+        hints: int,
+        success_message: str,
+        retry_message: str,
+        activity: str,
+    ) -> RewardResponse:
+        state["questions_attempted"] = int(state["questions_attempted"]) + 1
+        if correct:
+            state["correct_answers"] = int(state["correct_answers"]) + 1
+        coins, xp, stars = self.rewards.reward(correct, attempts, hints)
+        state["coins_earned"] = int(state["coins_earned"]) + coins
+        state["xp_earned"] = int(state["xp_earned"]) + xp
+        state["stars_earned"] = int(state["stars_earned"]) + stars
+        state["difficulty_attempts"] = int(state.get("difficulty_attempts", 0)) + 1
+        state["difficulty_correct"] = int(state.get("difficulty_correct", 0)) + int(correct)
+        current_tier = int(state.get("recommended_tier") or student.difficulty_tier)
+        adjusted_tier = self.difficulty.adjust(
+            current_tier,
+            int(state["difficulty_attempts"]),
+            int(state["difficulty_correct"]),
+        )
+        state["recommended_tier"] = adjusted_tier
+        if adjusted_tier != current_tier:
+            state["difficulty_attempts"] = 0
+            state["difficulty_correct"] = 0
+        new_badges = await self._update_progress(
+            student, state, coins, xp, stars, correct, activity=activity, hints=hints
+        )
+        state["achievements"] = self._append_achievement_names(state["achievements"], new_badges)
+        reward_message = state.get("reward_message")
+        return RewardResponse(
+            coins=coins,
+            xp=xp,
+            stars=stars,
+            message=(
+                reward_message
+                if isinstance(reward_message, str)
+                else success_message if correct else retry_message
+            ),
         )
 
     async def _update_progress(
@@ -475,11 +625,11 @@ class GameplayEngine:
         xp: int,
         stars: int,
         correct: bool,
-    ) -> None:
-        progress = await self.repository.get_progress(student.id)
-        if progress is None:
-            progress = StudentProgress(student_id=student.id)
-            self.session.add(progress)
+        *,
+        activity: str,
+        hints: int,
+    ) -> list[dict[str, str]]:
+        progress = await self._ensure_progress(student)
         progress.questions_attempted += 1
         progress.questions_correct += int(correct)
         progress.hints_used = int(state["hints_used"])
@@ -489,6 +639,51 @@ class GameplayEngine:
         progress.current_learning_level = int(
             state.get("recommended_tier") or student.difficulty_tier
         )
+        if correct and activity == "literacy":
+            progress.literacy_moments_completed += 1
+        if not correct:
+            return []
+        motivation_state = self._start_daily_motivation(progress, student)
+        motivation_state, mission_completed_today = self.motivation.record_event(
+            motivation_state, activity
+        )
+        motivation_state, new_badges = self.motivation.award_for_event(
+            motivation_state, activity, used_hint=hints > 0
+        )
+        if mission_completed_today:
+            progress.missions_completed += 1
+        progress.motivation_state = motivation_state
+        return new_badges
+
+    async def _ensure_progress(self, student: Student) -> StudentProgress:
+        progress = await self.repository.get_progress(student.id)
+        if progress is None:
+            progress = StudentProgress(student_id=student.id)
+            self.session.add(progress)
+            await self.session.flush()
+        return progress
+
+    def _start_daily_motivation(
+        self, progress: StudentProgress, student: Student
+    ) -> dict[str, object]:
+        seed = sum(student.id.bytes)
+        state = self.motivation.start_day(
+            progress.motivation_state if isinstance(progress.motivation_state, dict) else {},
+            datetime.now(UTC).date(),
+            seed,
+        )
+        progress.motivation_state = state
+        return state
+
+    @staticmethod
+    def _append_achievement_names(
+        existing: object, new_badges: list[dict[str, str]]
+    ) -> list[str]:
+        achievements = [str(name) for name in existing] if isinstance(existing, list) else []
+        for badge in new_badges:
+            if badge["name"] not in achievements:
+                achievements.append(badge["name"])
+        return achievements
 
     async def _save(self, game_session: GameSession, state: dict[str, object]) -> None:
         # SQLAlchemy does not reliably detect nested in-place changes to a JSON
@@ -615,11 +810,70 @@ class GameplayEngine:
             "reward_message": None,
             "learning_insight": None,
             "customer_scenarios": [],
+            "literacy_challenge": None,
+            "request_version": 0,
         }
 
     @staticmethod
     def _state(game_session: GameSession) -> dict[str, object]:
         return dict(game_session.game_state or GameplayEngine._initial_state())
+
+    def _prepare_literacy_challenge(
+        self,
+        state: dict[str, object],
+        student: Student,
+        available_items: list[InventoryItem],
+    ) -> None:
+        customer = state.get("current_customer")
+        if not isinstance(customer, dict):
+            state["literacy_challenge"] = None
+            return
+        stock_offer = customer.get("stock_offer")
+        if isinstance(stock_offer, dict) and stock_offer.get("status") == "pending":
+            state["literacy_challenge"] = None
+            return
+        state["literacy_challenge"] = self.literacy.create(
+            customer,
+            tier=int(state.get("recommended_tier") or student.difficulty_tier),
+            age=student.age,
+            served=int(state.get("customers_served", 0)),
+            available_item_names=[item.name for item in available_items],
+        )
+
+    def _literacy_response(
+        self, state: dict[str, object]
+    ) -> LiteracyChallengeResponse | None:
+        challenge = state.get("literacy_challenge")
+        if not isinstance(challenge, dict):
+            return None
+        choices = challenge.get("choices", [])
+        letters = challenge.get("letter_options", [])
+        return LiteracyChallengeResponse(
+            id=str(challenge["id"]),
+            type=str(challenge["type"]),
+            prompt=str(challenge["prompt"]),
+            content=str(challenge["content"]),
+            choices=choices if isinstance(choices, list) else [],
+            letter_options=letters if isinstance(letters, list) else [],
+            difficulty_tier=int(challenge["difficulty_tier"]),
+            attempts=int(challenge["attempts"]),
+            complete=bool(challenge["complete"]),
+            is_available=self._literacy_is_available(state, challenge),
+        )
+
+    def _literacy_is_available(
+        self, state: dict[str, object], challenge: dict[str, object]
+    ) -> bool:
+        if challenge.get("type") != "spelling":
+            return True
+        target_item_id = challenge.get("target_item_id")
+        basket = state.get("basket")
+        if not isinstance(basket, list):
+            return False
+        return any(
+            isinstance(line, dict) and str(line.get("item_id")) == str(target_item_id)
+            for line in basket
+        )
 
     @staticmethod
     def _lines(state: dict[str, object]) -> list[BasketLine]:
@@ -751,4 +1005,11 @@ class GameplayEngine:
         challenge = state["challenge"]
         if not isinstance(challenge, dict):
             raise ApplicationError("Start checkout to receive a math challenge.", status_code=409)
+        return challenge
+
+    @staticmethod
+    def _require_literacy_challenge(state: dict[str, object]) -> dict[str, object]:
+        challenge = state.get("literacy_challenge")
+        if not isinstance(challenge, dict):
+            raise ApplicationError("Serve a customer to receive a reading moment.", status_code=409)
         return challenge

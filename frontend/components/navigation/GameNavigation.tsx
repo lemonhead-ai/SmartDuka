@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { AdventureIcon, SidebarLeftIcon, SidebarRightIcon, Award01Icon, DashboardSquare01Icon, ShoppingBag01Icon } from "hugeicons-react";
+import { AdventureIcon, SidebarLeftIcon, SidebarRightIcon, DashboardSquare01Icon, ShoppingBag01Icon } from "hugeicons-react";
 import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 import { gameplayApi } from "@/features/gameplay/api";
 
-const items = [{ href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" }, { href: "/shop", icon: ShoppingBag01Icon, label: "My shop" }, { href: "/adventure", icon: AdventureIcon, label: "Missions" }, { href: "/profile", icon: Award01Icon, label: "Progress" }];
+const items = [{ href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" }, { href: "/shop", icon: ShoppingBag01Icon, label: "My shop" }, { href: "/adventure", icon: AdventureIcon, label: "Missions" }];
 
 type GameNavigationProps = { onWidthChange?: (width: number) => void };
 
@@ -119,8 +119,15 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
       {expanded && (
         <div
           aria-label="Resize sidebar"
-          role="separator"
-          aria-orientation="vertical"
+          aria-valuemax={360}
+          aria-valuemin={180}
+          aria-valuenow={sidebarWidth}
+          role="slider"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") setSidebarWidth((width) => Math.max(180, width - 12));
+            if (event.key === "ArrowRight") setSidebarWidth((width) => Math.min(360, width + 12));
+          }}
           onPointerDown={() => setResizing(true)}
           className="absolute inset-y-0 right-0 z-10 w-2 cursor-col-resize touch-none"
         />

@@ -122,6 +122,11 @@ class StudentProgress(Base):
     stars_earned: Mapped[int] = mapped_column(Integer, default=0)
     missions_completed: Mapped[int] = mapped_column(Integer, default=0)
     current_learning_level: Mapped[int] = mapped_column(Integer, default=1)
+    literacy_moments_completed: Mapped[int] = mapped_column(Integer, default=0)
+    # Daily goals and celebrations belong to the learner, not an individual
+    # gameplay session. A compact JSON document keeps the demo schema additive
+    # while leaving room for a dedicated achievements domain later.
+    motivation_state: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

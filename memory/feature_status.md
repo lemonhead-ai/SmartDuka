@@ -24,3 +24,7 @@
 | Session-Aware Adaptive Difficulty | Done | A forgiving three-attempt accuracy window adjusts the recommended tier between 1 and 7 and carries it into challenges, progress, and the next Qwen scenario batch. |
 | Shop Cash Ledger | Done | Persisted shop cash records sales, stock purchases, current balance, daily revenue, expenses, and profit; stock purchases are blocked when funds are insufficient. |
 | Adaptive Checkout Numeracy | Done | Learners progress from change to quantity multiplication, 10% bundle discounts, and equal-sharing division challenges as their session tier grows. |
+| Customer-Native Literacy Gameplay | Done | Customer conversations now create adaptive English/Kiswahili word reading, shopping-note comprehension, spelling, and conversational-English moments that use the existing reward, progress, and difficulty systems. |
+| Persistent Motivation | Done | Learner progress now stores daily goals, streaks, earned badges, and completed milestones; the dashboard and adventure pages read the live gameplay motivation API. |
+| Parent & Teacher Learning Summaries | Done | The Profile page presents concise caregiver celebrations and next steps plus a teacher-facing strengths, support-focus, and activity snapshot from persisted learner progress. |
+| Accessibility & Performance Pass | Done | The game now supports keyboard navigation improvements, visible focus, skip navigation, readable scrolling, global large-text/reduced-motion/sound preferences, and targeted query caching/invalidation. |

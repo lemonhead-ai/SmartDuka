@@ -36,6 +36,37 @@ class BasketValidationResponse(BaseModel):
     tutor_feedback: str
 
 
+class LiteracyChoiceResponse(BaseModel):
+    id: str
+    label: str
+
+
+class LiteracyChallengeResponse(BaseModel):
+    id: str
+    type: Literal["word_reading", "sentence_reading", "spelling", "conversation"]
+    prompt: str
+    content: str
+    choices: list[LiteracyChoiceResponse] = Field(default_factory=list)
+    letter_options: list[str] = Field(default_factory=list)
+    difficulty_tier: int = Field(ge=1, le=7)
+    attempts: int = Field(ge=0)
+    complete: bool
+    is_available: bool
+
+
+class AnswerLiteracyChallengeRequest(BaseModel):
+    answer: str = Field(min_length=1, max_length=100)
+
+
+class AnswerLiteracyChallengeResponse(BaseModel):
+    is_correct: bool
+    feedback: str
+    attempts: int
+    challenge_complete: bool
+    challenge: LiteracyChallengeResponse
+    rewards_preview: "RewardResponse | None" = None
+
+
 class BasketItemRequest(BaseModel):
     item_id: UUID
     quantity: int = Field(ge=1, le=10)
@@ -51,6 +82,8 @@ class BasketResponse(BaseModel):
     lines: list[BasketLineResponse]
     total_kes: int
     validation: BasketValidationResponse
+    literacy_challenge: LiteracyChallengeResponse | None = None
+    request_version: int = Field(default=0, ge=0)
 
 
 class StockOfferResponse(BaseModel):
@@ -70,6 +103,7 @@ class CustomerResponse(BaseModel):
     request: str
     requested_items: list[RequestedItemResponse]
     stock_offer: StockOfferResponse | None = None
+    request_version: int = Field(default=0, ge=0)
 
 
 class ChallengeResponse(BaseModel):
@@ -117,22 +151,70 @@ class MissionResponse(BaseModel):
     completed: bool
 
 
+class BadgeResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+
+
+class DailyMissionResponse(BaseModel):
+    id: str
+    title: str
+    description: str
+    kind: Literal["sales", "math", "literacy"]
+    progress: int = Field(ge=0)
+    target: int = Field(ge=1)
+    completed: bool
+
+
+class MotivationResponse(BaseModel):
+    daily_mission: DailyMissionResponse
+    current_streak_days: int = Field(ge=0)
+    badges: list[BadgeResponse] = Field(default_factory=list)
+
+
+class CaregiverLearningSummaryResponse(BaseModel):
+    headline: str
+    celebrations: list[str]
+    next_step: str
+
+
+class TeacherLearningSummaryResponse(BaseModel):
+    accuracy_percent: int = Field(ge=0, le=100)
+    learning_level: int = Field(ge=1, le=7)
+    strengths: list[str]
+    support_focus: str
+    suggested_activity: str
+
+
+class LearningSummaryResponse(BaseModel):
+    student_name: str
+    questions_attempted: int = Field(ge=0)
+    correct_answers: int = Field(ge=0)
+    literacy_moments_completed: int = Field(ge=0)
+    parent_summary: CaregiverLearningSummaryResponse
+    teacher_summary: TeacherLearningSummaryResponse
+
+
 class StartGameplaySessionResponse(BaseModel):
     session_id: UUID
     student_name: str
     started_at: datetime
     mission: MissionResponse
+    motivation: MotivationResponse
 
 
 class NextCustomerResponse(BaseModel):
     customer: CustomerResponse
     basket: BasketResponse
     mission: MissionResponse
+    literacy_challenge: LiteracyChallengeResponse | None = None
 
 
 class ResolveStockOfferResponse(BaseModel):
     customer: CustomerResponse
     basket: BasketResponse
+    literacy_challenge: LiteracyChallengeResponse | None = None
 
 
 class CheckoutResponse(BaseModel):

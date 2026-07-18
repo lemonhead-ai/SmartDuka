@@ -38,6 +38,8 @@ class Database:
                 "stars_earned": "INTEGER NOT NULL DEFAULT 0",
                 "missions_completed": "INTEGER NOT NULL DEFAULT 0",
                 "current_learning_level": "INTEGER NOT NULL DEFAULT 1",
+                "literacy_moments_completed": "INTEGER NOT NULL DEFAULT 0",
+                "motivation_state": "JSON NOT NULL DEFAULT '{}'",
             },
             "inventory_items": {"supplier_cost_kes": "INTEGER NOT NULL DEFAULT 0"},
             "shops": {"cash_balance_kes": "INTEGER NOT NULL DEFAULT 500"},

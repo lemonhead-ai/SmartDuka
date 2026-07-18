@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from pathlib import Path
 from uuid import UUID
 
@@ -10,8 +11,11 @@ from src.main import create_application
 from src.services.gameplay.managers import (
     AchievementEngine,
     BasketValidationManager,
+    LearningSummaryManager,
+    LiteracyChallengeManager,
     MathChallengeManager,
     MissionProgressEngine,
+    MotivationManager,
     ScoringEngine,
     XpCoinsEngine,
 )
@@ -26,6 +30,43 @@ def test_scoring_rewards_missions_and_achievements_reward_persistence() -> None:
     assert perfect[0] > persistent[0] > 0
     assert MissionProgressEngine().progress(3)["completed"] is True
     assert "First Sale" in AchievementEngine().update(1, True, 0, [])
+
+
+def test_daily_motivation_persists_goals_streaks_and_badges() -> None:
+    manager = MotivationManager()
+    today = date(2026, 7, 18)
+    state = manager.start_day({}, today, seed=4)
+    assert state["current_streak_days"] == 1
+    mission = state["daily_mission"]
+    assert isinstance(mission, dict)
+
+    event = str(mission["kind"])
+    for _ in range(int(mission["target"])):
+        state, completed_now = manager.record_event(state, event)
+    assert completed_now is True
+    assert manager.response(state)["daily_mission"]["completed"] is True
+
+    state, badges = manager.award_for_event(state, "sale")
+    assert badges[0]["id"] == "first-sale"
+    next_day = manager.start_day(state, today + timedelta(days=1), seed=4)
+    assert next_day["current_streak_days"] == 2
+
+
+def test_learning_summary_uses_real_attempts_and_support_signals() -> None:
+    summary = LearningSummaryManager().build(
+        student_name="Amina",
+        questions_attempted=5,
+        correct_answers=3,
+        hints_used=2,
+        learning_level=2,
+        streak_days=2,
+        badges=[{"id": "first-sale", "name": "First Sale", "description": "Completed a sale."}],
+        literacy_moments_completed=1,
+        skills_improving=["money", "change"],
+    )
+    assert summary["teacher_summary"]["accuracy_percent"] == 60
+    assert "Amina" in str(summary["parent_summary"]["headline"])
+    assert "Reading through customer conversations" in summary["teacher_summary"]["strengths"]
 
 
 def test_basket_validation_identifies_missing_unexpected_and_wrong_quantities() -> None:
@@ -63,6 +104,34 @@ def test_checkout_challenges_progress_from_change_to_multiplication_discount_and
     assert division["answer"] == 40
 
 
+def test_literacy_challenges_vary_with_level_and_check_answers() -> None:
+    manager = LiteracyChallengeManager()
+    customer = {
+        "requested_items": [
+            {"item_id": "milk", "name": "Milk", "quantity": 2},
+            {"item_id": "bread", "name": "Bread", "quantity": 1},
+        ]
+    }
+    available = ["Milk", "Bread", "Juice"]
+
+    word = manager.create(customer, tier=2, age=9, served=0, available_item_names=available)
+    sentence = manager.create(customer, tier=3, age=9, served=0, available_item_names=available)
+    spelling = manager.create(customer, tier=4, age=9, served=0, available_item_names=available)
+    conversation = manager.create(customer, tier=5, age=11, served=0, available_item_names=available)
+
+    assert word is not None and word["type"] == "word_reading"
+    assert word["content"] == "maziwa"
+    assert manager.is_correct(word, "milk")
+    assert sentence is not None and sentence["type"] == "sentence_reading"
+    assert "Dear shopkeeper" in str(sentence["content"])
+    assert manager.is_correct(sentence, "choice-0")
+    assert spelling is not None and spelling["type"] == "spelling"
+    assert spelling["letter_options"]
+    assert manager.is_correct(spelling, str(spelling["answer"]))
+    assert conversation is not None and conversation["type"] == "conversation"
+    assert manager.is_correct(conversation, "choice-0")
+
+
 @pytest.mark.asyncio
 async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
     database_path = tmp_path / "gameplay.db"
@@ -79,11 +148,26 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
             started = await client.post("/api/v1/gameplay/sessions")
             assert started.status_code == 201
             session_id = started.json()["session_id"]
+            assert started.json()["motivation"]["current_streak_days"] >= 1
+            motivation = await client.get("/api/v1/gameplay/motivation")
+            assert motivation.status_code == 200
+            assert motivation.json()["daily_mission"]["target"] >= 1
+            learning_summary = await client.get("/api/v1/gameplay/learning-summary")
+            assert learning_summary.status_code == 200
+            assert learning_summary.json()["student_name"] == started.json()["student_name"]
 
             customer = await client.post(f"/api/v1/gameplay/sessions/{session_id}/customers/next")
             assert customer.status_code == 200
             customer_payload = customer.json()["customer"]
             assert customer_payload["personality"] == "friendly"
+            literacy = customer.json()["literacy_challenge"]
+            assert literacy["type"] == "word_reading"
+            literacy_answer = await client.post(
+                f"/api/v1/gameplay/sessions/{session_id}/literacy/answer",
+                json={"answer": customer_payload["requested_items"][0]["item_id"]},
+            )
+            assert literacy_answer.status_code == 200
+            assert literacy_answer.json()["is_correct"] is True
 
             inventory = await client.get(f"/api/v1/gameplay/sessions/{session_id}/inventory")
             assert inventory.status_code == 200
@@ -134,11 +218,11 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
             summary = await client.get(f"/api/v1/gameplay/sessions/{session_id}/summary")
             assert summary.status_code == 200
             assert summary.json()["customers_served"] == 1
-            assert summary.json()["questions_attempted"] == 1
+            assert summary.json()["questions_attempted"] == 2
 
             progress = await client.get("/api/v1/gameplay/progress")
             assert progress.status_code == 200
-            assert progress.json()["questions_attempted"] == 1
+            assert progress.json()["questions_attempted"] == 2
             assert progress.json()["hints_used"] == 1
 
 
@@ -228,6 +312,8 @@ async def test_stock_decision_persists_before_the_next_basket_validation(tmp_pat
             )
             assert resolved.status_code == 200
             assert resolved.json()["customer"]["requested_items"][0]["quantity"] == 1
+            assert resolved.json()["customer"]["request_version"] == 1
+            assert resolved.json()["basket"]["request_version"] == 1
 
             basket = await client.post(
                 f"/api/v1/gameplay/sessions/{session_id}/basket/items",
@@ -235,6 +321,9 @@ async def test_stock_decision_persists_before_the_next_basket_validation(tmp_pat
             )
             assert basket.status_code == 200
             assert basket.json()["validation"]["is_valid"] is True
+            assert "exactly what Wanjiru requested" in basket.json()["validation"]["tutor_feedback"]
+            assert "juice" not in basket.json()["validation"]["tutor_feedback"].lower()
+            assert basket.json()["request_version"] == 1
 
 
 @pytest.mark.asyncio

@@ -13,7 +13,7 @@ export function triggerSensoryFeedback(kind: ToastKind): void {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
     navigator.vibrate(vibrationPatterns[kind]);
   }
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || document.documentElement.dataset.sound === "false") return;
   const AudioContextConstructor = window.AudioContext ?? (
     window as typeof window & { webkitAudioContext?: typeof AudioContext }
   ).webkitAudioContext;

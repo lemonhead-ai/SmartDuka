@@ -7,6 +7,10 @@ import type {
   Customer,
   Hint,
   InventoryItem,
+  LiteracyAnswer,
+  LiteracyChallenge,
+  LearningSummary,
+  Motivation,
   PlayerProgress,
   SessionSummary,
   Session,
@@ -47,10 +51,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export const gameplayApi = {
   startSession: () => request<Session>("/gameplay/sessions", { method: "POST" }),
   nextCustomer: (sessionId: string) =>
-    request<{ customer: Customer; basket: Basket }>(`/gameplay/sessions/${sessionId}/customers/next`, {
+    request<{ customer: Customer; basket: Basket; literacy_challenge: LiteracyChallenge | null }>(`/gameplay/sessions/${sessionId}/customers/next`, {
       method: "POST"
     }),
-  resolveStockOffer: (sessionId: string) => request<{ customer: Customer; basket: Basket }>(`/gameplay/sessions/${sessionId}/customers/stock-offer`, { method: "POST" }),
+  resolveStockOffer: (sessionId: string) => request<{ customer: Customer; basket: Basket; literacy_challenge: LiteracyChallenge | null }>(`/gameplay/sessions/${sessionId}/customers/stock-offer`, { method: "POST" }),
   inventory: (sessionId: string) => request<InventoryItem[]>(`/gameplay/sessions/${sessionId}/inventory`),
   addBasketItem: (sessionId: string, itemId: string) =>
     request<Basket>(`/gameplay/sessions/${sessionId}/basket/items`, {
@@ -70,7 +74,16 @@ export const gameplayApi = {
     request<Hint>(`/gameplay/sessions/${sessionId}/hint`, { method: "POST" }),
   currentChallenge: (sessionId: string) =>
     request<Challenge | null>(`/gameplay/sessions/${sessionId}/challenge`),
+  currentLiteracyChallenge: (sessionId: string) =>
+    request<LiteracyChallenge | null>(`/gameplay/sessions/${sessionId}/literacy`),
+  answerLiteracyChallenge: (sessionId: string, answer: string) =>
+    request<LiteracyAnswer>(`/gameplay/sessions/${sessionId}/literacy/answer`, {
+      method: "POST",
+      body: JSON.stringify({ answer })
+    }),
   progress: () => request<PlayerProgress>("/gameplay/progress"),
+  motivation: () => request<Motivation>("/gameplay/motivation"),
+  learningSummary: () => request<LearningSummary>("/gameplay/learning-summary"),
   sessionSummary: (sessionId: string) => request<SessionSummary>(`/gameplay/sessions/${sessionId}/summary`),
   catalog: () => request<CatalogItem[]>("/shop/catalog"),
   shop: () => request<Duka>("/shop"),

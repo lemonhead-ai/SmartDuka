@@ -35,9 +35,14 @@ class GameplayRepository:
         return game_session
 
     async def save_game_state(self, game_session: GameSession, state: dict[str, object]) -> None:
+        from sqlalchemy import update
+        await self.session.execute(
+            update(GameSession)
+            .where(GameSession.id == game_session.id)
+            .values(game_state=state)
+        )
         game_session.game_state = state
         flag_modified(game_session, "game_state")
-        await self.session.flush()
 
     async def list_inventory(self) -> list[InventoryItem]:
         result = await self.session.scalars(

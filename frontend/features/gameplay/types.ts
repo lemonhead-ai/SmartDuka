@@ -1,6 +1,49 @@
 export type Mission = { title: string; progress: number; target: number; completed: boolean };
 
-export type Session = { session_id: string; student_name: string; started_at: string; mission: Mission };
+export type Badge = { id: string; name: string; description: string };
+
+export type DailyMission = {
+  id: string;
+  title: string;
+  description: string;
+  kind: "sales" | "math" | "literacy";
+  progress: number;
+  target: number;
+  completed: boolean;
+};
+
+export type Motivation = {
+  daily_mission: DailyMission;
+  current_streak_days: number;
+  badges: Badge[];
+};
+
+export type LearningSummary = {
+  student_name: string;
+  questions_attempted: number;
+  correct_answers: number;
+  literacy_moments_completed: number;
+  parent_summary: {
+    headline: string;
+    celebrations: string[];
+    next_step: string;
+  };
+  teacher_summary: {
+    accuracy_percent: number;
+    learning_level: number;
+    strengths: string[];
+    support_focus: string;
+    suggested_activity: string;
+  };
+};
+
+export type Session = {
+  session_id: string;
+  student_name: string;
+  started_at: string;
+  mission: Mission;
+  motivation: Motivation;
+};
 
 export type Customer = {
   id: string;
@@ -10,6 +53,7 @@ export type Customer = {
   request: string;
   requested_items: { item_id: string; name: string; quantity: number }[];
   stock_offer: StockOffer | null;
+  request_version: number;
 };
 
 export type StockOffer = { item_id: string; name: string; requested_quantity: number; available_quantity: number; status: "pending" | "accepted" | "replaced"; message: string };
@@ -28,6 +72,8 @@ export type Basket = {
   lines: { item: InventoryItem; quantity: number; line_total_kes: number }[];
   total_kes: number;
   validation: BasketValidation;
+  literacy_challenge: LiteracyChallenge | null;
+  request_version: number;
 };
 
 export type BasketValidation = {
@@ -56,6 +102,28 @@ export type Challenge = {
   amount_due_kes: number;
   amount_paid_kes: number;
   discount_kes: number;
+};
+
+export type LiteracyChallenge = {
+  id: string;
+  type: "word_reading" | "sentence_reading" | "spelling" | "conversation";
+  prompt: string;
+  content: string;
+  choices: { id: string; label: string }[];
+  letter_options: string[];
+  difficulty_tier: number;
+  attempts: number;
+  complete: boolean;
+  is_available: boolean;
+};
+
+export type LiteracyAnswer = {
+  is_correct: boolean;
+  feedback: string;
+  attempts: number;
+  challenge_complete: boolean;
+  challenge: LiteracyChallenge;
+  rewards_preview: Reward | null;
 };
 
 export type Checkout = {

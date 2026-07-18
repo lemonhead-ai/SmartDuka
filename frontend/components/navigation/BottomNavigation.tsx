@@ -6,15 +6,13 @@ import { motion } from "framer-motion";
 import { 
   DashboardSquare01Icon, 
   ShoppingBag01Icon, 
-  AdventureIcon, 
-  Award01Icon
+  AdventureIcon
 } from "hugeicons-react";
 
 const items = [
   { href: "/dashboard", icon: DashboardSquare01Icon, label: "Dashboard" },
   { href: "/shop", icon: ShoppingBag01Icon, label: "Shop" },
-  { href: "/adventure", icon: AdventureIcon, label: "Play" },
-  { href: "/profile", icon: Award01Icon, label: "Progress" }
+  { href: "/adventure", icon: AdventureIcon, label: "Play" }
 ];
 
 export function BottomNavigation() {
@@ -30,6 +28,8 @@ export function BottomNavigation() {
             <Link 
               key={href} 
               href={href}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={label}
               className="relative"
             >
               <motion.div

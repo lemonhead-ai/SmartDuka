@@ -5,12 +5,17 @@ from fastapi import APIRouter
 from src.contracts.gameplay_engine import (
     AnswerChallengeRequest,
     AnswerChallengeResponse,
+    AnswerLiteracyChallengeRequest,
+    AnswerLiteracyChallengeResponse,
     BasketItemRequest,
     BasketResponse,
     ChallengeResponse,
     CheckoutResponse,
     HintResponse,
     InventoryItemResponse,
+    LearningSummaryResponse,
+    LiteracyChallengeResponse,
+    MotivationResponse,
     NextCustomerResponse,
     PlayerProgressResponse,
     ResolveStockOfferResponse,
@@ -106,6 +111,30 @@ async def current_challenge(session_id: UUID, db: DatabaseSession) -> ChallengeR
     return await GameplayEngine(db).current_challenge(session_id)
 
 
+@router.get(
+    "/sessions/{session_id}/literacy",
+    response_model=LiteracyChallengeResponse | None,
+    summary="Get the active customer literacy moment",
+)
+async def current_literacy_challenge(
+    session_id: UUID, db: DatabaseSession
+) -> LiteracyChallengeResponse | None:
+    return await GameplayEngine(db).current_literacy_challenge(session_id)
+
+
+@router.post(
+    "/sessions/{session_id}/literacy/answer",
+    response_model=AnswerLiteracyChallengeResponse,
+    summary="Answer a customer literacy moment",
+)
+async def answer_literacy_challenge(
+    session_id: UUID,
+    payload: AnswerLiteracyChallengeRequest,
+    db: DatabaseSession,
+) -> AnswerLiteracyChallengeResponse:
+    return await GameplayEngine(db).submit_literacy_answer(session_id, payload.answer)
+
+
 @router.post(
     "/sessions/{session_id}/challenge/answer",
     response_model=AnswerChallengeResponse,
@@ -145,3 +174,21 @@ async def session_summary(session_id: UUID, db: DatabaseSession) -> SessionSumma
 @router.get("/progress", response_model=PlayerProgressResponse, summary="Get demo learner progress")
 async def player_progress(db: DatabaseSession) -> PlayerProgressResponse:
     return await GameplayEngine(db).player_progress()
+
+
+@router.get(
+    "/motivation",
+    response_model=MotivationResponse,
+    summary="Get the learner's saved daily motivation",
+)
+async def motivation_summary(db: DatabaseSession) -> MotivationResponse:
+    return await GameplayEngine(db).motivation_summary()
+
+
+@router.get(
+    "/learning-summary",
+    response_model=LearningSummaryResponse,
+    summary="Get parent and teacher learning summaries",
+)
+async def learning_summary(db: DatabaseSession) -> LearningSummaryResponse:
+    return await GameplayEngine(db).learning_summary()

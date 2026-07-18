@@ -19,6 +19,10 @@ export default function DashboardPage() {
     queryKey: ["shop-ledger"],
     queryFn: gameplayApi.ledger,
   });
+  const motivationQuery = useQuery({
+    queryKey: ["motivation"],
+    queryFn: gameplayApi.motivation,
+  });
   const progress = progressQuery.data;
   const accuracy = progress?.questions_attempted
     ? Math.round((progress.correct_answers / progress.questions_attempted) * 100)
@@ -44,7 +48,7 @@ export default function DashboardPage() {
         <StatCard icon={Award02Icon} label="Correct answers" value={`${progress?.correct_answers ?? 0}`} detail={`${accuracy}% accuracy`} tone="muted" />
       </section>
 
-      <MissionCard />
+      <MissionCard motivation={motivationQuery.data} />
 
       <section className="grid gap-6 lg:grid-cols-[1.05fr_.95fr]">
         <ShopPreview />
@@ -53,7 +57,7 @@ export default function DashboardPage() {
           <h2 className="mt-1 text-xl font-semibold">Live progress</h2>
           <div className="mt-6 space-y-5">
             <ProgressBar label="Answer accuracy" value={accuracy} tone="leaf" />
-            <ProgressBar label="Mission progress" value={Math.min((progress?.missions_completed ?? 0) * 100, 100)} tone="sky" />
+            <ProgressBar label="Mission progress" value={motivationQuery.data ? Math.round((motivationQuery.data.daily_mission.progress / motivationQuery.data.daily_mission.target) * 100) : 0} tone="sky" />
             <ProgressBar label="Hints used" value={Math.min((progress?.hints_used ?? 0) * 10, 100)} tone="mango" />
           </div>
           <p className="mt-6 rounded-[20px] bg-canvas p-4 text-sm leading-relaxed text-muted">
@@ -61,6 +65,20 @@ export default function DashboardPage() {
           </p>
         </article>
       </section>
+
+      {motivationQuery.data?.badges.length ? (
+        <section className="rounded-[24px] border border-line bg-surface p-6">
+          <p className="text-sm font-medium text-muted">Your badges</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {motivationQuery.data.badges.map((badge) => (
+              <article key={badge.id} className="rounded-[16px] bg-canvas px-4 py-3">
+                <p className="font-semibold">{badge.name}</p>
+                <p className="mt-1 text-sm text-muted">{badge.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <ShopLedger ledger={ledgerQuery.data} isLoading={ledgerQuery.isLoading} />
     </div>

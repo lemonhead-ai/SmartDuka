@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-07-18
+
+- Added persistent daily missions, learning streaks, badges, and milestone completion to learner progress, with a typed gameplay motivation API and live dashboard/adventure views.
+- Kept motivation deterministic and local so it remains immediate and does not consume Featherless's limited concurrent inference capacity.
+- Added typed parent and teacher learning summaries drawn from saved attempts, accuracy, hints, literacy moments, streaks, badges, and learner level; surfaced them in Profile.
+- Completed the accessibility and performance pass: shared large-text/reduced-motion/sound preferences, system-level focus and skip navigation, keyboard sidebar resizing, accessible status updates, and bounded React Query caching with targeted invalidation.
+- Added adaptive customer-native literacy gameplay: English/Kiswahili shelf-word recognition, shopping-note comprehension, basket-linked spelling tiles, and age-gated conversational English.
+- Reused the existing learning-attempt, reward, progress, and adaptive-difficulty paths so literacy improves the learner profile alongside numeracy.
+- Restyled Milo feedback as an undismissable rounded speech bubble and kept the full stock-substitution conversation visible while the customer updates their order.
+- Added regression coverage to ensure post-substitution basket feedback follows the revised request rather than the unavailable product.
+- Guarded basket updates from an older customer request so a late response cannot overwrite the accepted substitution in the shop UI.
+- Versioned persisted customer requests and basket responses to make substitution state atomic across the SQLite backend and browser UI.
+
 ## 2026-07-16
 
 - Established the initial Next.js/Tailwind frontend runtime configuration.

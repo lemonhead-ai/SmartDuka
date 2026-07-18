@@ -4,14 +4,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { ToastViewport } from "@/components/ui/ToastViewport";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
+import { PreferencesProvider } from "@/components/theme/PreferencesProvider";
 import { OfflineSyncManager } from "@/features/offline";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
-        defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } }
+        defaultOptions: {
+          queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000, gcTime: 300_000 }
+        }
       })
   );
 
@@ -24,5 +27,5 @@ export function Providers({ children }: { children: ReactNode }) {
     return () => syncManager.stop();
   }, []);
 
-  return <ThemeProvider><QueryClientProvider client={queryClient}>{children}<ToastViewport /></QueryClientProvider></ThemeProvider>;
+  return <PreferencesProvider><AccessibilityProvider><QueryClientProvider client={queryClient}>{children}<ToastViewport /></QueryClientProvider></AccessibilityProvider></PreferencesProvider>;
 }

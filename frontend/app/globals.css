@@ -33,13 +33,27 @@ html, body {
   max-width: 100%;
   overflow-x: clip;
   font-family: 'Montserrat', sans-serif;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grey-mid) transparent;
 }
 body { min-height: 100dvh; margin: 0; background: var(--color-grey-soft); color: var(--color-black); }
-*::-webkit-scrollbar { display: none; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--color-grey-mid); border: 3px solid transparent; border-radius: 999px; background-clip: content-box; }
 main, section, article { min-width: 0; }
 button, a { -webkit-tap-highlight-color: transparent; }
+
+:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+.skip-link { position: fixed; left: 1rem; top: -5rem; z-index: 200; border-radius: 0.75rem; background: var(--color-black); color: var(--color-white); padding: 0.75rem 1rem; font-weight: 600; }
+.skip-link:focus { top: 1rem; }
+:root[data-large-text="true"] { font-size: 112.5%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+
+:root[data-reduced-motion="true"] *,
+:root[data-reduced-motion="true"] *::before,
+:root[data-reduced-motion="true"] *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 
 .tahoe-sidebar {
   position: sticky; top: 16px; height: calc(100vh - 32px); border-radius: 20px;
