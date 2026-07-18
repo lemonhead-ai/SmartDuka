@@ -52,8 +52,15 @@ export function ShopCounter() {
   const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary } | null>(null);
   const [offlineScenario, setOfflineScenario] = useState<CachedScenario | null>(null);
   const [offlineBasket, setOfflineBasket] = useState<Record<string, number>>({});
-  const [customerConversation, setCustomerConversation] = useState<CustomerConversationMessage[]>([]);
-  const customerRevision = useRef(0);
+  const [customerConversation, setCustomerConversation] = useState<CustomerConversationMessage[]>(() => {
+    if (customer) {
+      return [
+        { id: "init-greet", side: "incoming", text: customer.greeting },
+      ];
+    }
+    return [];
+  });
+  const customerRevision = useRef(customer?.request_version ?? 0);
 
   const notify = (kind: ToastKind, message: string) => {
     triggerSensoryFeedback(kind);
@@ -83,7 +90,6 @@ export function ShopCounter() {
       setAnswer("");
       setCustomerConversation([
         message("incoming", result.customer.greeting),
-        message("incoming", result.customer.request),
       ]);
       notify("info", `${result.customer.name} is ready at the counter.`);
     },
@@ -174,9 +180,19 @@ export function ShopCounter() {
       setCustomerConversation((current) => [
         ...current,
         message("incoming", result.customer.greeting),
-        message("incoming", result.customer.request),
       ]);
       notify("success", `${result.customer.name}: ${result.customer.greeting}`);
+    },
+    onError: (error) => notify("error", errorMessage(error)),
+  });
+  const chatMutation = useMutation({
+    mutationFn: (messageText: string) => gameplayApi.chat(sessionId ?? "", messageText),
+    onMutate: (messageText) => {
+      setCustomerConversation((current) => [...current, message("outgoing", messageText)]);
+    },
+    onSuccess: (result) => {
+      setCustomerConversation((current) => [...current, message("incoming", result.reply)]);
+      if (result.sentiment === "happy") notify("success", "The customer seems happy with that response!");
     },
     onError: (error) => notify("error", errorMessage(error)),
   });
@@ -273,8 +289,14 @@ export function ShopCounter() {
       <section className="rounded-[24px] border border-line bg-surface p-6">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
           <div className="rounded-[20px] bg-canvas p-5">
-            <p className="text-sm font-medium text-muted">Order details</p>
-            <p className="mt-3 text-lg font-semibold">{customer.request}</p>
+            <p className="text-xs font-semibold text-muted mb-2">Shopping List</p>
+            <ul className="space-y-1">
+              {customer.requested_items.map((item) => (
+                <li key={item.item_id} className="text-sm font-medium text-ink">
+                  • {item.quantity} × {item.name}
+                </li>
+              ))}
+            </ul>
             <div className="mt-5 rounded-[16px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{customer.stock_offer.message}</div>
           </div>
           <CustomerConversationPanel customerName={customer.name} messages={customerConversation} isThinking={stockOfferMutation.isPending} actionLabel="Send availability update" onAction={() => stockOfferMutation.mutate()} />
@@ -294,9 +316,27 @@ export function ShopCounter() {
   return (
     <section className="rounded-[24px] border border-line bg-surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/dashboard#stock-room" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
-      <AnimatePresence mode="wait"><motion.div key={customer.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: "easeOut" }}><p className="mt-2 text-sm text-muted">{customer.greeting}</p><p className="mt-5 rounded-[20px] bg-canvas p-4 text-lg font-medium">“{customer.request}”</p></motion.div></AnimatePresence>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={customer.id}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="mt-5 rounded-[20px] bg-canvas p-4"
+        >
+          <p className="text-xs font-semibold text-muted mb-2">Shopping List</p>
+          <ul className="space-y-2">
+            {customer.requested_items.map((item) => (
+              <li key={item.item_id} className="text-sm font-medium text-ink">
+                • {item.quantity} × {item.name}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+      </AnimatePresence>
       <div className="mt-6 lg:float-right lg:ml-6 lg:w-72">
-        <CustomerConversationPanel customerName={customer.name} messages={customerConversation} />
+        <CustomerConversationPanel customerName={customer.name} messages={customerConversation} onChatSubmit={(message) => chatMutation.mutate(message)} isThinking={chatMutation.isPending} />
       </div>
       {literacyChallenge && literacyChallenge.type !== "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

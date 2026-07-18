@@ -11,6 +11,9 @@ from src.agents.shared.context import (
     LearnerProfile,
     MissionContext,
     ProgressContext,
+    BasketItemContext,
+    CustomerContext,
+    RequestedItemContext,
 )
 from src.agents.shared.outputs import CustomerScenarioOutput, TutorAgentOutput
 from src.contracts.gameplay_engine import (
@@ -34,6 +37,7 @@ from src.contracts.gameplay_engine import (
     RewardResponse,
     SessionSummaryResponse,
     StartGameplaySessionResponse,
+    ChatResponse,
 )
 from src.core.exceptions import ApplicationError
 from src.database.models import GameSession, InventoryItem, Student, StudentProgress
@@ -469,6 +473,29 @@ class GameplayEngine:
             next_customer_available=True,
         )
 
+    async def chat(self, session_id: UUID, message: str) -> ChatResponse:
+        game_session, student = await self._session_and_student(session_id)
+        state = self._state(game_session)
+        customer = self._require_customer(state)
+        
+        if self.orchestrator is None:
+            return ChatResponse(reply="I am not sure what to say right now.")
+
+        inventory_items = [item for _, item in await self.repository.list_shop_stock(student.id)]
+        context = await self._agent_context(
+            game_session, student, state, [item.name for item in inventory_items]
+        )
+        
+        # Inject the user message into the context as a recent shopkeeper action.
+        context.progress.basket_feedback = f"The shopkeeper says: {message}"
+
+        try:
+            response = await self.orchestrator.chat_with_customer(context)
+            return ChatResponse(reply=response.reply, sentiment=response.sentiment)
+        except Exception:
+            logging.getLogger(__name__).exception("Customer chat failed.")
+            return ChatResponse(reply="Sorry, I am a bit distracted right now.")
+
     async def summary(self, session_id: UUID) -> SessionSummaryResponse:
         game_session, _ = await self._session_and_student(session_id)
         state = self._state(game_session)
@@ -743,6 +770,36 @@ class GameplayEngine:
         available_goods: list[str],
     ) -> AgentContext:
         basket = await self._basket_response(state)
+        customer_data = state.get("current_customer")
+        customer_ctx = None
+        if isinstance(customer_data, dict):
+            requested_items = []
+            for item in customer_data.get("requested_items", []):
+                requested_items.append(
+                    RequestedItemContext(
+                        item_id=str(item.get("item_id", "")),
+                        name=str(item.get("name", "")),
+                        quantity=int(item.get("quantity", 0)),
+                    )
+                )
+            customer_ctx = CustomerContext(
+                id=str(customer_data.get("id", "")),
+                name=str(customer_data.get("name", "")),
+                personality=str(customer_data.get("personality", "")),
+                greeting=str(customer_data.get("greeting", "")),
+                request=str(customer_data.get("request", "")),
+                requested_items=requested_items,
+            )
+
+        basket_items = []
+        for line in basket.lines:
+            basket_items.append(
+                BasketItemContext(
+                    name=line.item.name,
+                    quantity=line.quantity,
+                )
+            )
+
         return AgentContext(
             learner=LearnerProfile(
                 student_id=student.id,
@@ -771,6 +828,8 @@ class GameplayEngine:
                 progress_value=int(state["customers_served"]), target_value=3, mission_type="sales"
             ),
             available_goods=available_goods,
+            customer=customer_ctx,
+            basket=basket_items,
         )
 
     async def _demo_student(self) -> Student:

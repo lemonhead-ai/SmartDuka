@@ -3,6 +3,7 @@ import logging
 from src.agents.shared.context import AgentContext
 from src.agents.shared.outputs import (
     CustomerAgentOutput,
+    CustomerChatOutput,
     StockOfferDecisionOutput,
     TutorAgentOutput,
 )
@@ -25,3 +26,6 @@ class AIOrchestrator:
 
     async def resolve_stock_offer(self, context: AgentContext) -> StockOfferDecisionOutput:
         return await self.agents.stock_offer.run(context)
+
+    async def chat_with_customer(self, context: AgentContext) -> CustomerChatOutput:
+        return await self.agents.customer_chat.run(context)

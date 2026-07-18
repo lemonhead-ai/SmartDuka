@@ -21,6 +21,8 @@ from src.contracts.gameplay_engine import (
     ResolveStockOfferResponse,
     SessionSummaryResponse,
     StartGameplaySessionResponse,
+    ChatRequest,
+    ChatResponse,
 )
 from src.dependencies.core import AIOrchestratorDependency
 from src.dependencies.database import DatabaseSession
@@ -62,6 +64,20 @@ async def resolve_stock_offer(
     session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
 ) -> ResolveStockOfferResponse:
     return await GameplayEngine(db, orchestrator).resolve_stock_offer(session_id)
+
+
+@router.post(
+    "/sessions/{session_id}/chat",
+    response_model=ChatResponse,
+    summary="Chat with the current customer",
+)
+async def chat_with_customer(
+    session_id: UUID,
+    payload: ChatRequest,
+    db: DatabaseSession,
+    orchestrator: AIOrchestratorDependency,
+) -> ChatResponse:
+    return await GameplayEngine(db, orchestrator).chat(session_id, payload.message)
 
 
 @router.get(

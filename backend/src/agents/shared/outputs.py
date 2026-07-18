@@ -21,6 +21,11 @@ class CustomerAgentOutput(BaseModel):
     scenarios: list[CustomerScenarioOutput] = Field(min_length=5, max_length=5)
 
 
+class CustomerChatOutput(BaseModel):
+    reply: str = Field(min_length=1, max_length=240)
+    sentiment: Literal["happy", "neutral", "impatient", "angry"] = "neutral"
+
+
 class StockOfferDecisionOutput(BaseModel):
     accepts_available_quantity: bool
     replacement_item_name: str | None = None

@@ -180,3 +180,5 @@ export type CatalogItem = { id: string; name: string; category: string; price_ke
 export type Duka = { id: string; name: string; category: string; cash_balance_kes: number; items: (CatalogItem & { stock: number; restock_cost_kes: number })[] };
 export type ShopLedgerEntry = { id: string; entry_type: "sale" | "restock" | "new_stock"; amount_kes: number; description: string; created_at: string };
 export type ShopLedger = { cash_balance_kes: number; daily_revenue_kes: number; daily_expenses_kes: number; daily_profit_kes: number; sales_count: number; recent_entries: ShopLedgerEntry[] };
+
+export type ChatResponse = { reply: string; sentiment: "happy" | "neutral" | "impatient" | "angry" };

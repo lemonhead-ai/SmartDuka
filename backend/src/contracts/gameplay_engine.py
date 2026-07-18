@@ -238,6 +238,15 @@ class SessionSummaryResponse(BaseModel):
     mission: MissionResponse
 
 
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    sentiment: Literal["happy", "neutral", "impatient", "angry"] = "neutral"
+
+
 class PlayerProgressResponse(BaseModel):
     student_name: str
     questions_attempted: int

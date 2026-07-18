@@ -37,9 +37,32 @@ class MissionContext(BaseModel):
     mission_type: str | None = None
 
 
+class RequestedItemContext(BaseModel):
+    item_id: str
+    name: str
+    quantity: int
+
+
+class CustomerContext(BaseModel):
+    id: str
+    name: str
+    personality: str
+    greeting: str
+    request: str
+    requested_items: list[RequestedItemContext]
+
+
+class BasketItemContext(BaseModel):
+    name: str
+    quantity: int
+
+
 class AgentContext(BaseModel):
     learner: LearnerProfile
     session: GameplaySessionContext
     progress: ProgressContext
     mission: MissionContext
     available_goods: list[str] = Field(default_factory=list)
+    customer: CustomerContext | None = None
+    basket: list[BasketItemContext] = Field(default_factory=list)
+
