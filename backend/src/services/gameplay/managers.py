@@ -23,7 +23,7 @@ class BasketManager:
     ) -> list[BasketLine]:
         current = sum(line.quantity for line in lines if line.item_id == item_id)
         if current + quantity > stock:
-            raise ValueError("Not enough stock is available.")
+            raise ValueError(f"Not enough stock is available. (current={current}, quantity={quantity}, stock={stock}, lines={len(lines)})")
         return [line for line in lines if line.item_id != item_id] + [
             BasketLine(item_id, current + quantity)
         ]
