@@ -5,6 +5,7 @@ import { Award02Icon, FireIcon, Store01Icon } from "hugeicons-react";
 
 import { StatCard } from "@/components/cards/StatCard";
 import { MissionCard } from "@/components/game/MissionCard";
+import { ShopManagement } from "@/components/game/ShopManagement";
 import { ShopLedger } from "@/components/game/ShopLedger";
 import { ShopPreview } from "@/components/game/ShopPreview";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -65,6 +66,10 @@ export default function DashboardPage() {
           </p>
         </article>
       </section>
+
+      <div id="stock-room" className="scroll-mt-6">
+        <ShopManagement />
+      </div>
 
       {motivationQuery.data?.badges.length ? (
         <section className="rounded-[24px] border border-line bg-surface p-6">

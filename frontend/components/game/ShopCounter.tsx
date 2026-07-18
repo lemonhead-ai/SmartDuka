@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 import { useRef, useState } from "react";
 
 import { LiteracyMoment } from "@/components/game/LiteracyMoment";
@@ -284,7 +285,7 @@ export function ShopCounter() {
 
   if (!customer) {
     const pending = startMutation.isPending || nextCustomerMutation.isPending;
-    return <section className="rounded-[24px] border border-line bg-surface p-6" aria-busy={pending}><p className="text-sm font-medium text-muted">Smart Duka session</p><h1 className="mt-1 text-2xl font-semibold">Ready to serve a customer?</h1><p className="mt-3 text-muted">Start a live demo session to receive a customer and stock your basket.</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => void startOrContinue()} disabled={pending} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{pending ? "Loading…" : sessionId ? "Next customer" : "Start session"}</motion.button></section>;
+    return <section className="rounded-[24px] border border-line bg-surface p-6" aria-busy={pending}><p className="text-sm font-medium text-muted">Smart Duka session</p><h1 className="mt-1 text-2xl font-semibold">Ready to serve a customer?</h1><p className="mt-3 text-muted">Start a live demo session to receive a customer and stock your basket.</p><div className="mt-6 flex flex-wrap gap-3"><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => void startOrContinue()} disabled={pending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{pending ? "Loading…" : sessionId ? "Next customer" : "Start session"}</motion.button><Link href="/dashboard#stock-room" className="rounded-[14px] border border-line px-5 py-3 font-semibold">Manage stock</Link></div></section>;
   }
 
   const literacyNeedsAttention = Boolean(literacyChallenge && !literacyChallenge.complete && literacyChallenge.is_available);
@@ -292,7 +293,7 @@ export function ShopCounter() {
 
   return (
     <section className="rounded-[24px] border border-line bg-surface p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/dashboard#stock-room" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
       <AnimatePresence mode="wait"><motion.div key={customer.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: "easeOut" }}><p className="mt-2 text-sm text-muted">{customer.greeting}</p><p className="mt-5 rounded-[20px] bg-canvas p-4 text-lg font-medium">“{customer.request}”</p></motion.div></AnimatePresence>
       <div className="mt-6 lg:float-right lg:ml-6 lg:w-72">
         <CustomerConversationPanel customerName={customer.name} messages={customerConversation} />

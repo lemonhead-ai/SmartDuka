@@ -40,9 +40,9 @@ export function CustomerConversationPanel({
 }
 
 function MessageBubble({ side, children }: { side: CustomerConversationMessage["side"]; children: React.ReactNode }) {
-  return <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`w-fit max-w-[90%] rounded-[18px] px-3 py-2 text-sm leading-relaxed ${side === "outgoing" ? "ml-auto bg-[#007AFF] text-white" : "bg-[#e5e5ea] text-ink"}`}>{children}</motion.p>;
+  return <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`w-fit max-w-[90%] rounded-[18px] px-3 py-2 text-sm leading-relaxed ${side === "outgoing" ? "ml-auto bg-[#007AFF] text-white" : "bg-[#e5e5ea] text-[#1C1C1E] dark:bg-[#2C2C2E] dark:text-white"}`}>{children}</motion.p>;
 }
 
 function TypingIndicator() {
-  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-fit gap-1 rounded-[18px] bg-[#e5e5ea] px-3 py-3" aria-label="Customer is typing">{[0, 1, 2].map((dot) => <motion.span key={dot} animate={{ opacity: [0.35, 1, 0.35], y: [0, -2, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.14 }} className="size-1.5 rounded-full bg-muted" />)}</motion.div>;
+  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-fit gap-1 rounded-[18px] bg-[#e5e5ea] dark:bg-[#2C2C2E] px-3 py-3" aria-label="Customer is typing">{[0, 1, 2].map((dot) => <motion.span key={dot} animate={{ opacity: [0.35, 1, 0.35], y: [0, -2, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.14 }} className="size-1.5 rounded-full bg-[#8E8E93]" />)}</motion.div>;
 }
