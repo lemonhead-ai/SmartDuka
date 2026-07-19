@@ -6,6 +6,7 @@
 - Kept motivation deterministic and local so it remains immediate and does not consume Featherless's limited concurrent inference capacity.
 - Added typed parent and teacher learning summaries drawn from saved attempts, accuracy, hints, literacy moments, streaks, badges, and learner level; surfaced them in Profile.
 - Completed the accessibility and performance pass: shared large-text/reduced-motion/sound preferences, system-level focus and skip navigation, keyboard sidebar resizing, accessible status updates, and bounded React Query caching with targeted invalidation.
+- Added subtle global interaction audio, distinct customer chat send/receive sounds, a hover-expanding conversation scrollbar with message preview, and a slimmer mobile navigation bar; all sounds honour the learner's sound preference.
 - Added adaptive customer-native literacy gameplay: English/Kiswahili shelf-word recognition, shopping-note comprehension, basket-linked spelling tiles, and age-gated conversational English.
 - Reused the existing learning-attempt, reward, progress, and adaptive-difficulty paths so literacy improves the learner profile alongside numeracy.
 - Restyled Milo feedback as an undismissable rounded speech bubble and kept the full stock-substitution conversation visible while the customer updates their order.

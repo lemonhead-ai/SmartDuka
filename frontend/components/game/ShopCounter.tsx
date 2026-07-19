@@ -54,6 +54,13 @@ export function ShopCounter() {
   const [offlineBasket, setOfflineBasket] = useState<Record<string, number>>({});
   const [customerConversation, setCustomerConversation] = useState<CustomerConversationMessage[]>(() => {
     if (customer) {
+      if (customer.chat_history && customer.chat_history.length > 0) {
+        return customer.chat_history.map((msg, idx) => ({
+          id: `hist-${idx}`,
+          side: msg.sender === "shopkeeper" ? "outgoing" : "incoming",
+          text: msg.message,
+        }));
+      }
       return [
         { id: "init-greet", side: "incoming", text: customer.greeting },
       ];
@@ -77,6 +84,7 @@ export function ShopCounter() {
     queryKey: ["inventory", sessionId],
     queryFn: () => gameplayApi.inventory(sessionId ?? ""),
     enabled: Boolean(sessionId && customer),
+    staleTime: 0,
   });
   const nextCustomerMutation = useMutation({
     mutationFn: gameplayApi.nextCustomer,
@@ -174,13 +182,30 @@ export function ShopCounter() {
     },
     onSuccess: (result) => {
       customerRevision.current = result.customer.request_version;
-      setCustomer(result.customer);
       setBasket(result.basket);
       setLiteracyChallenge(result.literacy_challenge ?? result.basket.literacy_challenge);
-      setCustomerConversation((current) => [
-        ...current,
-        message("incoming", result.customer.greeting),
-      ]);
+      
+      const offerMsg = customer?.stock_offer 
+        ? `I only have ${customer.stock_offer.available_quantity} ${customer.stock_offer.name.toLowerCase()} left. Would you like to take that amount instead?`
+        : "Sorry, I am short on that item.";
+        
+      const nextConversation = [
+        ...(customer?.chat_history ?? []),
+        { sender: "shopkeeper" as const, message: offerMsg },
+        { sender: "customer" as const, message: result.customer.greeting }
+      ];
+      
+      setCustomer({
+        ...result.customer,
+        chat_history: nextConversation
+      });
+      
+      setCustomerConversation(nextConversation.map((msg, idx) => ({
+        id: `hist-${idx}`,
+        side: msg.sender === "shopkeeper" ? "outgoing" : "incoming",
+        text: msg.message
+      })));
+      
       notify("success", `${result.customer.name}: ${result.customer.greeting}`);
     },
     onError: (error) => notify("error", errorMessage(error)),
@@ -190,8 +215,18 @@ export function ShopCounter() {
     onMutate: (messageText) => {
       setCustomerConversation((current) => [...current, message("outgoing", messageText)]);
     },
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       setCustomerConversation((current) => [...current, message("incoming", result.reply)]);
+      if (customer) {
+        setCustomer({
+          ...customer,
+          chat_history: [
+            ...(customer.chat_history ?? []),
+            { sender: "shopkeeper", message: variables },
+            { sender: "customer", message: result.reply }
+          ]
+        });
+      }
       if (result.sentiment === "happy") notify("success", "The customer seems happy with that response!");
     },
     onError: (error) => notify("error", errorMessage(error)),
@@ -287,19 +322,45 @@ export function ShopCounter() {
   if (customer?.stock_offer?.status === "pending") {
     return (
       <section className="rounded-[24px] border border-line bg-surface p-6">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
-          <div className="rounded-[20px] bg-canvas p-5">
-            <p className="text-xs font-semibold text-muted mb-2">Shopping List</p>
-            <ul className="space-y-1">
-              {customer.requested_items.map((item) => (
-                <li key={item.item_id} className="text-sm font-medium text-ink">
-                  • {item.quantity} × {item.name}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-5 rounded-[16px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{customer.stock_offer.message}</div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-muted">Customer at the counter</p>
+            <h1 className="text-2xl font-semibold">{customer.name}</h1>
           </div>
-          <CustomerConversationPanel customerName={customer.name} messages={customerConversation} isThinking={stockOfferMutation.isPending} actionLabel="Send availability update" onAction={() => stockOfferMutation.mutate()} />
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Stock Negotiation</span>
+          </div>
+        </div>
+        
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+          <div className="space-y-6">
+            <motion.div className="rounded-[20px] bg-canvas p-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-muted">Shopping List:</span>
+                <div className="flex flex-wrap gap-2">
+                  {customer.requested_items.map((item) => (
+                    <span key={item.item_id} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink border border-line">
+                      {item.quantity} × {item.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+            <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-6 text-amber-950">
+              <h3 className="font-semibold text-base mb-2">Item Out of Stock</h3>
+              <p className="text-sm leading-relaxed">{customer.stock_offer.message}</p>
+            </div>
+          </div>
+          <div>
+            <CustomerConversationPanel
+              customerName={customer.name}
+              messages={customerConversation}
+              onChatSubmit={(message) => chatMutation.mutate(message)}
+              isThinking={chatMutation.isPending || stockOfferMutation.isPending}
+              actionLabel="Send availability update"
+              onAction={() => stockOfferMutation.mutate()}
+            />
+          </div>
         </div>
       </section>
     );
@@ -318,28 +379,8 @@ export function ShopCounter() {
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/dashboard#stock-room" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
       
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
-        {/* Left Column: Shopping List, Shelves, Basket, Checkout */}
+        {/* Left Column: Shelves, Basket, Checkout */}
         <div className="space-y-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={customer.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="rounded-[20px] bg-canvas p-4"
-            >
-              <p className="text-xs font-semibold text-muted mb-2">Shopping List</p>
-              <ul className="space-y-2">
-                {customer.requested_items.map((item) => (
-                  <li key={item.item_id} className="text-sm font-medium text-ink">
-                    • {item.quantity} × {item.name}
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          </AnimatePresence>
-
           {literacyChallenge && literacyChallenge.type !== "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
           
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -356,8 +397,29 @@ export function ShopCounter() {
           <div className="flex flex-wrap justify-between gap-3 rounded-[20px] bg-line p-4"><p className="font-medium">{literacyNeedsAttention ? "Help with the customer's reading moment to unlock checkout." : basket?.validation.is_valid ? "The basket matches the request." : "Match the shopping request to unlock checkout."}</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => checkoutMutation.mutate()} disabled={!basket?.validation.is_valid || literacyNeedsAttention || checkoutMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{challenge ? "Complete checkout" : "Check basket"}</motion.button></div>
         </div>
 
-        {/* Right Column: Larger Chat Area */}
-        <div>
+        {/* Right Column: Shopping List & Chat Area */}
+        <div className="space-y-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={customer.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="rounded-[20px] bg-canvas p-3"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-muted">Shopping List:</span>
+                <div className="flex flex-wrap gap-2">
+                  {customer.requested_items.map((item) => (
+                    <span key={item.item_id} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink border border-line">
+                      {item.quantity} × {item.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
           <CustomerConversationPanel customerName={customer.name} messages={customerConversation} onChatSubmit={(message) => chatMutation.mutate(message)} isThinking={chatMutation.isPending} />
         </div>
       </div>

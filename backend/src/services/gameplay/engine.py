@@ -122,12 +122,13 @@ class GameplayEngine:
             )
             state["current_customer"]["request_version"] = int(state["request_version"])
             state["basket"] = []
+            state["chat_history"] = []
             state["challenge"] = None
             self._prepare_stock_offer(state["current_customer"], shop_stock)
             self._prepare_literacy_challenge(state, student, items)
             await self._save(game_session, state)
             return NextCustomerResponse(
-                customer=CustomerResponse.model_validate(state["current_customer"]),
+                customer=self._customer_response(state),
                 basket=await self._basket_response(state),
                 mission=self._mission(state),
                 literacy_challenge=self._literacy_response(state),
@@ -162,12 +163,13 @@ class GameplayEngine:
             "request_version": int(state["request_version"]),
         }
         state["basket"] = []
+        state["chat_history"] = []
         state["challenge"] = None
         self._prepare_stock_offer(state["current_customer"], shop_stock)
         self._prepare_literacy_challenge(state, student, items)
         await self._save(game_session, state)
         return NextCustomerResponse(
-            customer=CustomerResponse.model_validate(state["current_customer"]),
+            customer=self._customer_response(state),
             basket=await self._basket_response(state),
             mission=self._mission(state),
             literacy_challenge=self._literacy_response(state),
@@ -221,6 +223,15 @@ class GameplayEngine:
             + ", please."
         )
         customer["greeting"] = str(offer["message"])
+        
+        chat_history = state.setdefault("chat_history", [])
+        offer_msg = (
+            f"I only have {offer['available_quantity']} {str(offer['name']).lower()} left. "
+            f"Would you like to take that amount instead?"
+        )
+        chat_history.append({"sender": "shopkeeper", "message": offer_msg})
+        chat_history.append({"sender": "customer", "message": str(offer["message"])})
+        
         state["request_version"] = int(state.get("request_version", 0)) + 1
         customer["request_version"] = int(state["request_version"])
         self._prepare_literacy_challenge(
@@ -228,7 +239,7 @@ class GameplayEngine:
         )
         await self._save(game_session, state)
         return ResolveStockOfferResponse(
-            customer=CustomerResponse.model_validate(customer),
+            customer=self._customer_response(state),
             basket=await self._basket_response(state),
             literacy_challenge=self._literacy_response(state),
         )
@@ -478,6 +489,9 @@ class GameplayEngine:
         state = self._state(game_session)
         customer = self._require_customer(state)
         
+        chat_history = state.setdefault("chat_history", [])
+        chat_history.append({"sender": "shopkeeper", "message": message})
+        
         if self.orchestrator is None:
             return ChatResponse(reply="I am not sure what to say right now.")
 
@@ -491,10 +505,15 @@ class GameplayEngine:
 
         try:
             response = await self.orchestrator.chat_with_customer(context)
+            chat_history.append({"sender": "customer", "message": response.reply})
+            await self._save(game_session, state)
             return ChatResponse(reply=response.reply, sentiment=response.sentiment)
         except Exception:
             logging.getLogger(__name__).exception("Customer chat failed.")
-            return ChatResponse(reply="Sorry, I am a bit distracted right now.")
+            fallback_reply = customer.get("greeting") or "Sorry, I am a bit distracted right now."
+            chat_history.append({"sender": "customer", "message": fallback_reply})
+            await self._save(game_session, state)
+            return ChatResponse(reply=fallback_reply, sentiment="neutral")
 
     async def summary(self, session_id: UUID) -> SessionSummaryResponse:
         game_session, _ = await self._session_and_student(session_id)
@@ -560,6 +579,11 @@ class GameplayEngine:
                 skills_improving=self.progress_tracker.skills_improving(progress.questions_correct),
             )
         )
+
+    def _customer_response(self, state: dict[str, object]) -> CustomerResponse:
+        customer_data = dict(state["current_customer"])
+        customer_data["chat_history"] = state.get("chat_history", [])
+        return CustomerResponse.model_validate(customer_data)
 
     async def _basket_response(self, state: dict[str, object]) -> BasketResponse:
         responses: list[BasketLineResponse] = []
@@ -800,6 +824,13 @@ class GameplayEngine:
                 )
             )
 
+        from src.agents.shared.context import ChatMessageContext
+        chat_history_ctx = [
+            ChatMessageContext(sender=msg["sender"], message=msg["message"])
+            for msg in state.get("chat_history", [])
+            if isinstance(msg, dict)
+        ]
+
         return AgentContext(
             learner=LearnerProfile(
                 student_id=student.id,
@@ -830,6 +861,7 @@ class GameplayEngine:
             available_goods=available_goods,
             customer=customer_ctx,
             basket=basket_items,
+            chat_history=chat_history_ctx,
         )
 
     async def _demo_student(self) -> Student:

@@ -52,7 +52,7 @@ async def get_shop(db: DatabaseSession) -> ShopResponse:
     shop = await repository.get_shop(student.id) if student else None
     if shop is None:
         raise ApplicationError("Create your duka before starting a session.", status_code=404)
-    stock = await repository.list_shop_stock(student.id)
+    stock = await repository.list_all_shop_stock(student.id)
     return ShopResponse(
         id=shop.id,
         name=shop.name,
@@ -82,7 +82,7 @@ async def create_shop(payload: ShopSetupRequest, db: DatabaseSession) -> ShopRes
         student.id, payload.name.strip(), payload.category, payload.item_ids
     )
     await db.commit()
-    stock = await repository.list_shop_stock(student.id)
+    stock = await repository.list_all_shop_stock(student.id)
     return ShopResponse(
         id=shop.id,
         name=shop.name,
@@ -110,7 +110,7 @@ async def add_shop_items(payload: AddShopItemsRequest, db: DatabaseSession) -> S
     except ValueError as error:
         raise ApplicationError(str(error), status_code=409) from error
     await db.commit()
-    stock = await repository.list_shop_stock(student.id)
+    stock = await repository.list_all_shop_stock(student.id)
     return ShopResponse(
         id=shop.id,
         name=shop.name,
@@ -140,7 +140,7 @@ async def restock_shop_item(payload: RestockShopItemRequest, db: DatabaseSession
     except ValueError as error:
         raise ApplicationError(str(error), status_code=409) from error
     await db.commit()
-    stock = await repository.list_shop_stock(student.id)
+    stock = await repository.list_all_shop_stock(student.id)
     return ShopResponse(
         id=shop.id,
         name=shop.name,

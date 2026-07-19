@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+
+import { playChatSound } from "@/features/feedback/sensory-feedback";
 
 export type CustomerConversationMessage = {
   id: string;
@@ -26,50 +28,74 @@ export function CustomerConversationPanel({
   onAction,
   onChatSubmit,
 }: CustomerConversationPanelProps) {
-  const [chatInput, setChatInput] = useState("");
+  const previousMessageCount = useRef(messages.length);
+  const [scrollPreview, setScrollPreview] = useState("");
+  const [draft, setDraft] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (chatInput.trim() && onChatSubmit && !isThinking) {
-      onChatSubmit(chatInput.trim());
-      setChatInput("");
+  useEffect(() => {
+    const addedMessages = messages.slice(previousMessageCount.current);
+    if (previousMessageCount.current > 0 && addedMessages.some((message) => message.side === "incoming")) {
+      playChatSound("incoming");
     }
-  };
+    previousMessageCount.current = messages.length;
+  }, [messages]);
 
   return (
-    <aside className="rounded-[20px] border border-line bg-canvas p-4" aria-label={`Conversation with ${customerName}`}>
+    <aside className="group/chat relative rounded-[20px] border border-line bg-canvas p-4" aria-label={`Conversation with ${customerName}`}>
       <p className="mb-4 text-center text-xs font-semibold text-muted">Chat with {customerName}</p>
-      <div className="max-h-72 space-y-3 overflow-y-auto pr-1" role="log" aria-live="polite" aria-relevant="additions text">
+      <div
+        className="chat-scroll max-h-72 space-y-3 overflow-y-auto pr-2"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        onScroll={(event) => {
+          const messagesInView = [...event.currentTarget.querySelectorAll<HTMLElement>("[data-chat-message]")];
+          const current = messagesInView.find((message) => message.offsetTop + message.offsetHeight > event.currentTarget.scrollTop);
+          if (current?.textContent) setScrollPreview(current.textContent);
+        }}
+      >
         {messages.map((message) => <MessageBubble key={message.id} side={message.side}>{message.text}</MessageBubble>)}
         {isThinking && <TypingIndicator />}
       </div>
-      
+      {scrollPreview && <p className="pointer-events-none absolute right-7 top-12 max-w-[70%] truncate rounded-full bg-ink px-3 py-1 text-xs text-white opacity-0 shadow-elevated transition-opacity group-hover/chat:opacity-100">{scrollPreview}</p>}
       {onChatSubmit && (
-        <form onSubmit={handleSubmit} className="mt-4 flex items-center gap-2">
-          <input
-            type="text"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            disabled={isThinking}
-            placeholder="Type a message..."
-            className="flex-1 rounded-[18px] border border-line bg-surface px-4 py-2 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={!chatInput.trim() || isThinking}
-            className="flex size-9 items-center justify-center rounded-full bg-accent text-white disabled:opacity-50"
-            aria-label="Send message"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
+        <form
+          className="mt-4 flex items-center"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            const message = draft.trim();
+            if (!message || isThinking) return;
+            playChatSound("outgoing");
+            onChatSubmit(message);
+            setDraft("");
+          }}
+        >
+          <label className="sr-only" htmlFor="customer-message">Reply to {customerName}</label>
+          <div className="relative flex min-w-0 flex-1 items-center rounded-full border border-line bg-surface dark:bg-[#1e1e1f] dark:border-zinc-800 p-1 pl-4 shadow-sm focus-within:border-accent">
+            <input
+              id="customer-message"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              disabled={isThinking}
+              placeholder="Reply"
+              className="min-w-0 flex-1 bg-transparent border-0 p-0 text-sm text-ink dark:text-white placeholder:text-muted outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+            />
+            <button
+              type="submit"
+              data-sound="none"
+              disabled={isThinking || !draft.trim()}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#007AFF] text-white hover:bg-[#167FE5] disabled:opacity-40 transition-colors"
+              aria-label="Send message"
+            >
+              <svg className="size-4 stroke-[3px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            </button>
+          </div>
         </form>
       )}
-
       {actionLabel && onAction && !isThinking && (
-        <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={onAction} className="mt-4 w-full rounded-[18px] bg-accent px-4 py-3 text-sm font-semibold text-white">
+        <motion.button type="button" data-sound="none" whileTap={{ scale: 0.97 }} onClick={() => { playChatSound("outgoing"); onAction(); }} className="mt-4 w-full rounded-[18px] bg-accent px-4 py-3 text-sm font-semibold text-white">
           {actionLabel}
         </motion.button>
       )}
@@ -78,9 +104,9 @@ export function CustomerConversationPanel({
 }
 
 function MessageBubble({ side, children }: { side: CustomerConversationMessage["side"]; children: React.ReactNode }) {
-  return <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`w-fit max-w-[90%] rounded-[18px] px-3 py-2 text-sm leading-relaxed ${side === "outgoing" ? "ml-auto bg-[#007AFF] text-white" : "bg-[#e5e5ea] text-[#1C1C1E] dark:bg-[#2C2C2E] dark:text-white"}`}>{children}</motion.p>;
+  return <motion.p data-chat-message initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`w-fit max-w-[90%] rounded-[18px] px-3 py-2 text-sm leading-relaxed ${side === "outgoing" ? "ml-auto bg-[#007AFF] text-white" : "bg-[#e5e5ea] text-ink"}`}>{children}</motion.p>;
 }
 
 function TypingIndicator() {
-  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-fit gap-1 rounded-[18px] bg-[#e5e5ea] dark:bg-[#2C2C2E] px-3 py-3" aria-label="Customer is typing">{[0, 1, 2].map((dot) => <motion.span key={dot} animate={{ opacity: [0.35, 1, 0.35], y: [0, -2, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.14 }} className="size-1.5 rounded-full bg-[#8E8E93]" />)}</motion.div>;
+  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-fit gap-1 rounded-[18px] bg-[#e5e5ea] px-3 py-3" aria-label="Customer is typing">{[0, 1, 2].map((dot) => <motion.span key={dot} animate={{ opacity: [0.35, 1, 0.35], y: [0, -2, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.14 }} className="size-1.5 rounded-full bg-muted" />)}</motion.div>;
 }

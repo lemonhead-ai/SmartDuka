@@ -184,6 +184,19 @@ class GameplayRepository:
         )
         return list(result.tuples())
 
+    async def list_all_shop_stock(self, student_id: UUID) -> list[tuple[ShopStock, InventoryItem]]:
+        result = await self.session.execute(
+            select(ShopStock, InventoryItem)
+            .join(Shop, ShopStock.shop_id == Shop.id)
+            .join(InventoryItem, ShopStock.inventory_item_id == InventoryItem.id)
+            .where(
+                Shop.student_id == student_id,
+                InventoryItem.is_active.is_(True),
+            )
+            .order_by(InventoryItem.name)
+        )
+        return list(result.tuples())
+
     async def get_shop_stock(self, student_id: UUID, item_id: UUID) -> ShopStock | None:
         return await self.session.scalar(
             select(ShopStock)

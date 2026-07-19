@@ -37,15 +37,24 @@ html, body {
   scrollbar-color: var(--color-grey-mid) transparent;
 }
 body { min-height: 100dvh; margin: 0; background: var(--color-grey-soft); color: var(--color-black); }
-*::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: var(--color-grey-mid); border: 3px solid transparent; border-radius: 999px; background-clip: content-box; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--color-grey-mid); border: 2px solid transparent; border-radius: 999px; background-clip: content-box; }
+.chat-scroll { scrollbar-color: rgba(110, 110, 115, 0.6) transparent; scrollbar-width: thin; }
+.chat-scroll::-webkit-scrollbar { width: 6px; }
+.chat-scroll::-webkit-scrollbar-thumb { min-height: 40px; border: 0; background: rgba(110, 110, 115, 0.55); border-radius: 999px; }
+.chat-scroll:hover::-webkit-scrollbar { width: 12px; }
+.chat-scroll:hover::-webkit-scrollbar-thumb { background: rgba(110, 110, 115, 0.82); }
 main, section, article { min-width: 0; }
-button, a { -webkit-tap-highlight-color: transparent; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 :focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
 .skip-link { position: fixed; left: 1rem; top: -5rem; z-index: 200; border-radius: 0.75rem; background: var(--color-black); color: var(--color-white); padding: 0.75rem 1rem; font-weight: 600; }
 .skip-link:focus { top: 1rem; }
-:root[data-large-text="true"] { font-size: 112.5%; }
+:root[data-large-text="true"] { font-size: 106.25%; }
+
+.hand-drawn-bubble {
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }

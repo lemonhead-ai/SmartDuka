@@ -45,6 +45,8 @@ export type Session = {
   motivation: Motivation;
 };
 
+export type ChatMessage = { sender: "shopkeeper" | "customer"; message: string };
+
 export type Customer = {
   id: string;
   name: string;
@@ -54,6 +56,7 @@ export type Customer = {
   requested_items: { item_id: string; name: string; quantity: number }[];
   stock_offer: StockOffer | null;
   request_version: number;
+  chat_history?: ChatMessage[];
 };
 
 export type StockOffer = { item_id: string; name: string; requested_quantity: number; available_quantity: number; status: "pending" | "accepted" | "replaced"; message: string };

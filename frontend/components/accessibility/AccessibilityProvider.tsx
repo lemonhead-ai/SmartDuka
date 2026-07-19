@@ -3,6 +3,8 @@
 import { MotionConfig } from "framer-motion";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { playInteractionSound } from "@/features/feedback/sensory-feedback";
+
 export type AccessibilityPreferences = {
   largeText: boolean;
   reducedMotion: boolean;
@@ -37,6 +39,19 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
       window.localStorage.removeItem(storageKey);
       applyPreferences(defaults);
     }
+  }, []);
+
+  useEffect(() => {
+    const playClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const control = target.closest<HTMLElement>("button, a, [role='button']");
+      if (!control || control.dataset.sound === "none") return;
+      if (control instanceof HTMLButtonElement && control.disabled) return;
+      playInteractionSound();
+    };
+    document.addEventListener("click", playClick, true);
+    return () => document.removeEventListener("click", playClick, true);
   }, []);
 
   const value = useMemo<AccessibilityContextValue>(() => ({

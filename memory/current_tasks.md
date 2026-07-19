@@ -43,4 +43,38 @@
    - [x] Add a skip link, visible focus treatment, keyboard sidebar resizing, readable scrollbars, and live-region updates.
    - [x] Make large text, reduced motion, and sound preferences system-wide.
    - [x] Cache read queries and invalidate only the affected learner and shop views after gameplay changes.
-25. [ ] **Release rehearsal**: Update documentation and verify the complete judging flow end to end.
+25. [ ] **Authentication foundation**: Build secure login, sign-up, password reset, logout, protected routes, and session handling for shopkeepers.
+   - [ ] Choose and configure the production authentication provider.
+   - [ ] Ensure all auth screens meet the existing accessibility and mobile standards.
+
+26. [ ] **Authenticated Duka creation**: Connect the Create Duka request flow to the authenticated shopkeeper identity.
+   - [ ] Create, retrieve, and protect each shopkeeper's duka data.
+   - [ ] Remove the remaining demo-only assumptions from duka ownership flows.
+
+27. [ ] **Onboarding flow**: Finalise the first-run journey from account creation through duka creation into the dashboard.
+   - [ ] Redirect returning shopkeepers directly to their dashboard.
+   - [ ] Keep the flow short, clear, and child-friendly.
+
+28. [ ] **Shopping-list hierarchy**: Make the active Shopping List the primary reference above available shelf items in the shop experience.
+   - [ ] Preserve the customer conversation while the learner selects items.
+   - [ ] Verify the layout on mobile and desktop.
+
+29. [ ] **Systematic UI/UX revamp**: Review each screen in order and refine hierarchy, responsive behavior, accessibility, loading states, and child-friendly feedback.
+   - [ ] Onboarding and authentication screens.
+   - [ ] Dashboard, profile, missions, stock room, and shop gameplay screens.
+
+30. [ ] **AI agent pipeline verification**: Verify the end-to-end Customer, Tutor, stock-offer, and shared-context paths with structured logs and integration tests.
+   - [ ] Confirm graceful fallbacks preserve gameplay when an inference call fails.
+   - [ ] Confirm real model responses are visible in the judge-ready flow without exposing credentials.
+
+31. [ ] **OpenAI runtime validation (blocked on user key)**: Add a user-provided OpenAI API key, configure GPT-5.6 Terra as an optional provider, and validate agent orchestration against it.
+   - [ ] Do not commit or expose the key; use local/deployment environment variables only.
+   - [ ] Keep Featherless Qwen as the supported fallback until the OpenAI validation is complete.
+
+32. [ ] **Deployment**: Deploy the FastAPI backend to Railway and the Next.js frontend to Vercel.
+   - [ ] Configure production environment variables, CORS, health checks, and the frontend API URL.
+   - [ ] Validate the deployed demo flow using a clean browser session.
+
+33. [ ] **Insight Agent report template**: Human team task; finalise the submission-facing Insight Agent report template using real project evidence.
+
+34. [ ] **Release rehearsal**: Update documentation and verify the complete judging flow end to end.

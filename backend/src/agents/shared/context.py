@@ -1,7 +1,13 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class ChatMessageContext(BaseModel):
+    sender: Literal["shopkeeper", "customer"]
+    message: str
 
 
 class LearnerProfile(BaseModel):
@@ -65,4 +71,5 @@ class AgentContext(BaseModel):
     available_goods: list[str] = Field(default_factory=list)
     customer: CustomerContext | None = None
     basket: list[BasketItemContext] = Field(default_factory=list)
+    chat_history: list[ChatMessageContext] = Field(default_factory=list)
 

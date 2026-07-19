@@ -95,6 +95,11 @@ class StockOfferResponse(BaseModel):
     message: str
 
 
+class ChatMessageResponse(BaseModel):
+    sender: Literal["shopkeeper", "customer"]
+    message: str
+
+
 class CustomerResponse(BaseModel):
     id: str
     name: str
@@ -104,6 +109,7 @@ class CustomerResponse(BaseModel):
     requested_items: list[RequestedItemResponse]
     stock_offer: StockOfferResponse | None = None
     request_version: int = Field(default=0, ge=0)
+    chat_history: list[ChatMessageResponse] = Field(default_factory=list)
 
 
 class ChallengeResponse(BaseModel):
