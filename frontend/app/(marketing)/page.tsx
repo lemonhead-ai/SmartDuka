@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePreferences } from "@/components/theme/PreferencesProvider";
 import { LandingCardWheel } from "@/components/marketing/LandingCardWheel";
@@ -7,7 +8,13 @@ import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 
 export default function MarketingHomePage() {
   const { preferences, setPreference } = usePreferences();
-  const isDark = preferences.theme === "dark" || (preferences.theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted && (preferences.theme === "dark" || (preferences.theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches));
 
   const toggleTheme = () => {
     setPreference("theme", isDark ? "light" : "dark");
