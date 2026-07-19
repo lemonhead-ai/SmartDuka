@@ -63,9 +63,15 @@ from src.services.gameplay.managers import (
 
 
 class GameplayEngine:
-    def __init__(self, session: AsyncSession, orchestrator: AIOrchestrator | None = None) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        orchestrator: AIOrchestrator | None = None,
+        student_id: UUID | None = None,
+    ) -> None:
         self.session = session
         self.orchestrator = orchestrator
+        self.student_id = student_id
         self.repository = GameplayRepository(session)
         self.inventory = ShopInventoryManager()
         self.customer_queue = CustomerQueueManager()
@@ -83,7 +89,7 @@ class GameplayEngine:
         self.summary_builder = LearningSummaryManager()
 
     async def start_session(self) -> StartGameplaySessionResponse:
-        student = await self._demo_student()
+        student = await self._current_student()
         if await self.repository.get_shop(student.id) is None:
             raise ApplicationError("Create your duka before starting a session.", status_code=409)
         progress = await self._ensure_progress(student)
@@ -532,7 +538,7 @@ class GameplayEngine:
         )
 
     async def player_progress(self) -> PlayerProgressResponse:
-        student = await self._demo_student()
+        student = await self._current_student()
         progress = await self._ensure_progress(student)
         motivation = self._start_daily_motivation(progress, student)
         await self.session.commit()
@@ -552,14 +558,14 @@ class GameplayEngine:
         )
 
     async def motivation_summary(self) -> MotivationResponse:
-        student = await self._demo_student()
+        student = await self._current_student()
         progress = await self._ensure_progress(student)
         motivation = self._start_daily_motivation(progress, student)
         await self.session.commit()
         return MotivationResponse.model_validate(motivation)
 
     async def learning_summary(self) -> LearningSummaryResponse:
-        student = await self._demo_student()
+        student = await self._current_student()
         progress = await self._ensure_progress(student)
         motivation = self._start_daily_motivation(progress, student)
         await self.session.commit()
@@ -870,6 +876,14 @@ class GameplayEngine:
             raise ApplicationError("Demo profile is not available.", status_code=503)
         return student
 
+    async def _current_student(self) -> Student:
+        if self.student_id is None:
+            return await self._demo_student()
+        student = await self.session.get(Student, self.student_id)
+        if student is None:
+            raise ApplicationError("Your learner profile is unavailable. Please sign in again.", status_code=401)
+        return student
+
     async def _session_and_student(self, session_id: UUID) -> tuple[GameSession, Student]:
         game_session = await self.repository.get_active_session(session_id)
         if game_session is None:
@@ -877,6 +891,8 @@ class GameplayEngine:
         student = await self.session.get(Student, game_session.student_id)
         if student is None:
             raise ApplicationError("Student was not found.", status_code=404)
+        if self.student_id is not None and student.id != self.student_id:
+            raise ApplicationError("Active session was not found.", status_code=404)
         return game_session, student
 
     @staticmethod

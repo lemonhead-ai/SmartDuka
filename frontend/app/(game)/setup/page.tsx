@@ -22,7 +22,7 @@ const categoryLabels: Record<string, string> = {
 export default function SetupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selected, setSelected] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,16 +39,18 @@ export default function SetupPage() {
   }, [router, shop.data]);
 
   const categories = useMemo(() => [...new Set((catalog.data ?? []).map((item) => item.category))], [catalog.data]);
-  const items = (catalog.data ?? []).filter((item) => item.category === category);
+  const items = (catalog.data ?? []).filter(
+    (item) => categoryFilter === "all" || item.category === categoryFilter,
+  );
   const toggleItem = (itemId: string) => {
     setSelected((current) => current.includes(itemId) ? current.filter((id) => id !== itemId) : current.length < 5 ? [...current, itemId] : current);
   };
   const submit = async () => {
-    if (!name.trim() || !category || selected.length < 2) return;
+    if (!name.trim() || selected.length < 2) return;
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      await gameplayApi.createShop(name.trim(), category, selected);
+      await gameplayApi.createShop(name.trim(), selected);
       router.replace("/dashboard");
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Could not create your duka. Please try again.");
@@ -71,17 +73,17 @@ export default function SetupPage() {
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Let&apos;s open your duka.</h1>
           <p className="mt-3 leading-6 text-muted">Choose a small starter shelf. You can add more products later in the Stock Room.</p>
         </div>
-        <ol className="mt-8 grid gap-3 text-sm sm:grid-cols-3"><li className="rounded-[16px] bg-canvas p-4 font-semibold">1. Name your duka</li><li className="rounded-[16px] bg-canvas p-4 font-semibold">2. Choose a shelf</li><li className="rounded-[16px] bg-canvas p-4 font-semibold">3. Pick starter products</li></ol>
+        <ol className="mt-8 grid gap-3 text-sm sm:grid-cols-3"><li className="rounded-[16px] bg-canvas p-4 font-semibold">1. Name your duka</li><li className="rounded-[16px] bg-canvas p-4 font-semibold">2. Choose what to sell</li><li className="rounded-[16px] bg-canvas p-4 font-semibold">3. Open your shelves</li></ol>
         <div className="mt-9 grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
           <section>
             <label className="grid gap-2 text-sm font-semibold">Duka name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-normal" /></label>
-            <p className="mt-7 text-sm font-semibold">Choose one shop style</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">{categories.map((value) => <button key={value} type="button" onClick={() => { setCategory(value); setSelected([]); setSubmitError(null); }} className={`rounded-[16px] border p-3 text-left text-sm font-semibold ${category === value ? "border-accent bg-accent text-white" : "border-line bg-canvas"}`}>{categoryLabels[value] ?? value.replaceAll("_", " ")}</button>)}</div>
+            <div className="mt-7"><p className="text-sm font-semibold">Choose your starter products</p><p className="mt-1 text-sm leading-5 text-muted">Mix fruit, drinks, snacks, and more. These filters only help you browse; they never limit your duka.</p></div>
+            <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => setCategoryFilter("all")} aria-pressed={categoryFilter === "all"} className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${categoryFilter === "all" ? "border-accent bg-accent text-white" : "border-line bg-canvas hover:border-accent"}`}>Everything</button>{categories.map((value) => <button key={value} type="button" onClick={() => setCategoryFilter(value)} aria-pressed={categoryFilter === value} className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${categoryFilter === value ? "border-accent bg-accent text-white" : "border-line bg-canvas hover:border-accent"}`}>{categoryLabels[value] ?? value.replaceAll("_", " ")}</button>)}</div>
           </section>
-          <section className="rounded-[24px] bg-canvas p-5"><div className="flex items-center justify-between gap-4"><div><h2 className="font-bold">Your starter shelf</h2><p className="mt-1 text-sm text-muted">Choose at least 2, up to 5 products.</p></div><span className="rounded-full bg-surface px-3 py-1 text-sm font-bold">{selected.length}/5</span></div>{category ? <div className="mt-5 grid gap-3 sm:grid-cols-2">{items.map((item) => <motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} key={item.id} type="button" onClick={() => toggleItem(item.id)} aria-pressed={selected.includes(item.id)} className={`rounded-[18px] border p-4 text-left ${selected.includes(item.id) ? "border-accent bg-surface" : "border-line bg-white"}`}><strong>{item.name}</strong><span className="mt-1 block text-sm text-muted">KES {item.price_kes}</span></motion.button>)}</div> : <p className="mt-8 rounded-[18px] border border-dashed border-line p-6 text-center text-sm text-muted">Choose a shop style to see your starter products.</p>}</section>
+          <section className="rounded-[24px] bg-canvas p-5"><div className="flex items-center justify-between gap-4"><div><h2 className="font-bold">Your starter shelf</h2><p className="mt-1 text-sm text-muted">Choose at least 2, up to 5 products from any category.</p></div><span className="rounded-full bg-surface px-3 py-1 text-sm font-bold">{selected.length}/5</span></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{items.map((item) => <motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} key={item.id} type="button" onClick={() => toggleItem(item.id)} aria-pressed={selected.includes(item.id)} className={`rounded-[18px] border p-4 text-left ${selected.includes(item.id) ? "border-accent bg-surface" : "border-line bg-white"}`}><span className="text-xs font-semibold uppercase tracking-wide text-muted">{categoryLabels[item.category] ?? item.category.replaceAll("_", " ")}</span><strong className="mt-1 block">{item.name}</strong><span className="mt-1 block text-sm text-muted">KES {item.price_kes}</span></motion.button>)}</div></section>
         </div>
         {submitError && <p role="alert" className="mt-6 rounded-[14px] bg-red-50 p-4 text-sm text-red-700">{submitError}</p>}
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6"><p className="text-sm text-muted">Your first products will be ready for your first customer.</p><motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} type="button" disabled={!name.trim() || !category || selected.length < 2 || isSubmitting} onClick={() => void submit()} className="rounded-full bg-ink px-6 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Opening your duka…" : "Open my duka"}</motion.button></div>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6"><p className="text-sm text-muted">Your first products will be ready for your first customer.</p><motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} type="button" disabled={!name.trim() || selected.length < 2 || isSubmitting} onClick={() => void submit()} className="rounded-full bg-ink px-6 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Opening your duka…" : "Open my duka"}</motion.button></div>
       </motion.section>
     </div>
   </main>;

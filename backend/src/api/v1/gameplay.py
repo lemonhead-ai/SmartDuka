@@ -1,6 +1,7 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from src.contracts.gameplay_engine import (
     AnswerChallengeRequest,
@@ -26,9 +27,31 @@ from src.contracts.gameplay_engine import (
 )
 from src.dependencies.core import AIOrchestratorDependency
 from src.dependencies.database import DatabaseSession
+from src.dependencies.auth import OptionalCurrentShopkeeper
+from src.core.exceptions import ApplicationError
+from src.database.repositories.gameplay import GameplayRepository
 from src.services.gameplay.engine import GameplayEngine
 
 router = APIRouter(prefix="/gameplay", tags=["gameplay"])
+
+
+async def get_gameplay_engine(
+    db: DatabaseSession,
+    orchestrator: AIOrchestratorDependency,
+    shopkeeper: OptionalCurrentShopkeeper,
+) -> GameplayEngine:
+    repository = GameplayRepository(db)
+    student = (
+        await repository.get_student_for_shopkeeper(shopkeeper.id)
+        if shopkeeper is not None
+        else await repository.get_demo_student()
+    )
+    if student is None:
+        raise ApplicationError("Create your duka before starting a session.", status_code=409)
+    return GameplayEngine(db, orchestrator, student.id)
+
+
+GameplayEngineDependency = Annotated[GameplayEngine, Depends(get_gameplay_engine)]
 
 
 @router.post(
@@ -39,9 +62,9 @@ router = APIRouter(prefix="/gameplay", tags=["gameplay"])
     description="Creates an active session for the seeded demo learner and returns its mission.",
 )
 async def start_gameplay_session(
-    db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    engine: GameplayEngineDependency,
 ) -> StartGameplaySessionResponse:
-    return await GameplayEngine(db, orchestrator).start_session()
+    return await engine.start_session()
 
 
 @router.post(
@@ -50,9 +73,9 @@ async def start_gameplay_session(
     summary="Serve the next customer",
 )
 async def next_customer(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, engine: GameplayEngineDependency,
 ) -> NextCustomerResponse:
-    return await GameplayEngine(db, orchestrator).next_customer(session_id)
+    return await engine.next_customer(session_id)
 
 
 @router.post(
@@ -61,9 +84,9 @@ async def next_customer(
     summary="Tell a customer about limited stock",
 )
 async def resolve_stock_offer(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, engine: GameplayEngineDependency,
 ) -> ResolveStockOfferResponse:
-    return await GameplayEngine(db, orchestrator).resolve_stock_offer(session_id)
+    return await engine.resolve_stock_offer(session_id)
 
 
 @router.post(
@@ -74,10 +97,9 @@ async def resolve_stock_offer(
 async def chat_with_customer(
     session_id: UUID,
     payload: ChatRequest,
-    db: DatabaseSession,
-    orchestrator: AIOrchestratorDependency,
+    engine: GameplayEngineDependency,
 ) -> ChatResponse:
-    return await GameplayEngine(db, orchestrator).chat(session_id, payload.message)
+    return await engine.chat(session_id, payload.message)
 
 
 @router.get(
@@ -85,13 +107,13 @@ async def chat_with_customer(
     response_model=list[InventoryItemResponse],
     summary="List available shop inventory",
 )
-async def list_inventory(session_id: UUID, db: DatabaseSession) -> list[InventoryItemResponse]:
-    return await GameplayEngine(db).list_inventory(session_id)
+async def list_inventory(session_id: UUID, engine: GameplayEngineDependency) -> list[InventoryItemResponse]:
+    return await engine.list_inventory(session_id)
 
 
 @router.get("/sessions/{session_id}/basket", response_model=BasketResponse, summary="Get basket")
-async def get_basket(session_id: UUID, db: DatabaseSession) -> BasketResponse:
-    return await GameplayEngine(db).get_basket(session_id)
+async def get_basket(session_id: UUID, engine: GameplayEngineDependency) -> BasketResponse:
+    return await engine.get_basket(session_id)
 
 
 @router.post(
@@ -100,9 +122,9 @@ async def get_basket(session_id: UUID, db: DatabaseSession) -> BasketResponse:
 async def add_basket_item(
     session_id: UUID,
     payload: BasketItemRequest,
-    db: DatabaseSession,
+    engine: GameplayEngineDependency,
 ) -> BasketResponse:
-    return await GameplayEngine(db).add_basket_item(session_id, payload.item_id, payload.quantity)
+    return await engine.add_basket_item(session_id, payload.item_id, payload.quantity)
 
 
 @router.delete(
@@ -113,9 +135,9 @@ async def add_basket_item(
 async def remove_basket_item(
     session_id: UUID,
     item_id: UUID,
-    db: DatabaseSession,
+    engine: GameplayEngineDependency,
 ) -> BasketResponse:
-    return await GameplayEngine(db).remove_basket_item(session_id, item_id)
+    return await engine.remove_basket_item(session_id, item_id)
 
 
 @router.get(
@@ -123,8 +145,8 @@ async def remove_basket_item(
     response_model=ChallengeResponse | None,
     summary="Get the active math challenge",
 )
-async def current_challenge(session_id: UUID, db: DatabaseSession) -> ChallengeResponse | None:
-    return await GameplayEngine(db).current_challenge(session_id)
+async def current_challenge(session_id: UUID, engine: GameplayEngineDependency) -> ChallengeResponse | None:
+    return await engine.current_challenge(session_id)
 
 
 @router.get(
@@ -133,9 +155,9 @@ async def current_challenge(session_id: UUID, db: DatabaseSession) -> ChallengeR
     summary="Get the active customer literacy moment",
 )
 async def current_literacy_challenge(
-    session_id: UUID, db: DatabaseSession
+    session_id: UUID, engine: GameplayEngineDependency
 ) -> LiteracyChallengeResponse | None:
-    return await GameplayEngine(db).current_literacy_challenge(session_id)
+    return await engine.current_literacy_challenge(session_id)
 
 
 @router.post(
@@ -146,9 +168,9 @@ async def current_literacy_challenge(
 async def answer_literacy_challenge(
     session_id: UUID,
     payload: AnswerLiteracyChallengeRequest,
-    db: DatabaseSession,
+    engine: GameplayEngineDependency,
 ) -> AnswerLiteracyChallengeResponse:
-    return await GameplayEngine(db).submit_literacy_answer(session_id, payload.answer)
+    return await engine.submit_literacy_answer(session_id, payload.answer)
 
 
 @router.post(
@@ -159,23 +181,23 @@ async def answer_literacy_challenge(
 async def answer_challenge(
     session_id: UUID,
     payload: AnswerChallengeRequest,
-    db: DatabaseSession,
+    engine: GameplayEngineDependency,
 ) -> AnswerChallengeResponse:
-    return await GameplayEngine(db).submit_answer(session_id, payload.answer)
+    return await engine.submit_answer(session_id, payload.answer)
 
 
 @router.post("/sessions/{session_id}/hint", response_model=HintResponse, summary="Request a hint")
 async def request_hint(
-    session_id: UUID, db: DatabaseSession, orchestrator: AIOrchestratorDependency
+    session_id: UUID, engine: GameplayEngineDependency
 ) -> HintResponse:
-    return await GameplayEngine(db, orchestrator).request_hint(session_id)
+    return await engine.request_hint(session_id)
 
 
 @router.post(
     "/sessions/{session_id}/checkout", response_model=CheckoutResponse, summary="Checkout basket"
 )
-async def checkout(session_id: UUID, db: DatabaseSession) -> CheckoutResponse:
-    return await GameplayEngine(db).checkout(session_id)
+async def checkout(session_id: UUID, engine: GameplayEngineDependency) -> CheckoutResponse:
+    return await engine.checkout(session_id)
 
 
 @router.get(
@@ -183,13 +205,13 @@ async def checkout(session_id: UUID, db: DatabaseSession) -> CheckoutResponse:
     response_model=SessionSummaryResponse,
     summary="Get session summary",
 )
-async def session_summary(session_id: UUID, db: DatabaseSession) -> SessionSummaryResponse:
-    return await GameplayEngine(db).summary(session_id)
+async def session_summary(session_id: UUID, engine: GameplayEngineDependency) -> SessionSummaryResponse:
+    return await engine.summary(session_id)
 
 
 @router.get("/progress", response_model=PlayerProgressResponse, summary="Get demo learner progress")
-async def player_progress(db: DatabaseSession) -> PlayerProgressResponse:
-    return await GameplayEngine(db).player_progress()
+async def player_progress(engine: GameplayEngineDependency) -> PlayerProgressResponse:
+    return await engine.player_progress()
 
 
 @router.get(
@@ -197,8 +219,8 @@ async def player_progress(db: DatabaseSession) -> PlayerProgressResponse:
     response_model=MotivationResponse,
     summary="Get the learner's saved daily motivation",
 )
-async def motivation_summary(db: DatabaseSession) -> MotivationResponse:
-    return await GameplayEngine(db).motivation_summary()
+async def motivation_summary(engine: GameplayEngineDependency) -> MotivationResponse:
+    return await engine.motivation_summary()
 
 
 @router.get(
@@ -206,5 +228,5 @@ async def motivation_summary(db: DatabaseSession) -> MotivationResponse:
     response_model=LearningSummaryResponse,
     summary="Get parent and teacher learning summaries",
 )
-async def learning_summary(db: DatabaseSession) -> LearningSummaryResponse:
-    return await GameplayEngine(db).learning_summary()
+async def learning_summary(engine: GameplayEngineDependency) -> LearningSummaryResponse:
+    return await engine.learning_summary()

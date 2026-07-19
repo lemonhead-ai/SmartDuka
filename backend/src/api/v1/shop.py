@@ -87,10 +87,8 @@ async def create_shop(
         item is None for item in selected
     ):
         raise ApplicationError("Choose valid catalogue items.", status_code=422)
-    if any(item.category != payload.category for item in selected if item):
-        raise ApplicationError("Choose products from one shop category.", status_code=422)
     shop = await repository.create_shop(
-        student.id, payload.name.strip(), payload.category, payload.item_ids
+        student.id, payload.name.strip(), "general", payload.item_ids
     )
     await db.commit()
     stock = await repository.list_all_shop_stock(student.id)

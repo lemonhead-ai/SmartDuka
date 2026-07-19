@@ -20,7 +20,9 @@ class ShopStockItemResponse(CatalogItemResponse):
 
 class ShopSetupRequest(BaseModel):
     name: str = Field(min_length=2, max_length=80)
-    category: str = Field(min_length=2, max_length=40)
+    # Kept for compatibility with earlier clients. A duka can now stock items
+    # from any catalogue category, so new shops are created as general shops.
+    category: str = Field(default="general", min_length=2, max_length=40)
     item_ids: list[UUID] = Field(min_length=2, max_length=5)
 
 

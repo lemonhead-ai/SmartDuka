@@ -7,11 +7,41 @@ import { useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import { playCarouselTick } from "@/features/feedback/sensory-feedback";
 
 const cards = [
-  { title: "Mango maths", detail: "Count & add", image: "/illustrations/fruits_mascot.png", color: "#ffb347" },
-  { title: "Milo helps", detail: "Little hints", image: "/mascots/milo.PNG", color: "#66d9c8" },
-  { title: "Money smart", detail: "Give change", image: "/illustrations/snacks_mascot.png", color: "#f78ca0" },
-  { title: "Word shelf", detail: "Read & learn", image: "/illustrations/school_mascot.png", color: "#8b7cf6" },
-  { title: "Shop hero", detail: "Grow your duka", image: "/illustrations/household_mascot.png", color: "#4d8cff" }
+  { 
+    title: "Mario maths", 
+    detail: "Count & add", 
+    image: "/illustrations/mario.PNG", 
+    color: "#ff4a6b", // Saturated red-pink
+    shadow: "rgba(255, 10, 80, 0.9)" // Vibrant red shadow
+  },
+  { 
+    title: "Milo helps", 
+    detail: "Little hints", 
+    image: "/mascots/milo.PNG", 
+    color: "#24ccb8ff", // Saturated teal/green
+    shadow: "rgba(31, 72, 195, 0.9)" // Vibrant teal shadow
+  },
+  { 
+    title: "Stitch smart", 
+    detail: "Give change", 
+    image: "/illustrations/stitch.PNG", 
+    color: "#efa424ff", // Saturated yellow/amber
+    shadow: "rgba(156, 45, 4, 0.95)" // Vibrant amber-yellow shadow
+  },
+  { 
+    title: "Kirby words", 
+    detail: "Read & learn", 
+    image: "/illustrations/kirby.PNG", 
+    color: "#ec4899", // Saturated pink
+    shadow: "rgba(217, 147, 182, 0.95)" // Vibrant pink shadow
+  },
+  { 
+    title: "Jack shop", 
+    detail: "Grow your duka", 
+    image: "/illustrations/jack.PNG", 
+    color: "#8b5cf6", // Saturated purple
+    shadow: "rgba(189, 168, 239, 0.95)" // Vibrant purple shadow
+  }
 ];
 
 function circularOffset(index: number, activeIndex: number): number {
@@ -28,11 +58,16 @@ export function LandingCardWheel() {
   const lastWheelChange = useRef(0);
   const dragStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
+  const lastPlayedIndex = useRef(2);
 
   const cardWidth = 160; // drag distance per card shift
 
   const move = (direction: number) => {
-    setActiveIndex((current) => (current + direction + cards.length) % cards.length);
+    setActiveIndex((current) => {
+      const next = (current + direction + cards.length) % cards.length;
+      lastPlayedIndex.current = next;
+      return next;
+    });
     playCarouselTick();
   };
 
@@ -48,9 +83,11 @@ export function LandingCardWheel() {
   const finishDrag = () => {
     if (dragStartX.current === null) return;
     const cardsToMove = Math.round(-dragOffsetRef.current / cardWidth);
-    if (cardsToMove !== 0) {
-      move(cardsToMove);
-    }
+    const targetIndex = (activeIndex + cardsToMove % cards.length + cards.length) % cards.length;
+    
+    setActiveIndex(targetIndex);
+    lastPlayedIndex.current = targetIndex;
+    
     setDragOffset(0);
     dragOffsetRef.current = 0;
     setIsDragging(false);
@@ -69,6 +106,14 @@ export function LandingCardWheel() {
     const nextOffset = Math.max(-cardWidth * 2, Math.min(cardWidth * 2, event.clientX - dragStartX.current));
     dragOffsetRef.current = nextOffset;
     setDragOffset(nextOffset);
+
+    // Play tick sound dynamically as cards cross the center during drag
+    const rounded = Math.round(activeIndex - (nextOffset / cardWidth));
+    const normalizedIndex = (rounded % cards.length + cards.length) % cards.length;
+    if (normalizedIndex !== lastPlayedIndex.current) {
+      lastPlayedIndex.current = normalizedIndex;
+      playCarouselTick();
+    }
   };
 
   // Continuous current position based on active index and drag offset
@@ -130,14 +175,17 @@ export function LandingCardWheel() {
                   {card.detail}
                 </p>
 
-                {/* Overlapping Mascot Character Asset */}
+                {/* Overlapping Mascot Character Asset with saturated drop shadow */}
                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[85%] h-[65%] pointer-events-none z-10">
                   <Image 
                     src={card.image} 
                     alt={`${card.title} mascot`} 
                     width={200} 
                     height={200} 
-                    className="w-full h-full object-contain object-bottom filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)] transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-2"
+                    style={{
+                      filter: `drop-shadow(0px 14px 20px ${card.shadow})`
+                    }}
+                    className="w-full h-full object-contain object-bottom transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-2"
                     priority
                   />
                 </div>

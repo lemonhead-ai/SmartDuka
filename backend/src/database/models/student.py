@@ -18,5 +18,5 @@ class Student(Base):
     age: Mapped[int] = mapped_column(Integer)
     language: Mapped[str] = mapped_column(String(8), default="sw")
     difficulty_tier: Mapped[int] = mapped_column(Integer, default=2)
-    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, unique=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
