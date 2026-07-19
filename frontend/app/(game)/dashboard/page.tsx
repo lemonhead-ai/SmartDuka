@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Award02Icon, FireIcon, Store01Icon } from "hugeicons-react";
+import Link from "next/link";
 
 import { StatCard } from "@/components/cards/StatCard";
 import { MissionCard } from "@/components/game/MissionCard";
@@ -37,11 +38,16 @@ export default function DashboardPage() {
           <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Ready to run your duka?</h1>
           <p className="mt-2 text-muted">Your live progress appears here as you serve customers.</p>
         </div>
-        <div className="rounded-[20px] border border-line bg-surface px-4 py-3">
-          <p className="text-xs font-medium text-muted">DUKA COINS</p>
-          <p className="font-semibold">{progress?.coins_earned ?? 0}</p>
+        <div className="flex items-center gap-3">
+          <div className="rounded-[20px] border border-line bg-surface px-4 py-3">
+            <p className="text-xs font-medium text-muted">DUKA COINS</p>
+            <p className="font-semibold">{progress?.coins_earned ?? 0}</p>
+          </div>
+          <Link href="/shop" className="rounded-[14px] bg-ink px-4 py-3 text-sm font-bold text-white">Open shop</Link>
         </div>
       </header>
+
+      {(progressQuery.isError || ledgerQuery.isError || motivationQuery.isError) && <p role="alert" className="rounded-[16px] border border-line bg-canvas p-4 text-sm text-muted">Some dashboard details could not load yet. You can still continue playing.</p>}
 
       <section className="grid gap-4 sm:grid-cols-3">
         <StatCard icon={FireIcon} label="Current streak" value={`${progress?.daily_streak_days ?? 0} days`} detail="Daily streak tracking is ready." tone="muted" />

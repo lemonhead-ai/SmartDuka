@@ -7,6 +7,7 @@ import { ToastViewport } from "@/components/ui/ToastViewport";
 import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
 import { PreferencesProvider } from "@/components/theme/PreferencesProvider";
 import { OfflineSyncManager } from "@/features/offline";
+import { AuthProvider } from "@/features/auth/AuthProvider";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -27,5 +28,5 @@ export function Providers({ children }: { children: ReactNode }) {
     return () => syncManager.stop();
   }, []);
 
-  return <PreferencesProvider><AccessibilityProvider><QueryClientProvider client={queryClient}>{children}<ToastViewport /></QueryClientProvider></AccessibilityProvider></PreferencesProvider>;
+  return <PreferencesProvider><AccessibilityProvider><QueryClientProvider client={queryClient}><AuthProvider>{children}<ToastViewport /></AuthProvider></QueryClientProvider></AccessibilityProvider></PreferencesProvider>;
 }

@@ -12,6 +12,7 @@ from src.contracts.shop import (
 )
 from src.core.exceptions import ApplicationError
 from src.database.repositories.gameplay import GameplayRepository
+from src.dependencies.auth import OptionalCurrentShopkeeper
 from src.dependencies.database import DatabaseSession
 from src.services.gameplay.managers import ShopInventoryManager
 
@@ -30,6 +31,14 @@ def stock_item_response(stock: object, item: object) -> ShopStockItemResponse:
     )
 
 
+async def owner_student(
+    repository: GameplayRepository, shopkeeper: OptionalCurrentShopkeeper
+) -> object | None:
+    if shopkeeper is not None:
+        return await repository.get_student_for_shopkeeper(shopkeeper.id)
+    return await repository.get_demo_student()
+
+
 @router.get("/catalog", response_model=list[CatalogItemResponse])
 async def catalog(db: DatabaseSession) -> list[CatalogItemResponse]:
     items = await GameplayRepository(db).list_inventory()
@@ -46,9 +55,9 @@ async def catalog(db: DatabaseSession) -> list[CatalogItemResponse]:
 
 
 @router.get("", response_model=ShopResponse)
-async def get_shop(db: DatabaseSession) -> ShopResponse:
+async def get_shop(db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper) -> ShopResponse:
     repository = GameplayRepository(db)
-    student = await repository.get_demo_student()
+    student = await owner_student(repository, shopkeeper)
     shop = await repository.get_shop(student.id) if student else None
     if shop is None:
         raise ApplicationError("Create your duka before starting a session.", status_code=404)
@@ -63,11 +72,13 @@ async def get_shop(db: DatabaseSession) -> ShopResponse:
 
 
 @router.post("", response_model=ShopResponse, status_code=201)
-async def create_shop(payload: ShopSetupRequest, db: DatabaseSession) -> ShopResponse:
+async def create_shop(
+    payload: ShopSetupRequest, db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper
+) -> ShopResponse:
     repository = GameplayRepository(db)
-    student = await repository.get_demo_student()
+    student = await owner_student(repository, shopkeeper)
     if student is None:
-        raise ApplicationError("Demo learner is unavailable.", status_code=503)
+        raise ApplicationError("Your learner profile is unavailable. Please sign in again.", status_code=401)
     if await repository.get_shop(student.id):
         raise ApplicationError("This learner already has a duka.", status_code=409)
     catalogue = {item.id: item for item in await repository.list_inventory()}
@@ -93,9 +104,11 @@ async def create_shop(payload: ShopSetupRequest, db: DatabaseSession) -> ShopRes
 
 
 @router.post("/items", response_model=ShopResponse, summary="Add products to the duka")
-async def add_shop_items(payload: AddShopItemsRequest, db: DatabaseSession) -> ShopResponse:
+async def add_shop_items(
+    payload: AddShopItemsRequest, db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper
+) -> ShopResponse:
     repository = GameplayRepository(db)
-    student = await repository.get_demo_student()
+    student = await owner_student(repository, shopkeeper)
     shop = await repository.get_shop(student.id) if student else None
     if shop is None:
         raise ApplicationError("Create your duka before adding products.", status_code=409)
@@ -121,11 +134,13 @@ async def add_shop_items(payload: AddShopItemsRequest, db: DatabaseSession) -> S
 
 
 @router.post("/restock", response_model=ShopResponse, summary="Restock a duka product")
-async def restock_shop_item(payload: RestockShopItemRequest, db: DatabaseSession) -> ShopResponse:
+async def restock_shop_item(
+    payload: RestockShopItemRequest, db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper
+) -> ShopResponse:
     repository = GameplayRepository(db)
-    student = await repository.get_demo_student()
+    student = await owner_student(repository, shopkeeper)
     if student is None:
-        raise ApplicationError("Demo learner is unavailable.", status_code=503)
+        raise ApplicationError("Your learner profile is unavailable. Please sign in again.", status_code=401)
     shop = await repository.get_shop(student.id)
     if shop is None:
         raise ApplicationError("Create your duka before restocking.", status_code=409)
@@ -151,9 +166,9 @@ async def restock_shop_item(payload: RestockShopItemRequest, db: DatabaseSession
 
 
 @router.get("/ledger", response_model=ShopLedgerResponse, summary="Read the duka cash ledger")
-async def shop_ledger(db: DatabaseSession) -> ShopLedgerResponse:
+async def shop_ledger(db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper) -> ShopLedgerResponse:
     repository = GameplayRepository(db)
-    student = await repository.get_demo_student()
+    student = await owner_student(repository, shopkeeper)
     shop = await repository.get_shop(student.id) if student else None
     if shop is None:
         raise ApplicationError("Create your duka before viewing its ledger.", status_code=404)

@@ -1,11 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
 import { LiteracyMoment } from "@/components/game/LiteracyMoment";
+import { ShoppingListPanel } from "@/components/game/ShoppingListPanel";
 import {
   CustomerConversationPanel,
   type CustomerConversationMessage,
@@ -332,26 +333,16 @@ export function ShopCounter() {
           </div>
         </div>
         
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="mt-6 space-y-6">
+          <ShoppingListPanel customer={customer} basket={basket} />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
           <div className="space-y-6">
-            <motion.div className="rounded-[20px] bg-canvas p-3">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-muted">Shopping List:</span>
-                <div className="flex flex-wrap gap-2">
-                  {customer.requested_items.map((item) => (
-                    <span key={item.item_id} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink border border-line">
-                      {item.quantity} × {item.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
             <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-6 text-amber-950">
               <h3 className="font-semibold text-base mb-2">Item Out of Stock</h3>
               <p className="text-sm leading-relaxed">{customer.stock_offer.message}</p>
             </div>
           </div>
-          <div>
+          <div className="lg:sticky lg:top-6 lg:self-start">
             <CustomerConversationPanel
               customerName={customer.name}
               messages={customerConversation}
@@ -360,6 +351,7 @@ export function ShopCounter() {
               actionLabel="Send availability update"
               onAction={() => stockOfferMutation.mutate()}
             />
+          </div>
           </div>
         </div>
       </section>
@@ -378,11 +370,14 @@ export function ShopCounter() {
     <section className="rounded-[24px] border border-line bg-surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/dashboard#stock-room" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
       
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="mt-6 space-y-6">
+        <ShoppingListPanel customer={customer} basket={basket} />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* Left Column: Shelves, Basket, Checkout */}
         <div className="space-y-6">
           {literacyChallenge && literacyChallenge.type !== "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
           
+          <div className="flex items-end justify-between gap-3"><div><h2 className="font-bold">Available items</h2><p className="mt-1 text-sm text-muted">Use the shopping list above to fill the basket.</p></div><span className="text-sm font-semibold text-muted">Pick items</span></div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {inventoryQuery.data?.map((product) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={product.id} onClick={() => literacyChallenge?.type === "word_reading" && !literacyChallenge.complete ? literacyAnswerMutation.mutate({ answer: product.id, itemId: product.id }) : addItemMutation.mutate({ itemId: product.id, revision: customerRevision.current })} disabled={addItemMutation.isPending || literacyAnswerMutation.isPending || Boolean(challenge)} className="rounded-[20px] border border-line bg-canvas p-4 text-left disabled:opacity-50"><p className="font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">KES {product.price_kes} · {product.stock} left</p></motion.button>)}
           </div>
@@ -397,30 +392,10 @@ export function ShopCounter() {
           <div className="flex flex-wrap justify-between gap-3 rounded-[20px] bg-line p-4"><p className="font-medium">{literacyNeedsAttention ? "Help with the customer's reading moment to unlock checkout." : basket?.validation.is_valid ? "The basket matches the request." : "Match the shopping request to unlock checkout."}</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => checkoutMutation.mutate()} disabled={!basket?.validation.is_valid || literacyNeedsAttention || checkoutMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{challenge ? "Complete checkout" : "Check basket"}</motion.button></div>
         </div>
 
-        {/* Right Column: Shopping List & Chat Area */}
-        <div className="space-y-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={customer.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="rounded-[20px] bg-canvas p-3"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-muted">Shopping List:</span>
-                <div className="flex flex-wrap gap-2">
-                  {customer.requested_items.map((item) => (
-                    <span key={item.item_id} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink border border-line">
-                      {item.quantity} × {item.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+        {/* Chat remains visible beside the shelf on desktop and follows it on mobile. */}
+        <div className="lg:sticky lg:top-6 lg:self-start">
           <CustomerConversationPanel customerName={customer.name} messages={customerConversation} onChatSubmit={(message) => chatMutation.mutate(message)} isThinking={chatMutation.isPending} />
+        </div>
         </div>
       </div>
     </section>

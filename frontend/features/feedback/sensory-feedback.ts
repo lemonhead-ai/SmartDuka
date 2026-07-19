@@ -47,6 +47,10 @@ export function playInteractionSound(): void {
   playTone({ frequency: 520, duration: 0.045, volume: 0.018, type: "triangle" });
 }
 
+export function playCarouselTick(): void {
+  playTone({ frequency: 780, duration: 0.035, volume: 0.012, type: "triangle" });
+}
+
 export function playChatSound(direction: "incoming" | "outgoing"): void {
   if (direction === "outgoing") {
     playTone({ frequency: 360, duration: 0.055, volume: 0.022, type: "triangle" });

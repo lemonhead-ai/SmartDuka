@@ -26,6 +26,11 @@ class GameplayRepository:
     async def get_demo_student(self) -> Student | None:
         return await self.session.scalar(select(Student).where(Student.is_demo.is_(True)))
 
+    async def get_student_for_shopkeeper(self, shopkeeper_id: UUID) -> Student | None:
+        return await self.session.scalar(
+            select(Student).where(Student.shopkeeper_id == shopkeeper_id, Student.is_demo.is_(False))
+        )
+
     async def create_session(
         self, student_id: UUID, game_state: dict[str, object] | None = None
     ) -> GameSession:

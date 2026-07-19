@@ -25,25 +25,29 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:800
 export class ApiRequestError extends Error {
   readonly detail: string;
   readonly status: number;
+  readonly errors: ApiError["errors"];
 
-  constructor(detail: string, status: number) {
+  constructor(detail: string, status: number, errors: ApiError["errors"] = []) {
     super(detail);
     this.name = "ApiRequestError";
     this.detail = detail;
     this.status = status;
+    this.errors = errors;
   }
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...options.headers }
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => null) as ApiError | null;
     throw new ApiRequestError(
       typeof payload?.detail === "string" ? payload.detail : "Something went wrong. Please try again.",
-      response.status
+      response.status,
+      payload?.errors
     );
   }
   return response.json() as Promise<T>;

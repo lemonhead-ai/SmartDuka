@@ -1,0 +1,50 @@
+import { ApiRequestError } from "@/features/gameplay/api";
+
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+
+export type Shopkeeper = {
+  id: string;
+  email: string;
+  display_name: string;
+  created_at: string;
+};
+
+type AuthResponse = { shopkeeper: Shopkeeper };
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...options.headers }
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { detail?: string; errors?: { field?: string; message: string }[] } | null;
+    throw new ApiRequestError(payload?.detail ?? "Something went wrong. Please try again.", response.status, payload?.errors);
+  }
+  return response.json() as Promise<T>;
+}
+
+export const authApi = {
+  signUp: (email: string, displayName: string, password: string) =>
+    request<AuthResponse>("/auth/sign-up", {
+      method: "POST",
+      body: JSON.stringify({ email, display_name: displayName, password })
+    }),
+  signIn: (email: string, password: string) =>
+    request<AuthResponse>("/auth/sign-in", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    }),
+  signOut: () => request<{ message: string }>("/auth/sign-out", { method: "POST" }),
+  me: () => request<AuthResponse>("/auth/me"),
+  requestPasswordReset: (email: string) =>
+    request<{ message: string }>("/auth/password-reset", {
+      method: "POST",
+      body: JSON.stringify({ email })
+    }),
+  resetPassword: (token: string, password: string) =>
+    request<{ message: string }>("/auth/password-reset/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token, password })
+    })
+};

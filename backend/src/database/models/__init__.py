@@ -1,3 +1,4 @@
+from .auth import AuthSession, PasswordResetToken, Shopkeeper
 from .gameplay import (
     GameSession,
     InventoryItem,
@@ -12,12 +13,15 @@ from .gameplay import (
 from .student import Student
 
 __all__ = [
+    "AuthSession",
     "GameSession",
     "InventoryItem",
     "OfflineEvent",
+    "PasswordResetToken",
     "Question",
     "QuestionAttempt",
     "Shop",
+    "Shopkeeper",
     "ShopLedgerEntry",
     "ShopStock",
     "Student",

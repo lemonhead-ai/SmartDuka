@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-5.6"
     allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    auth_session_cookie_name: str = "smartduka_session"
+    auth_session_days: int = 14
+    auth_cookie_secure: bool = False
+    password_reset_minutes: int = 30
 
 
 @lru_cache

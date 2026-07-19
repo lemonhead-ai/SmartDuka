@@ -29,6 +29,7 @@ class Database:
 
         table_names = set(connection.dialect.get_table_names(connection))
         additions = {
+            "students": {"shopkeeper_id": "CHAR(32)"},
             "game_sessions": {"game_state": "JSON NOT NULL DEFAULT '{}'"},
             "student_progress": {
                 "hints_used": "INTEGER NOT NULL DEFAULT 0",
@@ -55,6 +56,11 @@ class Database:
                     connection.exec_driver_sql(
                         f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}"
                     )
+        if "students" in table_names:
+            connection.exec_driver_sql(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_students_shopkeeper_id "
+                "ON students (shopkeeper_id) WHERE shopkeeper_id IS NOT NULL"
+            )
 
     async def dispose(self) -> None:
         await self.engine.dispose()

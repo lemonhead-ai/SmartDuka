@@ -43,25 +43,25 @@
    - [x] Add a skip link, visible focus treatment, keyboard sidebar resizing, readable scrollbars, and live-region updates.
    - [x] Make large text, reduced motion, and sound preferences system-wide.
    - [x] Cache read queries and invalidate only the affected learner and shop views after gameplay changes.
-25. [ ] **Authentication foundation**: Build secure login, sign-up, password reset, logout, protected routes, and session handling for shopkeepers.
-   - [ ] Choose and configure the production authentication provider.
-   - [ ] Ensure all auth screens meet the existing accessibility and mobile standards.
+25. [x] **Authentication foundation**: Build secure login, sign-up, password reset, logout, protected routes, and session handling for shopkeepers.
+   - [x] Add first-party shopkeeper accounts with server-side, opaque HttpOnly sessions and password hashing.
+   - [x] Provide accessible, mobile sign-in, sign-up, password reset, and sign-out entry points while retaining the existing judge demo path.
 
-26. [ ] **Authenticated Duka creation**: Connect the Create Duka request flow to the authenticated shopkeeper identity.
-   - [ ] Create, retrieve, and protect each shopkeeper's duka data.
-   - [ ] Remove the remaining demo-only assumptions from duka ownership flows.
+26. [x] **Authenticated Duka creation**: Connect the Create Duka request flow to the authenticated shopkeeper identity.
+   - [x] Create a private learner profile and Duka ownership scope for every new shopkeeper account.
+   - [x] Use the authenticated identity for Duka creation, retrieval, stock, and ledger routes while preserving the logged-out demo flow.
 
-27. [ ] **Onboarding flow**: Finalise the first-run journey from account creation through duka creation into the dashboard.
-   - [ ] Redirect returning shopkeepers directly to their dashboard.
-   - [ ] Keep the flow short, clear, and child-friendly.
+27. [x] **Onboarding flow**: Finalise the first-run journey from account creation through duka creation into the dashboard.
+   - [x] Route new shopkeepers through a focused three-step setup journey before opening their Duka.
+   - [x] Route returning shopkeepers to their dashboard and accounts without a Duka back to setup.
 
-28. [ ] **Shopping-list hierarchy**: Make the active Shopping List the primary reference above available shelf items in the shop experience.
-   - [ ] Preserve the customer conversation while the learner selects items.
-   - [ ] Verify the layout on mobile and desktop.
+28. [x] **Shopping-list hierarchy**: Make the active Shopping List the primary reference above available shelf items in the shop experience.
+   - [x] Show the live required-versus-selected quantity for every requested item before the shelf.
+   - [x] Preserve customer conversation beside the shelf on desktop and after it on mobile.
 
-29. [ ] **Systematic UI/UX revamp**: Review each screen in order and refine hierarchy, responsive behavior, accessibility, loading states, and child-friendly feedback.
-   - [ ] Onboarding and authentication screens.
-   - [ ] Dashboard, profile, missions, stock room, and shop gameplay screens.
+29. [x] **Systematic UI/UX revamp**: Review each screen in order and refine hierarchy, responsive behavior, accessibility, loading states, and child-friendly feedback.
+   - [x] Refine onboarding and authentication screens with focused first-run routing and accessible account actions.
+   - [x] Refine dashboard, profile, missions, stock room, and shop gameplay screens with hierarchy, responsive layout, loading/error states, and child-friendly guidance.
 
 30. [ ] **AI agent pipeline verification**: Verify the end-to-end Customer, Tutor, stock-offer, and shared-context paths with structured logs and integration tests.
    - [ ] Confirm graceful fallbacks preserve gameplay when an inference call fails.

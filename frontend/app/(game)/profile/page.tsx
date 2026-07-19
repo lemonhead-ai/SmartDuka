@@ -9,10 +9,12 @@ import { Settings02Icon, Logout01Icon, Award01Icon, CheckmarkCircle02Icon, Penci
 import { gameplayApi } from "@/features/gameplay/api";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
 import { avatarChoices, shopThemes, useKidProfileStore } from "@/features/kids/store";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 export default function ProfilePage() {
   const router = useRouter();
   const clearSession = useGameplaySessionStore((state) => state.clearSession);
+  const { signOut } = useAuth();
   const { avatar, setAvatar, shopName, setShopName, shopTheme, setShopTheme } = useKidProfileStore();
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
   const progress = progressQuery.data;
@@ -28,7 +30,8 @@ export default function ProfilePage() {
 
   const displayName = name || progress?.student_name || "Shopkeeper";
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut().catch(() => undefined);
     clearSession();
     if (typeof window !== "undefined") window.localStorage.removeItem("smart-duka-gameplay-session");
     router.push("/");
@@ -189,7 +192,7 @@ export default function ProfilePage() {
         </Link>
       </section>
 
-      <button type="button" onClick={logout} className="inline-flex items-center gap-2 rounded-[14px] border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">
+      <button type="button" onClick={() => void logout()} className="inline-flex items-center gap-2 rounded-[14px] border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">
         <Logout01Icon size={18} color="currentColor" /> Log out
       </button>
 
