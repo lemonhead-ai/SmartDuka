@@ -32,10 +32,63 @@ export function ShopManagement() {
 
   const stocked = new Set(shop.data.items.map((item) => item.id));
   const additions = (catalog.data ?? []).filter((item) => !stocked.has(item.id));
-  return <section className="rounded-[24px] border border-line bg-surface p-6" aria-busy={restock.isPending || add.isPending} aria-labelledby="stock-room-title">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-medium text-muted">Stock room</p><h2 id="stock-room-title" className="mt-1 text-xl font-semibold">Keep your shelves ready</h2><p className="mt-2 max-w-xl text-sm leading-6 text-muted">Restock your popular products before the next customer arrives.</p></div><span className="rounded-full bg-canvas px-4 py-2 text-sm font-bold">KES {shop.data.cash_balance_kes} available</span></div>
-    <div className="mt-6 grid gap-3 lg:grid-cols-2">{shop.data.items.map((item) => <article key={item.id} className="rounded-[20px] bg-canvas p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{item.name}</h3><p className="mt-1 text-sm text-muted">{item.stock} left · KES {item.restock_cost_kes} each</p></div><span className={`rounded-full px-3 py-1 text-xs font-bold ${item.stock <= 3 ? "bg-red-50 text-red-700" : "bg-surface text-muted"}`}>{item.stock <= 3 ? "Low stock" : "In stock"}</span></div><div className="mt-4 flex gap-2"><RestockButton quantity={5} itemId={item.id} isPending={restock.isPending} onRestock={restock.mutate} /><RestockButton quantity={10} itemId={item.id} isPending={restock.isPending} onRestock={restock.mutate} emphasis /></div></article>)}</div>
-    {additions.length > 0 && <div className="mt-7 border-t border-line pt-6"><p className="text-sm font-bold">Add a new product</p><p className="mt-1 text-sm text-muted">Pick one item to add to your shop with starter stock.</p><div className="mt-4 flex flex-wrap gap-2">{additions.map((item) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={item.id} onClick={() => add.mutate([item.id])} disabled={add.isPending} className="rounded-full border border-line px-4 py-2 text-sm font-semibold disabled:opacity-50">Add {item.name}</motion.button>)}</div></div>}
+  return <section className="rounded-[24px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.002]" aria-busy={restock.isPending || add.isPending} aria-labelledby="stock-room-title">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium text-muted">Stock room</p>
+        <h2 id="stock-room-title" className="mt-1 text-xl font-semibold text-ink">Keep your shelves ready</h2>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">Restock your popular products before the next customer arrives.</p>
+      </div>
+      <span className="rounded-full bg-canvas px-4 py-2 text-sm font-bold border border-line">KES {shop.data.cash_balance_kes} available</span>
+    </div>
+    
+    <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {shop.data.items.map((item) => (
+        <article key={item.id} className="rounded-[20px] bg-canvas p-4 flex flex-col justify-between border border-line/30 hover:scale-[1.02] hover:shadow-md transition-all duration-300">
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-bold text-sm text-ink truncate" title={item.name}>{item.name}</h3>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                item.stock <= 3 
+                  ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400" 
+                  : "bg-surface text-muted"
+              }`}>
+                {item.stock <= 3 ? "Low" : "In stock"}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted">
+              {item.stock} left · KES {item.restock_cost_kes} ea
+            </p>
+          </div>
+          <div className="mt-4 flex gap-1.5">
+            <RestockButton quantity={5} itemId={item.id} isPending={restock.isPending} onRestock={restock.mutate} />
+            <RestockButton quantity={10} itemId={item.id} isPending={restock.isPending} onRestock={restock.mutate} emphasis />
+          </div>
+        </article>
+      ))}
+    </div>
+
+    {additions.length > 0 && (
+      <div className="mt-7 border-t border-line pt-6">
+        <p className="text-sm font-bold text-ink">Add a new product</p>
+        <p className="mt-1 text-sm text-muted">Pick one item to add to your shop with starter stock.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {additions.map((item) => (
+            <motion.button 
+              type="button" 
+              whileTap={{ scale: 0.97 }} 
+              key={item.id} 
+              onClick={() => add.mutate([item.id])} 
+              disabled={add.isPending} 
+              className="rounded-full border border-line bg-canvas px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50 hover:bg-surface transition-colors"
+            >
+              Add {item.name}
+            </motion.button>
+          ))}
+        </div>
+      </div>
+    )}
+    
     <p className="sr-only" aria-live="polite">{restock.isPending ? "Restocking shelf" : add.isPending ? "Adding product" : ""}</p>
   </section>;
 }

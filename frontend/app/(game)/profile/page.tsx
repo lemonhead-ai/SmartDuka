@@ -5,9 +5,16 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Settings02Icon, Logout01Icon, Award01Icon, CheckmarkCircle02Icon, PencilEdit01Icon } from "hugeicons-react";
+import { Settings02Icon, Logout01Icon, Award01Icon, Award02Icon, CheckmarkCircle02Icon, PencilEdit01Icon, Store01Icon, FireIcon } from "hugeicons-react";
 
 import { gameplayApi } from "@/features/gameplay/api";
+
+const LockSVG = () => (
+  <svg className="size-5 text-muted/65" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
 import { useGameplaySessionStore } from "@/features/gameplay/store";
 import { avatarChoices, shopThemes, useKidProfileStore } from "@/features/kids/store";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -141,8 +148,8 @@ export default function ProfilePage() {
                         type="button" 
                         onClick={() => setAvatar(choice.value)} 
                         aria-label={`Choose ${choice.label}`} 
-                        className={`rounded-full size-16 transition-transform hover:-translate-y-1 overflow-hidden p-2 flex items-center justify-center ${
-                            avatar === choice.value ? "bg-white border-2 border-accent shadow-md scale-110" : "bg-canvas border border-line opacity-60 hover:opacity-100"
+                        className={`rounded-full size-16 transition-all duration-200 hover:-translate-y-1 overflow-hidden p-2 flex items-center justify-center ${
+                            avatar === choice.value ? "bg-white dark:bg-canvas border-2 border-accent dark:border-white shadow-md scale-110" : "bg-canvas border border-line opacity-60 hover:opacity-100 hover:scale-105"
                         }`}
                     >
                         <Image 
@@ -159,11 +166,11 @@ export default function ProfilePage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-[24px] border border-line bg-surface p-6">
+        <article className="rounded-[24px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
           <p className="text-sm font-medium text-muted">Duka Identity</p>
           <h2 className="mt-1 text-xl font-semibold">Your Shop</h2>
           
-          <label className="mt-6 block text-sm font-medium" htmlFor="shop-name">Shop name</label>
+          <label className="mt-6 block text-sm font-medium text-ink/80" htmlFor="shop-name">Shop name</label>
           <input 
             id="shop-name" 
             value={shopName} 
@@ -171,7 +178,7 @@ export default function ProfilePage() {
             className="mt-2 w-full rounded-xl border border-line bg-canvas px-4 py-3 outline-none focus:border-ink transition-colors" 
           />
           
-          <p className="mt-6 block text-sm font-medium">Shop theme</p>
+          <p className="mt-6 block text-sm font-medium text-ink/80">Shop theme</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {shopThemes.map((theme) => (
                 <button 
@@ -179,7 +186,9 @@ export default function ProfilePage() {
                     type="button" 
                     onClick={() => setShopTheme(theme.value)} 
                     className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${theme.className} ${
-                        shopTheme === theme.value ? "border-ink ring-2 ring-ink/20 shadow-sm" : "border-transparent opacity-80 hover:opacity-100"
+                        shopTheme === theme.value 
+                          ? "ring-2 ring-ink/30 border-ink dark:ring-white/40 dark:border-white shadow-sm scale-105" 
+                          : "border-transparent opacity-70 hover:opacity-100 hover:scale-[1.03]"
                     }`}
                 >
                     {theme.label}
@@ -188,27 +197,27 @@ export default function ProfilePage() {
           </div>
         </article>
 
-        <article className="rounded-[24px] border border-line bg-surface p-6">
+        <article className="rounded-[24px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
           <p className="text-sm font-medium text-muted">Your collection</p>
           <h2 className="mt-1 text-xl font-semibold">Little wins</h2>
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <BadgeCard icon="🌟" title="First steps" detail="Start your duka" unlocked={Boolean(progress)} />
-            <BadgeCard icon="🧮" title="Careful counter" detail="Answer correctly" unlocked={(progress?.correct_answers ?? 0) > 0} />
-            <BadgeCard icon="🛍️" title="Helpful seller" detail="Complete a mission" unlocked={(progress?.missions_completed ?? 0) > 0} />
-            <BadgeCard icon="🔥" title="On a roll" detail="Build a streak" unlocked={(progress?.daily_streak_days ?? 0) > 0} />
+            <BadgeCard icon={Store01Icon} title="First steps" detail="Start your duka" unlocked={Boolean(progress)} />
+            <BadgeCard icon={Award02Icon} title="Careful counter" detail="Answer correctly" unlocked={(progress?.correct_answers ?? 0) > 0} />
+            <BadgeCard icon={CheckmarkCircle02Icon} title="Helpful seller" detail="Complete a mission" unlocked={(progress?.missions_completed ?? 0) > 0} />
+            <BadgeCard icon={FireIcon} title="On a roll" detail="Build a streak" unlocked={(progress?.daily_streak_days ?? 0) > 0} />
           </div>
         </article>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <Link href="/settings" className="group flex items-center gap-4 rounded-[20px] border border-line bg-surface p-5 transition-colors hover:bg-canvas">
+        <Link href="/settings" className="group flex items-center gap-4 rounded-[20px] border border-line bg-surface p-5 transition-all duration-300 hover:bg-canvas hover:scale-[1.02] hover:shadow-md active:scale-[0.98]">
           <span className="grid size-11 place-items-center rounded-2xl bg-canvas"><Settings02Icon size={21} color="currentColor" /></span>
-          <span className="min-w-0 flex-1"><strong className="block">Settings</strong><span className="mt-1 block text-sm text-muted">Appearance, text, and sound</span></span>
+          <span className="min-w-0 flex-1"><strong className="block text-ink">Settings</strong><span className="mt-1 block text-sm text-muted">Appearance, text, and sound</span></span>
           <span className="text-xl text-muted transition-transform group-hover:translate-x-1">›</span>
         </Link>
-        <Link href="/adventure" className="group flex items-center gap-4 rounded-[20px] border border-line bg-surface p-5 transition-colors hover:bg-canvas">
+        <Link href="/adventure" className="group flex items-center gap-4 rounded-[20px] border border-line bg-surface p-5 transition-all duration-300 hover:bg-canvas hover:scale-[1.02] hover:shadow-md active:scale-[0.98]">
           <span className="grid size-11 place-items-center rounded-2xl bg-canvas"><Award01Icon size={21} color="currentColor" /></span>
-          <span className="min-w-0 flex-1"><strong className="block">Missions & Progress</strong><span className="mt-1 block text-sm text-muted">View your learning stats</span></span>
+          <span className="min-w-0 flex-1"><strong className="block text-ink">Explore Adventure</strong><span className="mt-1 block text-sm text-muted">Start missions and progress</span></span>
           <span className="text-xl text-muted transition-transform group-hover:translate-x-1">›</span>
         </Link>
       </section>
@@ -221,12 +230,22 @@ export default function ProfilePage() {
   );
 }
 
-function BadgeCard({ icon, title, detail, unlocked }: { icon: string; title: string; detail: string; unlocked: boolean }) {
+function BadgeCard({ icon: Icon, title, detail, unlocked }: { icon: React.ComponentType<{ size?: number; className?: string }>; title: string; detail: string; unlocked: boolean }) {
   return (
-    <div className={`rounded-2xl border p-3 ${unlocked ? "border-yellow-200 bg-yellow-50" : "border-line bg-canvas opacity-50"}`}>
-        <span className="text-2xl">{unlocked ? icon : "🔒"}</span>
-        <p className="mt-2 text-sm font-semibold">{title}</p>
-        <p className="mt-1 text-xs text-muted">{unlocked ? detail : "Keep playing to unlock"}</p>
+    <div className={`rounded-2xl border p-4 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-md ${
+      unlocked 
+        ? "border-emerald-200/60 bg-emerald-50/40 dark:border-emerald-900/20 dark:bg-emerald-950/10" 
+        : "border-line bg-canvas/45 opacity-65"
+    }`}>
+        <div className={`grid size-9 place-items-center rounded-xl ${
+          unlocked 
+            ? "bg-emerald-100 dark:bg-emerald-900/40 text-[#047857] dark:text-[#30D158]" 
+            : "bg-line/45 text-muted"
+        }`}>
+          {unlocked ? <Icon size={18} className="stroke-[2.5]" /> : <LockSVG />}
+        </div>
+        <p className="mt-3 text-sm font-bold text-ink">{title}</p>
+        <p className="mt-1 text-xs text-muted leading-relaxed">{unlocked ? detail : "Keep playing to unlock"}</p>
     </div>
   );
 }

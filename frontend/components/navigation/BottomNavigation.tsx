@@ -10,7 +10,7 @@ import {
 } from "hugeicons-react";
 
 const items = [
-  { href: "/dashboard", icon: DashboardSquare01Icon, label: "Dashboard" },
+  { href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" },
   { href: "/shop", icon: ShoppingBag01Icon, label: "Shop" },
   { href: "/adventure", icon: AdventureIcon, label: "Play" }
 ];

@@ -11,6 +11,8 @@ import {
   CustomerConversationPanel,
   type CustomerConversationMessage,
 } from "@/components/game/CustomerConversationPanel";
+import { printSaleReceipt } from "@/components/game/SaleReceipt";
+import { Receipt3DModal } from "@/components/game/Receipt3DModal";
 import { triggerSensoryFeedback } from "@/features/feedback/sensory-feedback";
 import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { gameplayApi } from "@/features/gameplay/api";
@@ -50,7 +52,8 @@ export function ShopCounter() {
   const dismissToast = useToastStore((state) => state.dismissToast);
   const queryClient = useQueryClient();
   const [answer, setAnswer] = useState("");
-  const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary } | null>(null);
+  const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary; basket: Basket; customerName: string } | null>(null);
+  const [showReceipt3D, setShowReceipt3D] = useState(false);
   const [offlineScenario, setOfflineScenario] = useState<CachedScenario | null>(null);
   const [offlineBasket, setOfflineBasket] = useState<Record<string, number>>({});
   const [customerConversation, setCustomerConversation] = useState<CustomerConversationMessage[]>(() => {
@@ -87,6 +90,7 @@ export function ShopCounter() {
     enabled: Boolean(sessionId && customer),
     staleTime: 0,
   });
+  const shopQuery = useQuery({ queryKey: ["shop"], queryFn: gameplayApi.shop });
   const nextCustomerMutation = useMutation({
     mutationFn: gameplayApi.nextCustomer,
     onSuccess: (result) => {
@@ -146,8 +150,9 @@ export function ShopCounter() {
         return;
       }
       const summary = await gameplayApi.sessionSummary(sessionId ?? "");
+      if (!basket) return;
       clearCurrentCustomer();
-      setCompletion({ checkout: result, summary });
+      setCompletion({ checkout: result, summary, basket, customerName: customer?.name ?? "Customer" });
       void queryClient.invalidateQueries({ queryKey: ["inventory", sessionId] });
       void queryClient.invalidateQueries({ queryKey: ["player-progress"] });
       void queryClient.invalidateQueries({ queryKey: ["motivation"] });
@@ -309,13 +314,53 @@ export function ShopCounter() {
   }
 
   if (completion) {
+    const reward = completion.checkout.reward;
+    const mission = completion.summary.mission;
+    const missionProgress = Math.min(100, Math.round((mission.progress / mission.target) * 100));
+    const accuracy = completion.summary.questions_attempted
+      ? Math.round((completion.summary.correct_answers / completion.summary.questions_attempted) * 100)
+      : null;
+    const rewardMessage = (reward?.message ?? "Wonderful work at the counter!").replace(/[—–]/g, ": ");
+
     return (
-      <motion.section initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="rounded-[24px] border border-line bg-surface p-6 text-center">
-        <p className="text-sm font-medium text-muted">Sale complete</p>
-        <h1 className="mt-1 text-2xl font-semibold">{completion.checkout.reward?.message ?? "Wonderful work at the counter!"}</h1>
-        <div className="mt-6 grid grid-cols-3 gap-3"><Stat label="Coins" value={completion.summary.coins_earned} /><Stat label="XP" value={completion.summary.xp_earned} /><Stat label="Stars" value={completion.summary.stars_earned} /></div>
-        <p className="mt-5 text-muted">Mission: {completion.summary.mission.title} ({completion.summary.mission.progress}/{completion.summary.mission.target})</p>
-        <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => { setCompletion(null); if (sessionId) nextCustomerMutation.mutate(sessionId); }} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white">Serve next customer</motion.button>
+      <motion.section initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-4xl rounded-[24px] border border-line bg-surface p-6 sm:p-8">
+        <header className="text-center">
+          <span className="inline-grid size-12 place-items-center rounded-2xl bg-leaf/15 text-2xl" aria-hidden="true">✓</span>
+          <p className="mt-3 text-sm font-semibold text-muted">Sale complete</p>
+          <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{rewardMessage}</h1>
+        </header>
+        <div className="mt-7 grid grid-cols-3 gap-3"><Stat label="Coins earned" value={reward?.coins ?? 0} prefix="+" /><Stat label="XP earned" value={reward?.xp ?? 0} prefix="+" /><Stat label="Stars earned" value={reward?.stars ?? 0} prefix="+" /></div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-[1.35fr_.65fr]">
+          <article className="rounded-[20px] bg-canvas p-5"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">{mission.title}</p><p className="mt-1 text-sm text-muted">{mission.completed ? "Mission complete. Brilliant work!" : `${mission.target - mission.progress} more to finish your mission.`}</p></div><span className="shrink-0 text-sm font-bold text-accent">{mission.progress}/{mission.target}</span></div><div className="mt-4 h-2.5 overflow-hidden rounded-full bg-line"><div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${missionProgress}%` }} /></div></article>
+          <article className="rounded-[20px] bg-canvas p-5"><p className="text-sm font-semibold">Session so far</p><p className="mt-2 text-sm text-muted">{completion.summary.customers_served} customer{completion.summary.customers_served === 1 ? "" : "s"} helped{accuracy !== null ? ` · ${accuracy}% maths accuracy` : ""}</p>{completion.summary.achievements.length > 0 && <p className="mt-2 text-sm font-medium text-leaf">Unlocked: {completion.summary.achievements.at(-1)}</p>}</article>
+        </div>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <button 
+            type="button" 
+            onClick={() => setShowReceipt3D(true)} 
+            className="rounded-full border border-line px-6 py-3 font-semibold text-ink hover:bg-canvas transition-transform hover:scale-[1.03]"
+          >
+            Print receipt
+          </button>
+          <motion.button 
+            type="button" 
+            whileTap={{ scale: 0.97 }} 
+            onClick={() => { setCompletion(null); if (sessionId) nextCustomerMutation.mutate(sessionId); }} 
+            className="rounded-full bg-accent px-6 py-3 font-semibold text-white hover:scale-[1.03] transition-transform"
+          >
+            Serve next customer
+          </motion.button>
+        </div>
+
+        {showReceipt3D && (
+          <Receipt3DModal
+            shopName={shopQuery.data?.name ?? "Smart Duka"}
+            customerName={completion.customerName}
+            basket={completion.basket}
+            reward={reward}
+            onClose={() => setShowReceipt3D(false)}
+          />
+        )}
       </motion.section>
     );
   }
@@ -402,6 +447,6 @@ export function ShopCounter() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return <div className="rounded-[16px] bg-canvas p-3"><p className="text-sm text-muted">{label}</p><p className="text-xl font-semibold">{value}</p></div>;
+function Stat({ label, value, prefix = "" }: { label: string; value: number; prefix?: string }) {
+  return <div className="rounded-[16px] bg-canvas p-3 text-center"><p className="text-xs font-medium text-muted">{label}</p><p className="mt-1 text-xl font-semibold">{prefix}{value}</p></div>;
 }

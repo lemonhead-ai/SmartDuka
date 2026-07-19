@@ -22,10 +22,10 @@ export const avatarChoices: { value: KidAvatar; label: string }[] = [
 ];
 
 export const shopThemes: { value: ShopTheme; label: string; className: string }[] = [
-  { value: "sunrise", label: "Sunrise", className: "bg-orange-100" },
-  { value: "ocean", label: "Ocean", className: "bg-blue-100" },
-  { value: "leaf", label: "Leaf", className: "bg-green-100" },
-  { value: "berry", label: "Berry", className: "bg-pink-100" }
+  { value: "sunrise", label: "Sunrise", className: "bg-orange-100/70 dark:bg-orange-950/40 text-orange-900 dark:text-orange-200 border-orange-200 dark:border-orange-900/50" },
+  { value: "ocean", label: "Ocean", className: "bg-blue-100/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-900/50" },
+  { value: "leaf", label: "Leaf", className: "bg-green-100/70 dark:bg-green-950/40 text-green-900 dark:text-green-200 border-green-200 dark:border-green-900/50" },
+  { value: "berry", label: "Berry", className: "bg-pink-100/70 dark:bg-pink-950/40 text-pink-900 dark:text-pink-200 border-pink-200 dark:border-pink-900/50" }
 ];
 
 export const useKidProfileStore = create<KidProfile>()(persist((set) => ({

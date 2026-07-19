@@ -24,7 +24,9 @@ function getAudioContext(): AudioContext | null {
   ).webkitAudioContext;
   if (!AudioContextConstructor) return null;
   audioContext ??= new AudioContextConstructor();
-  if (audioContext.state === "suspended") void audioContext.resume();
+  if (audioContext.state === "suspended") {
+    audioContext.resume().catch(() => {});
+  }
   return audioContext;
 }
 

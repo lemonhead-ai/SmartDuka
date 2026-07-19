@@ -39,11 +39,10 @@ export default function DashboardPage() {
           <p className="mt-2 text-muted">Your live progress appears here as you serve customers.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-[20px] border border-line bg-surface px-4 py-3">
-            <p className="text-xs font-medium text-muted">DUKA COINS</p>
-            <p className="font-semibold">{progress?.coins_earned ?? 0}</p>
+          <div className="rounded-[20px] border border-line bg-surface px-5 py-3 shadow-sm hover:scale-[1.02] transition-transform">
+            <p className="text-xs font-medium text-muted tracking-wider">DUKA COINS</p>
+            <p className="text-lg font-black text-ink">{progress?.coins_earned ?? 0}</p>
           </div>
-          <Link href="/shop" className="rounded-[14px] bg-ink px-4 py-3 text-sm font-bold text-white">Open shop</Link>
         </div>
       </header>
 
@@ -59,9 +58,9 @@ export default function DashboardPage() {
 
       <section className="grid gap-6 lg:grid-cols-[1.05fr_.95fr]">
         <ShopPreview />
-        <article className="rounded-[24px] border border-line bg-surface p-6">
+        <article className="rounded-[24px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
           <p className="text-sm font-medium text-muted">Your learning journey</p>
-          <h2 className="mt-1 text-xl font-semibold">Live progress</h2>
+          <h2 className="mt-1 text-xl font-semibold text-ink">Live progress</h2>
           <div className="mt-6 space-y-5">
             <ProgressBar label="Answer accuracy" value={accuracy} tone="leaf" />
             <ProgressBar label="Mission progress" value={motivationQuery.data ? Math.round((motivationQuery.data.daily_mission.progress / motivationQuery.data.daily_mission.target) * 100) : 0} tone="sky" />

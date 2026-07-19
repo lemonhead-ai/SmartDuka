@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -8,6 +9,15 @@ import { useQuery } from "@tanstack/react-query";
 import { AdventureIcon, SidebarLeftIcon, SidebarRightIcon, DashboardSquare01Icon, ShoppingBag01Icon } from "hugeicons-react";
 import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 import { gameplayApi } from "@/features/gameplay/api";
+import { useKidProfileStore } from "@/features/kids/store";
+
+const avatarImageMap: Record<string, string> = {
+  mario: "/illustrations/mario.PNG",
+  milo: "/mascots/milo.PNG",
+  stitch: "/illustrations/stitch.PNG",
+  kirby: "/illustrations/kirby.PNG",
+  jack: "/illustrations/jack.PNG"
+};
 
 const items = [{ href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" }, { href: "/shop", icon: ShoppingBag01Icon, label: "My shop" }, { href: "/adventure", icon: AdventureIcon, label: "Missions" }];
 
@@ -50,10 +60,7 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
 
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
   const displayName = localName || progressQuery.data?.student_name || "Shopkeeper";
-  const nameParts = displayName.trim().split(" ");
-  const initials = nameParts.length > 1 
-    ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase() 
-    : displayName.slice(0, 2).toUpperCase();
+  const avatar = useKidProfileStore((state) => state.avatar);
 
   return (
     <motion.aside className={`tahoe-sidebar relative hidden flex-col border-r border-line px-3 py-5 lg:flex ${resizing ? "select-none" : ""}`} animate={{ width: expanded ? sidebarWidth : 68 }} transition={resizing ? { duration: 0 } : { type: "tween", duration: expanded ? 0.35 : 0.28, ease: [0.32, 0.72, 0, 1] }}>
@@ -106,8 +113,14 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
 
       <div className={`mt-auto overflow-hidden rounded-[14px] ${expanded ? "" : "size-11"}`}>
         <Link href="/profile" aria-label={!expanded ? "Profile" : undefined} className={expanded ? "flex items-center gap-3 px-[10px] py-[10px] hover:bg-[rgba(0,0,0,0.04)] transition-colors" : "flex items-center justify-center size-11 hover:bg-[rgba(0,0,0,0.04)] transition-colors"}>
-          <div className="grid size-8 shrink-0 place-items-center rounded-full bg-line text-[11px] font-bold text-ink">
-            {initials}
+          <div className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas border border-line overflow-hidden p-0.5 relative">
+            <Image 
+              src={avatarImageMap[avatar] || "/mascots/milo.PNG"} 
+              alt="Your profile avatar" 
+              width={28} 
+              height={28} 
+              className="w-full h-full object-contain"
+            />
           </div>
           {expanded && (
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="whitespace-nowrap font-medium text-sm text-ink truncate">
