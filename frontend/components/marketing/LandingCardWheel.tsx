@@ -85,14 +85,7 @@ export function LandingCardWheel() {
       // Speed: 0.15 cards per second (takes ~6.7 seconds to scroll one card)
       setScrollPos((prev) => {
         const next = (prev + 0.15 * delta) % cards.length;
-        
-        // Play tick sound when crossing a card threshold
-        const rounded = Math.round(next) % cards.length;
-        if (rounded !== lastPlayedIndex.current) {
-          lastPlayedIndex.current = rounded;
-          playCarouselTick();
-        }
-        
+        lastPlayedIndex.current = Math.round(next) % cards.length;
         return next;
       });
 
