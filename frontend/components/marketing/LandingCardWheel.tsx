@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useRef, useState, type PointerEvent, type WheelEvent } from "react";
+import { useRef, useState, useEffect, type PointerEvent, type WheelEvent } from "react";
 
 import { playCarouselTick } from "@/features/feedback/sensory-feedback";
 
@@ -44,31 +44,80 @@ const cards = [
   }
 ];
 
-function circularOffset(index: number, activeIndex: number): number {
-  let offset = index - activeIndex;
-  if (offset > cards.length / 2) offset -= cards.length;
-  if (offset < -cards.length / 2) offset += cards.length;
-  return offset;
-}
-
 export function LandingCardWheel() {
-  const [activeIndex, setActiveIndex] = useState(2);
+  const [scrollPos, setScrollPos] = useState(2);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSnapping, setIsSnapping] = useState(false);
+
+  const scrollPosRef = useRef(2);
   const lastWheelChange = useRef(0);
   const dragStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
   const lastPlayedIndex = useRef(2);
+  const snapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const cardWidth = 160; // drag distance per card shift
 
+  // Sync ref with state
+  useEffect(() => {
+    scrollPosRef.current = scrollPos;
+  }, [scrollPos]);
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    };
+  }, []);
+
+  // Continuous smooth auto-scroll when idle
+  useEffect(() => {
+    if (isDragging || isSnapping) return;
+
+    let lastTime = performance.now();
+    let frameId: number;
+
+    const tick = (time: number) => {
+      const delta = (time - lastTime) / 1000;
+      lastTime = time;
+
+      // Speed: 0.15 cards per second (takes ~6.7 seconds to scroll one card)
+      setScrollPos((prev) => {
+        const next = (prev + 0.15 * delta) % cards.length;
+        
+        // Play tick sound when crossing a card threshold
+        const rounded = Math.round(next) % cards.length;
+        if (rounded !== lastPlayedIndex.current) {
+          lastPlayedIndex.current = rounded;
+          playCarouselTick();
+        }
+        
+        return next;
+      });
+
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [isDragging, isSnapping]);
+
   const move = (direction: number) => {
-    setActiveIndex((current) => {
-      const next = (current + direction + cards.length) % cards.length;
-      lastPlayedIndex.current = next;
-      return next;
+    if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    setIsSnapping(true);
+
+    setScrollPos((current) => {
+      const target = (Math.round(current) + direction + cards.length) % cards.length;
+      lastPlayedIndex.current = target;
+      return target;
     });
     playCarouselTick();
+
+    // Snap active for 400ms to allow transition to settle before resuming continuous auto-scroll
+    snapTimeoutRef.current = setTimeout(() => {
+      setIsSnapping(false);
+    }, 400);
   };
 
   const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
@@ -82,21 +131,28 @@ export function LandingCardWheel() {
 
   const finishDrag = () => {
     if (dragStartX.current === null) return;
+    if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    setIsSnapping(true);
+
     const cardsToMove = Math.round(-dragOffsetRef.current / cardWidth);
-    const targetIndex = (activeIndex + cardsToMove % cards.length + cards.length) % cards.length;
+    const targetIndex = (Math.round(scrollPosRef.current) + cardsToMove + cards.length) % cards.length;
     
-    setActiveIndex(targetIndex);
-    lastPlayedIndex.current = targetIndex;
-    
+    setScrollPos(targetIndex);
     setDragOffset(0);
     dragOffsetRef.current = 0;
     setIsDragging(false);
     dragStartX.current = null;
+
+    snapTimeoutRef.current = setTimeout(() => {
+      setIsSnapping(false);
+    }, 400);
   };
 
   const startDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
     dragStartX.current = event.clientX;
     setIsDragging(true);
+    setIsSnapping(false);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -108,7 +164,7 @@ export function LandingCardWheel() {
     setDragOffset(nextOffset);
 
     // Play tick sound dynamically as cards cross the center during drag
-    const rounded = Math.round(activeIndex - (nextOffset / cardWidth));
+    const rounded = Math.round(scrollPosRef.current - (nextOffset / cardWidth));
     const normalizedIndex = (rounded % cards.length + cards.length) % cards.length;
     if (normalizedIndex !== lastPlayedIndex.current) {
       lastPlayedIndex.current = normalizedIndex;
@@ -117,7 +173,8 @@ export function LandingCardWheel() {
   };
 
   // Continuous current position based on active index and drag offset
-  const currentPosition = activeIndex - (dragOffset / cardWidth);
+  const currentPosition = scrollPos - (dragOffset / cardWidth);
+  const isAutoScrolling = !isDragging && !isSnapping;
 
   return (
     <section className="relative h-[clamp(205px,34vh,360px)] shrink-0" aria-label="Smart Duka learning activities">
@@ -153,13 +210,13 @@ export function LandingCardWheel() {
                 animate={{ 
                   x: offset * 180, // Spacing remains fixed relative to the center
                   y: distance * 28, 
-                  scale: distance === 0 ? 1.08 : distance === 1 ? 0.88 : 0.72, 
+                  scale: distance <= 1 ? 1.08 - 0.2 * distance : Math.max(0.72, 0.88 - 0.16 * (distance - 1)), 
                   rotate: offset * 8, 
                   opacity: distance > 2 ? 0 : 1 - (distance * 0.4)
                 }} 
                 transition={{ 
-                  duration: isDragging ? 0 : 0.28, 
-                  ease: [0.32, 0.72, 0, 1] 
+                  duration: isDragging ? 0 : isAutoScrolling ? 0.05 : 0.28, 
+                  ease: isDragging || isAutoScrolling ? "linear" : [0.32, 0.72, 0, 1] 
                 }} 
                 className="absolute bottom-2 flex h-[clamp(165px,27vh,300px)] w-[148px] sm:w-[230px] flex-col overflow-visible rounded-[26px] p-4 sm:p-5 text-left shadow-2xl group cursor-pointer" 
                 style={{ 
