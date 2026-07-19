@@ -55,6 +55,7 @@ class Shop(Base):
     )
     name: Mapped[str] = mapped_column(String(80))
     category: Mapped[str] = mapped_column(String(40), index=True)
+    theme: Mapped[str] = mapped_column(String(20), default="leaf")
     cash_balance_kes: Mapped[int] = mapped_column(Integer, default=500)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

@@ -94,6 +94,7 @@ export const gameplayApi = {
   shop: () => request<Duka>("/shop"),
   ledger: () => request<ShopLedger>("/shop/ledger"),
   createShop: (name: string, itemIds: string[]) => request<Duka>("/shop", { method: "POST", body: JSON.stringify({ name, item_ids: itemIds }) }),
+  updateShop: (details: { name?: string; theme?: Duka["theme"] }) => request<Duka>("/shop", { method: "PATCH", body: JSON.stringify(details) }),
   addShopItems: (itemIds: string[]) => request<Duka>("/shop/items", { method: "POST", body: JSON.stringify({ item_ids: itemIds }) }),
   restock: (itemId: string, quantity: number) => request<Duka>("/shop/restock", { method: "POST", body: JSON.stringify({ item_id: itemId, quantity }) }),
   chat: (sessionId: string, message: string) => request<ChatResponse>(`/gameplay/sessions/${sessionId}/chat`, { method: "POST", body: JSON.stringify({ message }) })

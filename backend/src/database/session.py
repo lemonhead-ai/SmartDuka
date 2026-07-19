@@ -43,7 +43,10 @@ class Database:
                 "motivation_state": "JSON NOT NULL DEFAULT '{}'",
             },
             "inventory_items": {"supplier_cost_kes": "INTEGER NOT NULL DEFAULT 0"},
-            "shops": {"cash_balance_kes": "INTEGER NOT NULL DEFAULT 500"},
+            "shops": {
+                "cash_balance_kes": "INTEGER NOT NULL DEFAULT 500",
+                "theme": "VARCHAR(20) NOT NULL DEFAULT 'leaf'",
+            },
         }
         for table_name, columns in additions.items():
             if table_name not in table_names:

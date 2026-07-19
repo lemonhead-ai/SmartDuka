@@ -9,6 +9,7 @@ from src.contracts.shop import (
     ShopResponse,
     ShopSetupRequest,
     ShopStockItemResponse,
+    UpdateShopRequest,
 )
 from src.core.exceptions import ApplicationError
 from src.database.repositories.gameplay import GameplayRepository
@@ -66,6 +67,7 @@ async def get_shop(db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper) -
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        theme=shop.theme,
         cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
     )
@@ -96,6 +98,7 @@ async def create_shop(
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        theme=shop.theme,
         cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
     )
@@ -126,6 +129,34 @@ async def add_shop_items(
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        theme=shop.theme,
+        cash_balance_kes=shop.cash_balance_kes,
+        items=[stock_item_response(stock_row, item) for stock_row, item in stock],
+    )
+
+
+@router.patch("", response_model=ShopResponse, summary="Update duka identity")
+async def update_shop(
+    payload: UpdateShopRequest,
+    db: DatabaseSession,
+    shopkeeper: OptionalCurrentShopkeeper,
+) -> ShopResponse:
+    repository = GameplayRepository(db)
+    student = await owner_student(repository, shopkeeper)
+    shop = await repository.get_shop(student.id) if student else None
+    if shop is None:
+        raise ApplicationError("Create your duka before updating it.", status_code=404)
+    if payload.name is not None:
+        shop.name = payload.name.strip()
+    if payload.theme is not None:
+        shop.theme = payload.theme
+    await db.commit()
+    stock = await repository.list_all_shop_stock(student.id)
+    return ShopResponse(
+        id=shop.id,
+        name=shop.name,
+        category=shop.category,
+        theme=shop.theme,
         cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
     )
@@ -158,6 +189,7 @@ async def restock_shop_item(
         id=shop.id,
         name=shop.name,
         category=shop.category,
+        theme=shop.theme,
         cash_balance_kes=shop.cash_balance_kes,
         items=[stock_item_response(stock_row, item) for stock_row, item in stock],
     )

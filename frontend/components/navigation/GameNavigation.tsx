@@ -28,13 +28,7 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
   const [expanded, setExpanded] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [resizing, setResizing] = useState(false);
-  const [localName, setLocalName] = useState("");
   const [activePath, setActivePath] = useState(pathname);
-
-  useEffect(() => {
-    const savedName = window.localStorage.getItem("smart-duka-profile-name");
-    if (savedName) setLocalName(savedName);
-  }, []);
 
   useEffect(() => {
     if (!resizing) return;
@@ -59,7 +53,7 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
   }, [pathname]);
 
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
-  const displayName = localName || progressQuery.data?.student_name || "Shopkeeper";
+  const displayName = progressQuery.data?.student_name || "Shopkeeper";
   const avatar = useKidProfileStore((state) => state.avatar);
 
   return (

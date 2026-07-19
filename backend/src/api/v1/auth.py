@@ -8,6 +8,7 @@ from src.contracts.auth import (
     ShopkeeperResponse,
     SignInRequest,
     SignUpRequest,
+    UpdateProfileRequest,
 )
 from src.core.config import Settings
 from src.core.exceptions import ApplicationError
@@ -97,6 +98,17 @@ async def sign_out(
 @router.get("/me", response_model=AuthenticatedShopkeeperResponse)
 async def current_shopkeeper(shopkeeper: CurrentShopkeeper) -> AuthenticatedShopkeeperResponse:
     return AuthenticatedShopkeeperResponse(shopkeeper=response_for(shopkeeper))
+
+
+@router.patch("/me", response_model=AuthenticatedShopkeeperResponse)
+async def update_current_shopkeeper(
+    payload: UpdateProfileRequest,
+    shopkeeper: CurrentShopkeeper,
+    db: DatabaseSession,
+) -> AuthenticatedShopkeeperResponse:
+    updated = await AuthRepository(db).update_profile_name(shopkeeper, payload.display_name.strip())
+    await db.commit()
+    return AuthenticatedShopkeeperResponse(shopkeeper=response_for(updated))
 
 
 @router.post("/password-reset", response_model=MessageResponse, status_code=status.HTTP_202_ACCEPTED)

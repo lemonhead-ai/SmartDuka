@@ -33,6 +33,10 @@ class SignInRequest(EmailRequestModel):
     password: str = Field(min_length=1, max_length=128)
 
 
+class UpdateProfileRequest(BaseModel):
+    display_name: str = Field(min_length=2, max_length=100)
+
+
 class AuthenticatedShopkeeperResponse(BaseModel):
     shopkeeper: ShopkeeperResponse
 

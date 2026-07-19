@@ -180,7 +180,7 @@ export type PlayerProgress = {
 export type ApiError = { detail: string; request_id?: string; errors?: { field?: string; message: string }[] };
 
 export type CatalogItem = { id: string; name: string; category: string; price_kes: number; image_placeholder: string };
-export type Duka = { id: string; name: string; category: string; cash_balance_kes: number; items: (CatalogItem & { stock: number; restock_cost_kes: number })[] };
+export type Duka = { id: string; name: string; category: string; theme: "sunrise" | "ocean" | "leaf" | "berry"; cash_balance_kes: number; items: (CatalogItem & { stock: number; restock_cost_kes: number })[] };
 export type ShopLedgerEntry = { id: string; entry_type: "sale" | "restock" | "new_stock"; amount_kes: number; description: string; created_at: string };
 export type ShopLedger = { cash_balance_kes: number; daily_revenue_kes: number; daily_expenses_kes: number; daily_profit_kes: number; sales_count: number; recent_entries: ShopLedgerEntry[] };
 

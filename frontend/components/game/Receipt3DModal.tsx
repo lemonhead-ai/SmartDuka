@@ -47,15 +47,19 @@ export function Receipt3DModal({
       return;
     }
 
-    // --- 1. Texture Generation (2D Canvas) ---
+    // --- 1. Texture Generation (2D Canvas with dynamic height) ---
+    const baseHeight = 620; // header, dividers, rewards, and footers space
+    const itemHeight = basket.lines.length * 42;
+    const H = Math.min(1024, baseHeight + itemHeight);
+    const textureHeight = H * 2;
+
     const texCanvas = document.createElement("canvas");
     texCanvas.width = 1024;
-    texCanvas.height = 2048;
+    texCanvas.height = textureHeight;
     const ctx = texCanvas.getContext("2d");
     if (ctx) {
       ctx.scale(2, 2);
       const W = 512;
-      const H = 1024;
 
       // Paper background (creamy receipt paper look)
       ctx.fillStyle = "#faf9f5";
@@ -119,7 +123,7 @@ export function Receipt3DModal({
         ctx.fillText(`+${reward.coins} coins   +${reward.xp} XP   +${reward.stars} stars`, W / 2, startY + 110);
       }
 
-      // Footer
+      // Footer (dynamically offset from dynamic H height)
       ctx.fillStyle = "#555";
       ctx.font = "16px monospace";
       ctx.textAlign = "center";
@@ -204,12 +208,12 @@ export function Receipt3DModal({
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    // --- 3. Physics Simulation Setup ---
+    // --- 3. Physics Simulation Setup with dynamic aspect ratio height ---
     const numX = 22;
     const numY = 44;
     const numParticles = numX * numY;
     const width = 2.8;
-    const height = 5.6;
+    const height = width * (H / 512); // Shortened receipt length based on item count!
 
     type Particle = { x: number; y: number; z: number; ox: number; oy: number; oz: number };
     const particles: Particle[] = [];
@@ -279,8 +283,8 @@ export function Receipt3DModal({
 
     gl.enable(gl.DEPTH_TEST);
 
-    // Camera setup - top row aligned with slot by adjusting camPos
-    const camPos = { x: 0, y: -2.1, z: 7.6 };
+    // Camera setup - keep top row aligned with dispenser slot by keeping Y translation constant
+    const camPos = { x: 0, y: -2.0, z: 7.6 };
     const fov = (43 * Math.PI) / 180;
     let aspect = 1;
 
@@ -575,10 +579,10 @@ export function Receipt3DModal({
     >
       <div
         ref={containerRef}
-        className="relative w-full max-w-2xl h-[70vh] rounded-[24px] overflow-hidden border border-[#d2d0c6] dark:border-zinc-800/85 bg-[#deddd5] dark:bg-[#111112] shadow-2xl flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none"
+        className="relative w-full max-w-md h-[70vh] aspect-[3/4.2] rounded-[24px] overflow-hidden border border-[#d2d0c6] dark:border-zinc-800/85 bg-[#deddd5] dark:bg-[#111112] shadow-2xl flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none"
       >
         {/* Repeated Low-opacity Mascot Doodle Grid */}
-        <div className="absolute inset-0 grid grid-cols-4 sm:grid-cols-6 gap-6 p-6 opacity-[0.06] dark:opacity-[0.03] pointer-events-none select-none overflow-hidden z-0">
+        <div className="absolute inset-0 grid grid-cols-4 gap-6 p-6 opacity-[0.06] dark:opacity-[0.03] pointer-events-none select-none overflow-hidden z-0">
           {Array.from({ length: 24 }).map((_, idx) => (
             <div key={idx} className="flex items-center justify-center aspect-square">
               <img
@@ -593,8 +597,8 @@ export function Receipt3DModal({
         {/* 3D WebGL Canvas Layer */}
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-0" />
         
-        {/* Receipt Slot Dispenser (Matches iphone slot look) */}
-        <div className="absolute top-[12%] left-1/2 -translate-x-1/2 w-[55%] h-[18px] bg-black dark:bg-[#050505] rounded-full border border-[#cac8be] dark:border-zinc-800 shadow-inner z-10 flex items-center justify-center">
+        {/* Receipt Slot Dispenser (Aligns precisely with screenY 16.5% top row of paper) */}
+        <div className="absolute top-[16.5%] left-1/2 -translate-x-1/2 w-[71%] h-[18px] bg-black dark:bg-[#050505] rounded-full border border-[#cac8be] dark:border-zinc-800 shadow-inner z-10 flex items-center justify-center">
           <div className="w-[98%] h-[6px] bg-zinc-950 rounded-full" />
         </div>
 
@@ -602,14 +606,14 @@ export function Receipt3DModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 flex size-10 items-center justify-center rounded-full bg-[#cdcbc0]/80 text-zinc-700 dark:bg-black/40 dark:text-white backdrop-blur-sm border border-[#bab8ae]/40 dark:border-white/10 hover:scale-105 active:scale-95 transition-transform"
+          className="absolute top-4 right-4 z-20 flex size-10 items-center justify-center rounded-full bg-[#cdcbc0]/85 text-zinc-700 dark:bg-black/40 dark:text-white backdrop-blur-sm border border-[#bab8ae]/40 dark:border-white/10 hover:scale-105 active:scale-95 transition-transform"
           aria-label="Close receipt"
         >
           <Cancel01Icon size={18} />
         </button>
 
         {/* Hover Hint Info */}
-        <div className="absolute bottom-6 z-20 pointer-events-none text-center bg-[#cdcbc0]/65 dark:bg-black/40 px-4 py-2 rounded-full border border-[#bab8ae]/30 dark:border-white/5 backdrop-blur-sm">
+        <div className="absolute bottom-6 z-20 pointer-events-none text-center bg-[#cdcbc0]/75 dark:bg-black/40 px-4 py-2 rounded-full border border-[#bab8ae]/30 dark:border-white/5 backdrop-blur-sm">
           <p className="text-xs sm:text-sm font-semibold tracking-wider text-zinc-700 dark:text-zinc-300">
             Grab and drag the receipt to swing it!
           </p>

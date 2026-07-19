@@ -36,10 +36,16 @@ class RestockShopItemRequest(BaseModel):
     quantity: int = Field(ge=1, le=100)
 
 
+class UpdateShopRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=80)
+    theme: Literal["sunrise", "ocean", "leaf", "berry"] | None = None
+
+
 class ShopResponse(BaseModel):
     id: UUID
     name: str
     category: str
+    theme: str
     cash_balance_kes: int = Field(ge=0)
     items: list[ShopStockItemResponse]
 

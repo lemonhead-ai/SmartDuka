@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Settings02Icon, Logout01Icon, Award01Icon, Award02Icon, CheckmarkCircle02Icon, PencilEdit01Icon, Store01Icon, FireIcon } from "hugeicons-react";
 
 import { gameplayApi } from "@/features/gameplay/api";
+import { authApi } from "@/features/auth/api";
 
 const LockSVG = () => (
   <svg className="size-5 text-muted/65" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -29,22 +30,43 @@ const avatarImageMap: Record<string, string> = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const clearSession = useGameplaySessionStore((state) => state.clearSession);
   const { signOut } = useAuth();
-  const { avatar, setAvatar, shopName, setShopName, shopTheme, setShopTheme } = useKidProfileStore();
+  const { avatar, setAvatar } = useKidProfileStore();
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
+  const accountQuery = useQuery({ queryKey: ["auth", "me"], queryFn: authApi.me, retry: false });
+  const shopQuery = useQuery({ queryKey: ["shop"], queryFn: gameplayApi.shop });
   const progress = progressQuery.data;
   
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
+  const [shopName, setShopName] = useState("");
+  const [shopTheme, setShopTheme] = useState<"sunrise" | "ocean" | "leaf" | "berry">("leaf");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const savedName = window.localStorage.getItem("smart-duka-profile-name");
-    if (savedName) setName(savedName);
-  }, []);
+    if (accountQuery.data && !editing) setName(accountQuery.data.shopkeeper.display_name);
+  }, [accountQuery.data, editing]);
+  useEffect(() => {
+    if (shopQuery.data) {
+      setShopName(shopQuery.data.name);
+      setShopTheme(shopQuery.data.theme);
+    }
+  }, [shopQuery.data]);
 
-  const displayName = name || progress?.student_name || "Shopkeeper";
+  const displayName = name || accountQuery.data?.shopkeeper.display_name || progress?.student_name || "Shopkeeper";
+  const profileMutation = useMutation({
+    mutationFn: authApi.updateProfile,
+    onSuccess: (result) => {
+      queryClient.setQueryData(["auth", "me"], result);
+      void queryClient.invalidateQueries({ queryKey: ["player-progress"] });
+    },
+  });
+  const shopMutation = useMutation({
+    mutationFn: gameplayApi.updateShop,
+    onSuccess: (shop) => queryClient.setQueryData(["shop"], shop),
+  });
 
   const logout = async () => {
     await signOut().catch(() => undefined);
@@ -53,22 +75,26 @@ export default function ProfilePage() {
     router.push("/");
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-        setName(progress?.student_name || "Shopkeeper");
+        setName(accountQuery.data?.shopkeeper.display_name || progress?.student_name || "Shopkeeper");
         setEditing(false);
         return;
     }
-    window.localStorage.setItem("smart-duka-profile-name", trimmedName);
-    setName(trimmedName);
-    setEditing(false);
+    try {
+      await profileMutation.mutateAsync(trimmedName);
+      setName(trimmedName);
+      setEditing(false);
+    } catch {
+      setName(accountQuery.data?.shopkeeper.display_name || progress?.student_name || "Shopkeeper");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") saveProfile();
+    if (e.key === "Enter") void saveProfile();
     if (e.key === "Escape") {
-        setName(window.localStorage.getItem("smart-duka-profile-name") || progress?.student_name || "Shopkeeper");
+        setName(accountQuery.data?.shopkeeper.display_name || progress?.student_name || "Shopkeeper");
         setEditing(false);
     }
   };
@@ -109,13 +135,13 @@ export default function ProfilePage() {
                         ref={inputRef}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        onBlur={saveProfile}
+                        onBlur={() => void saveProfile()}
                         onKeyDown={handleKeyDown}
                         className="text-2xl font-semibold text-center bg-canvas border border-line rounded-xl px-4 py-2 outline-none focus:border-accent w-64"
                         placeholder="Your name"
                     />
                     <button 
-                        onClick={saveProfile} 
+                        onClick={() => void saveProfile()} 
                         className="grid size-11 place-items-center rounded-xl bg-accent text-white hover:bg-accent/90"
                     >
                         <CheckmarkCircle02Icon size={24} />
@@ -177,6 +203,7 @@ export default function ProfilePage() {
             onChange={(event) => setShopName(event.target.value)} 
             className="mt-2 w-full rounded-xl border border-line bg-canvas px-4 py-3 outline-none focus:border-ink transition-colors" 
           />
+          <button type="button" onClick={() => shopMutation.mutate({ name: shopName.trim() })} disabled={shopMutation.isPending || shopName.trim().length < 2} className="mt-3 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{shopMutation.isPending ? "Saving…" : "Save shop name"}</button>
           
           <p className="mt-6 block text-sm font-medium text-ink/80">Shop theme</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -184,7 +211,7 @@ export default function ProfilePage() {
                 <button 
                     key={theme.value} 
                     type="button" 
-                    onClick={() => setShopTheme(theme.value)} 
+                    onClick={() => { setShopTheme(theme.value); shopMutation.mutate({ theme: theme.value }); }} 
                     className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${theme.className} ${
                         shopTheme === theme.value 
                           ? "ring-2 ring-ink/30 border-ink dark:ring-white/40 dark:border-white shadow-sm scale-105" 
@@ -195,6 +222,7 @@ export default function ProfilePage() {
                 </button>
             ))}
           </div>
+          <p className="mt-4 text-sm text-muted">Your duka name appears in the shop, receipts, and stock snapshot. Its theme is saved to your account too.</p>
         </article>
 
         <article className="rounded-[24px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
