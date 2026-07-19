@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +11,14 @@ import { gameplayApi } from "@/features/gameplay/api";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
 import { avatarChoices, shopThemes, useKidProfileStore } from "@/features/kids/store";
 import { useAuth } from "@/features/auth/AuthProvider";
+
+const avatarImageMap: Record<string, string> = {
+  mario: "/illustrations/mario.PNG",
+  milo: "/mascots/milo.PNG",
+  stitch: "/illustrations/stitch.PNG",
+  kirby: "/illustrations/kirby.PNG",
+  jack: "/illustrations/jack.PNG"
+};
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -76,8 +85,14 @@ export default function ProfilePage() {
         {/* Decorative background circle */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl -z-10 pointer-events-none" />
         
-        <div className="mx-auto grid size-32 place-items-center rounded-full bg-white border-4 border-line shadow-sm text-6xl shadow-elevated relative z-10">
-          {avatar}
+        <div className="mx-auto grid size-32 place-items-center rounded-full bg-white border-4 border-line shadow-sm shadow-elevated relative z-10 overflow-hidden">
+          <Image 
+            src={avatarImageMap[avatar] || "/mascots/milo.PNG"} 
+            alt="Your avatar mascot" 
+            width={110} 
+            height={110} 
+            className="w-full h-full object-contain p-2"
+          />
         </div>
         
         <div className="mt-6 flex flex-col items-center justify-center">
@@ -126,11 +141,17 @@ export default function ProfilePage() {
                         type="button" 
                         onClick={() => setAvatar(choice.value)} 
                         aria-label={`Choose ${choice.label}`} 
-                        className={`rounded-full size-16 text-3xl transition-transform hover:-translate-y-1 ${
+                        className={`rounded-full size-16 transition-transform hover:-translate-y-1 overflow-hidden p-2 flex items-center justify-center ${
                             avatar === choice.value ? "bg-white border-2 border-accent shadow-md scale-110" : "bg-canvas border border-line opacity-60 hover:opacity-100"
                         }`}
                     >
-                        {choice.value}
+                        <Image 
+                            src={avatarImageMap[choice.value]} 
+                            alt={choice.label} 
+                            width={48} 
+                            height={48} 
+                            className="w-full h-full object-contain"
+                        />
                     </button>
                 ))}
             </div>

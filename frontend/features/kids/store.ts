@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type KidAvatar = "🧑🏾‍🍳" | "👩🏾‍🔬" | "🧑🏾‍🎨" | "👨🏾‍🚀";
+export type KidAvatar = "mario" | "milo" | "stitch" | "kirby" | "jack";
 export type ShopTheme = "sunrise" | "ocean" | "leaf" | "berry";
 
 type KidProfile = {
@@ -14,10 +14,11 @@ type KidProfile = {
 };
 
 export const avatarChoices: { value: KidAvatar; label: string }[] = [
-  { value: "🧑🏾‍🍳", label: "Chef" },
-  { value: "👩🏾‍🔬", label: "Inventor" },
-  { value: "🧑🏾‍🎨", label: "Artist" },
-  { value: "👨🏾‍🚀", label: "Explorer" }
+  { value: "mario", label: "Mario" },
+  { value: "milo", label: "Milo" },
+  { value: "stitch", label: "Stitch" },
+  { value: "kirby", label: "Kirby" },
+  { value: "jack", label: "Jack" }
 ];
 
 export const shopThemes: { value: ShopTheme; label: string; className: string }[] = [
@@ -28,7 +29,7 @@ export const shopThemes: { value: ShopTheme; label: string; className: string }[
 ];
 
 export const useKidProfileStore = create<KidProfile>()(persist((set) => ({
-  avatar: "🧑🏾‍🍳",
+  avatar: "milo",
   shopTheme: "sunrise",
   shopName: "My Smart Duka",
   setAvatar: (avatar) => set({ avatar }),
