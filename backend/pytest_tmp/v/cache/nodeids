@@ -11,6 +11,7 @@
   "tests/test_auth.py::test_bearer_session_keeps_a_deployed_shopkeeper_out_of_demo_mode",
   "tests/test_auth.py::test_shopkeeper_can_register_read_session_and_sign_out",
   "tests/test_auth.py::test_sign_in_rejects_invalid_credentials_and_duplicate_email",
+  "tests/test_database_config.py::test_supabase_postgres_urls_use_the_async_driver_and_ssl_connect_args",
   "tests/test_demo_gameplay.py::test_openapi_and_validation_errors_use_version_one_contract",
   "tests/test_demo_readiness.py::test_startup_upgrades_a_legacy_demo_database_and_starts_a_session",
   "tests/test_gameplay_engine.py::test_basket_validation_identifies_missing_unexpected_and_wrong_quantities",

@@ -51,7 +51,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     if (response.status === 401 && typeof window !== "undefined") {
       const pathname = window.location.pathname;
+      const hasToken = !!window.localStorage.getItem(sessionTokenKey);
       if (
+        hasToken &&
         pathname !== "/" &&
         pathname !== "/sign-in" &&
         pathname !== "/sign-up" &&
