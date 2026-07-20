@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+import ssl
 
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import (
@@ -15,11 +16,15 @@ class Database:
     def __init__(self, database_url: str) -> None:
         engine_options: dict[str, object] = {"pool_pre_ping": True}
         if database_url.startswith("postgresql+asyncpg://"):
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
             engine_options.update(
                 pool_size=5,
                 max_overflow=5,
                 pool_recycle=1800,
-                connect_args={"ssl": True, "statement_cache_size": 0},
+                connect_args={"ssl": ssl_context, "statement_cache_size": 0},
             )
         self.engine: AsyncEngine = create_async_engine(database_url, **engine_options)
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
