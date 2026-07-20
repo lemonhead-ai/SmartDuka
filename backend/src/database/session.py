@@ -19,7 +19,7 @@ class Database:
                 pool_size=5,
                 max_overflow=5,
                 pool_recycle=1800,
-                connect_args={"ssl": True},
+                connect_args={"ssl": True, "statement_cache_size": 0},
             )
         self.engine: AsyncEngine = create_async_engine(database_url, **engine_options)
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
