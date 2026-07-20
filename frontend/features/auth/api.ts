@@ -9,13 +9,24 @@ export type Shopkeeper = {
   created_at: string;
 };
 
-type AuthResponse = { shopkeeper: Shopkeeper };
+export type AuthResponse = { shopkeeper: Shopkeeper; access_token: string | null };
+
+const sessionTokenKey = "smart-duka-session-token";
+
+function sessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(sessionTokenKey);
+}
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...options.headers }
+    headers: {
+      "Content-Type": "application/json",
+      ...(sessionToken() ? { Authorization: `Bearer ${sessionToken()}` } : {}),
+      ...options.headers
+    }
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => null) as { detail?: string; errors?: { field?: string; message: string }[] } | null;
@@ -25,6 +36,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const authApi = {
+  storeSessionToken: (token: string) => {
+    if (typeof window !== "undefined") window.localStorage.setItem(sessionTokenKey, token);
+  },
+  clearSessionToken: () => {
+    if (typeof window !== "undefined") window.localStorage.removeItem(sessionTokenKey);
+  },
   signUp: (email: string, displayName: string, password: string) =>
     request<AuthResponse>("/auth/sign-up", {
       method: "POST",

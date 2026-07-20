@@ -39,6 +39,7 @@ class UpdateProfileRequest(BaseModel):
 
 class AuthenticatedShopkeeperResponse(BaseModel):
     shopkeeper: ShopkeeperResponse
+    access_token: str | None = Field(default=None, min_length=1)
 
 
 class PasswordResetRequest(EmailRequestModel):

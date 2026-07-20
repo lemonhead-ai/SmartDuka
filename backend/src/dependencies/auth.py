@@ -10,14 +10,22 @@ from src.database.repositories.auth import AuthRepository
 from src.dependencies.database import DatabaseSession
 
 
+def request_session_token(request: Request, settings: Settings) -> str | None:
+    """Read the session from either the secure cookie or a Bearer header."""
+
+    token = request.cookies.get(settings.auth_session_cookie_name)
+    if token:
+        return token
+    authorization = request.headers.get("Authorization", "")
+    if authorization.lower().startswith("bearer "):
+        return authorization[7:].strip() or None
+    return None
+
+
 async def get_current_shopkeeper(
     request: Request, db: DatabaseSession, settings: Annotated[Settings, Depends(get_settings)]
 ) -> Shopkeeper:
-    token = request.cookies.get(settings.auth_session_cookie_name)
-    if not token:
-        authorization = request.headers.get("Authorization", "")
-        if authorization.lower().startswith("bearer "):
-            token = authorization[7:].strip()
+    token = request_session_token(request, settings)
     if not token:
         raise ApplicationError("Sign in is required.", status_code=401)
     shopkeeper = await AuthRepository(db).get_session_shopkeeper(fingerprint_token(token))
@@ -29,11 +37,7 @@ async def get_current_shopkeeper(
 async def get_optional_current_shopkeeper(
     request: Request, db: DatabaseSession, settings: Annotated[Settings, Depends(get_settings)]
 ) -> Shopkeeper | None:
-    token = request.cookies.get(settings.auth_session_cookie_name)
-    if not token:
-        authorization = request.headers.get("Authorization", "")
-        if authorization.lower().startswith("bearer "):
-            token = authorization[7:].strip()
+    token = request_session_token(request, settings)
     if not token:
         return None
     shopkeeper = await AuthRepository(db).get_session_shopkeeper(fingerprint_token(token))

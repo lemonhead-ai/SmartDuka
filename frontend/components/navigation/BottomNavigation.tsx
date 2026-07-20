@@ -6,13 +6,15 @@ import { motion } from "framer-motion";
 import { 
   DashboardSquare01Icon, 
   ShoppingBag01Icon, 
-  AdventureIcon
+  AdventureIcon,
+  UserCircleIcon
 } from "hugeicons-react";
 
 const items = [
   { href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" },
   { href: "/shop", icon: ShoppingBag01Icon, label: "Shop" },
-  { href: "/adventure", icon: AdventureIcon, label: "Play" }
+  { href: "/adventure", icon: AdventureIcon, label: "Play" },
+  { href: "/profile", icon: UserCircleIcon, label: "Profile" }
 ];
 
 export function BottomNavigation() {

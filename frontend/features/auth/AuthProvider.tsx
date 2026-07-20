@@ -31,9 +31,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setShopkeeperState(nextShopkeeper);
   }, [clearAccountState]);
   const signOut = useCallback(async () => {
-    await authApi.signOut();
-    clearAccountState();
-    setShopkeeperState(null);
+    try {
+      await authApi.signOut();
+    } finally {
+      authApi.clearSessionToken();
+      clearAccountState();
+      setShopkeeperState(null);
+    }
   }, [clearAccountState]);
 
   return <AuthContext.Provider value={{ shopkeeper, setShopkeeper, signOut }}>{children}</AuthContext.Provider>;

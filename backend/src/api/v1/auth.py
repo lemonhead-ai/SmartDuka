@@ -14,7 +14,7 @@ from src.core.config import Settings
 from src.core.exceptions import ApplicationError
 from src.core.security import fingerprint_token
 from src.database.repositories.auth import AuthRepository
-from src.dependencies.auth import CurrentShopkeeper
+from src.dependencies.auth import CurrentShopkeeper, request_session_token
 from src.dependencies.core import SettingsDependency
 from src.dependencies.database import DatabaseSession
 from src.services.auth import AuthService
@@ -60,7 +60,7 @@ async def sign_up(
         raise ApplicationError(str(error), status_code=409) from error
     await db.commit()
     set_session_cookie(response, token, settings)
-    return AuthenticatedShopkeeperResponse(shopkeeper=response_for(shopkeeper))
+    return AuthenticatedShopkeeperResponse(shopkeeper=response_for(shopkeeper), access_token=token)
 
 
 @router.post("/sign-in", response_model=AuthenticatedShopkeeperResponse)
@@ -78,7 +78,7 @@ async def sign_in(
     shopkeeper, token = authenticated
     await db.commit()
     set_session_cookie(response, token, settings)
-    return AuthenticatedShopkeeperResponse(shopkeeper=response_for(shopkeeper))
+    return AuthenticatedShopkeeperResponse(shopkeeper=response_for(shopkeeper), access_token=token)
 
 
 @router.post("/sign-out", response_model=MessageResponse)
@@ -89,7 +89,7 @@ async def sign_out(
     settings: SettingsDependency,
 ) -> MessageResponse:
     # Sign-out remains idempotent so a stale browser can always clear itself safely.
-    token = request.cookies.get(settings.auth_session_cookie_name)
+    token = request_session_token(request, settings)
     if token:
         await AuthRepository(db).revoke_session(fingerprint_token(token))
         await db.commit()

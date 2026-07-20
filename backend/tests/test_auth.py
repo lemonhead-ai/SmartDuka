@@ -26,6 +26,7 @@ async def test_shopkeeper_can_register_read_session_and_sign_out(tmp_path: Path)
             assert registered.status_code == 201
             assert "smartduka_session" in registered.headers["set-cookie"]
             assert registered.json()["shopkeeper"]["email"] == "owner@example.com"
+            assert registered.json()["access_token"]
 
             current = await client.get("/api/v1/auth/me")
             assert current.status_code == 200
@@ -34,6 +35,36 @@ async def test_shopkeeper_can_register_read_session_and_sign_out(tmp_path: Path)
             signed_out = await client.post("/api/v1/auth/sign-out")
             assert signed_out.status_code == 200
             assert (await client.get("/api/v1/auth/me")).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_bearer_session_keeps_a_deployed_shopkeeper_out_of_demo_mode(tmp_path: Path) -> None:
+    app = create_application(
+        Settings(database_url=f"sqlite+aiosqlite:///{(tmp_path / 'bearer-auth.db').as_posix()}")
+    )
+
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            registered = await client.post(
+                "/api/v1/auth/sign-up",
+                json={
+                    "email": "owner@example.com",
+                    "display_name": "Martin",
+                    "password": "a-strong-password",
+                },
+            )
+            token = registered.json()["access_token"]
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test",
+                headers={"Authorization": f"Bearer {token}"},
+            ) as bearer_client:
+                current = await bearer_client.get("/api/v1/auth/me")
+                assert current.status_code == 200
+                assert current.json()["shopkeeper"]["display_name"] == "Martin"
+                assert (await bearer_client.get("/api/v1/shop")).status_code == 404
+                assert (await bearer_client.post("/api/v1/auth/sign-out")).status_code == 200
+                assert (await bearer_client.get("/api/v1/auth/me")).status_code == 401
 
 
 @pytest.mark.asyncio

@@ -21,6 +21,7 @@ import type {
 } from "@/features/gameplay/types";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+const sessionTokenKey = "smart-duka-session-token";
 
 export class ApiRequestError extends Error {
   readonly detail: string;
@@ -37,10 +38,15 @@ export class ApiRequestError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = typeof window === "undefined" ? null : window.localStorage.getItem(sessionTokenKey);
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...options.headers }
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers
+    }
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => null) as ApiError | null;

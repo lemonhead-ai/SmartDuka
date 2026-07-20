@@ -48,10 +48,12 @@ export function AuthCard({ mode }: { mode: AuthMode }) {
     try {
       if (mode === "sign-up") {
         const response = await authApi.signUp(email, displayName, password);
+        if (response.access_token) authApi.storeSessionToken(response.access_token);
         setShopkeeper(response.shopkeeper);
         router.replace("/setup");
       } else if (mode === "sign-in") {
         const response = await authApi.signIn(email, password);
+        if (response.access_token) authApi.storeSessionToken(response.access_token);
         setShopkeeper(response.shopkeeper);
         try {
           await gameplayApi.shop();
