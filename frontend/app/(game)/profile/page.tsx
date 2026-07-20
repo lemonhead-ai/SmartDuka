@@ -9,6 +9,7 @@ import { Settings02Icon, Logout01Icon, Award01Icon, Award02Icon, CheckmarkCircle
 
 import { gameplayApi } from "@/features/gameplay/api";
 import { authApi } from "@/features/auth/api";
+import { MiloAlert } from "@/components/ui/MiloAlert";
 
 const LockSVG = () => (
   <svg className="size-5 text-muted/65" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -323,7 +324,7 @@ export default function ProfilePage() {
                 className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-semibold outline-none transition-colors focus:border-red-500 focus-visible:outline-none disabled:opacity-60"
               />
             </label>
-            {deleteError && <p role="alert" className="mt-3 rounded-[14px] bg-red-50 p-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-200">{deleteError}</p>}
+            {deleteError && <MiloAlert kind="error" message={deleteError} className="mt-3" />}
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={closeDeleteDialog} disabled={isDeleting} className="rounded-[14px] border border-line px-4 py-3 text-sm font-semibold transition-colors hover:bg-canvas disabled:opacity-50">Keep my account</button>
               <button type="button" onClick={() => void deleteAccount()} disabled={deleteConfirmation !== "DELETE" || isDeleting} className="rounded-[14px] bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-45">{isDeleting ? "Deleting account…" : "Delete permanently"}</button>

@@ -11,6 +11,7 @@ import { ShopLedger } from "@/components/game/ShopLedger";
 import { ShopPreview } from "@/components/game/ShopPreview";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { gameplayApi } from "@/features/gameplay/api";
+import { MiloAlert } from "@/components/ui/MiloAlert";
 
 export default function DashboardPage() {
   const progressQuery = useQuery({
@@ -46,7 +47,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {(progressQuery.isError || ledgerQuery.isError || motivationQuery.isError) && <p role="alert" className="rounded-[16px] border border-line bg-canvas p-4 text-sm text-muted">Some dashboard details could not load yet. You can still continue playing.</p>}
+      {(progressQuery.isError || ledgerQuery.isError || motivationQuery.isError) && <MiloAlert kind="warning" message="Some dashboard details could not load yet. You can still continue playing." />}
 
       <section className="grid gap-4 sm:grid-cols-3">
         <StatCard icon={FireIcon} label="Current streak" value={`${progress?.daily_streak_days ?? 0} days`} detail="Daily streak tracking is ready." tone="muted" />

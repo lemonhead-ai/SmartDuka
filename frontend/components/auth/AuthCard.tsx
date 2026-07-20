@@ -10,6 +10,8 @@ import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 import { authApi } from "@/features/auth/api";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { ApiRequestError, gameplayApi } from "@/features/gameplay/api";
+import { MiloAlert } from "@/components/ui/MiloAlert";
+import { formatMiloMessage } from "@/features/feedback/toast-store";
 
 type AuthMode = "sign-in" | "sign-up" | "forgot-password";
 
@@ -71,9 +73,9 @@ export function AuthCard({ mode }: { mode: AuthMode }) {
       }
     } catch (requestError) {
       if (requestError instanceof ApiRequestError && requestError.errors?.length) {
-        setError(requestError.errors.map((issue) => issue.message).join(" "));
+        setError(requestError.errors.map((issue) => formatMiloMessage(issue.message)).join(" "));
       } else {
-        setError(requestError instanceof Error ? requestError.message : "Please try again.");
+        setError(requestError instanceof Error ? formatMiloMessage(requestError.message) : "Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -90,8 +92,8 @@ export function AuthCard({ mode }: { mode: AuthMode }) {
         <label className="grid gap-2 text-sm font-semibold">Email address<input value={email} onChange={(event) => setEmail(event.target.value)} required type="email" autoComplete="email" className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-normal" /></label>
         {mode !== "forgot-password" && <PasswordField label="Password" value={password} onChange={setPassword} showPassword={showPassword} onToggle={() => setShowPassword((current) => !current)} autoComplete={mode === "sign-up" ? "new-password" : "current-password"} helper="Use at least 6 characters." />}
         {mode === "sign-up" && <PasswordField label="Confirm password" value={confirmPassword} onChange={setConfirmPassword} showPassword={showPassword} onToggle={() => setShowPassword((current) => !current)} autoComplete="new-password" error={confirmPassword.length > 0 && password !== confirmPassword ? "Passwords do not match yet." : undefined} />}
-        {error && <p role="alert" className="rounded-[14px] bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-        {message && <p role="status" className="rounded-[14px] bg-green-50 p-3 text-sm text-green-800">{message}</p>}
+        {error && <MiloAlert kind="error" message={error} />}
+        {message && <MiloAlert kind="success" message={message} />}
         <motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} disabled={isSubmitting} className="mt-2 rounded-[14px] bg-ink px-5 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Please wait…" : content.submit}</motion.button>
       </form>
       <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold text-accent">

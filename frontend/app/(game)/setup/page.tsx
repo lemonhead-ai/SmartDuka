@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 import { authApi } from "@/features/auth/api";
 import { ApiRequestError, gameplayApi } from "@/features/gameplay/api";
+import { MiloAlert } from "@/components/ui/MiloAlert";
 
 const categoryLabels: Record<string, string> = {
   fruits: "Fresh fruit",
@@ -62,7 +63,7 @@ export default function SetupPage() {
   if (account.isLoading || (account.data && shop.isLoading)) return <LoadingState />;
   if (account.error) return <AccessRequired />;
   if (shop.data) return <LoadingState />;
-  if (!setupRequired) return <main id="main-content" className="grid min-h-dvh place-items-center bg-canvas p-6"><p role="alert" className="max-w-md rounded-[20px] border border-line bg-surface p-5 text-center text-muted">We could not open setup right now. Please refresh and try again.</p></main>;
+  if (!setupRequired) return <main id="main-content" className="grid min-h-dvh place-items-center bg-canvas p-6"><div className="w-full max-w-md"><MiloAlert kind="error" message="We could not open setup right now. Please refresh and try again." /></div></main>;
 
   return <main id="main-content" className="min-h-dvh bg-canvas px-5 py-6 sm:px-10">
     <div className="mx-auto max-w-5xl">
@@ -82,7 +83,7 @@ export default function SetupPage() {
           </section>
           <section className="rounded-[24px] bg-canvas p-5"><div className="flex items-center justify-between gap-4"><div><h2 className="font-bold">Your starter shelf</h2><p className="mt-1 text-sm text-muted">Choose at least 2, up to 5 products from any category.</p></div><span className="rounded-full bg-surface px-3 py-1 text-sm font-bold">{selected.length}/5</span></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{items.map((item) => <motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} key={item.id} type="button" onClick={() => toggleItem(item.id)} aria-pressed={selected.includes(item.id)} className={`rounded-[18px] border p-4 text-left ${selected.includes(item.id) ? "border-accent bg-surface" : "border-line bg-white"}`}><span className="text-xs font-semibold uppercase tracking-wide text-muted">{categoryLabels[item.category] ?? item.category.replaceAll("_", " ")}</span><strong className="mt-1 block">{item.name}</strong><span className="mt-1 block text-sm text-muted">KES {item.price_kes}</span></motion.button>)}</div></section>
         </div>
-        {submitError && <p role="alert" className="mt-6 rounded-[14px] bg-red-50 p-4 text-sm text-red-700">{submitError}</p>}
+        {submitError && <MiloAlert kind="error" message={submitError} className="mt-6" />}
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6"><p className="text-sm text-muted">Your first products will be ready for your first customer.</p><motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} type="button" disabled={!name.trim() || selected.length < 2 || isSubmitting} onClick={() => void submit()} className="rounded-full bg-ink px-6 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Opening your duka…" : "Open my duka"}</motion.button></div>
       </motion.section>
     </div>

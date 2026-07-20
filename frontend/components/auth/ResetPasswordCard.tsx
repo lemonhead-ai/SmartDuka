@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 import { authApi } from "@/features/auth/api";
+import { MiloAlert } from "@/components/ui/MiloAlert";
 
 export function ResetPasswordCard() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export function ResetPasswordCard() {
       <p className="mt-2 text-sm leading-6 text-muted">Use at least 6 characters to protect your shopkeeper account.</p>
       <form className="mt-7 grid gap-4" onSubmit={submit}>
         <label className="grid gap-2 text-sm font-semibold">New password<input value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} type="password" autoComplete="new-password" className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-normal" /></label>
-        {error && <p role="alert" className="rounded-[14px] bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        {error && <MiloAlert kind="error" message={error} />}
         <motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} disabled={isSubmitting} className="rounded-[14px] bg-ink px-5 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Saving…" : "Save new password"}</motion.button>
       </form>
       <Link href="/sign-in" className="mt-6 inline-block text-sm font-semibold text-accent">Back to sign in</Link>
