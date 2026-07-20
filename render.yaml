@@ -9,6 +9,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
+      - key: SMARTDUKA_AUTH_COOKIE_SECURE
+        value: "true"
       # Provide Featherless API Key or OpenAI API key here when setting up on Render Dashboard
       # - key: FEATHERLESS_API_KEY
       #   sync: false
