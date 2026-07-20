@@ -23,7 +23,9 @@ class BasketManager:
     ) -> list[BasketLine]:
         current = sum(line.quantity for line in lines if line.item_id == item_id)
         if current + quantity > stock:
-            raise ValueError(f"Not enough stock is available. (current={current}, quantity={quantity}, stock={stock}, lines={len(lines)})")
+            raise ValueError(
+                f"Not enough stock is available. (current={current}, quantity={quantity}, stock={stock}, lines={len(lines)})"
+            )
         return [line for line in lines if line.item_id != item_id] + [
             BasketLine(item_id, current + quantity)
         ]
@@ -219,7 +221,11 @@ class LiteracyChallengeManager:
     def _word_reading(
         self, target: dict[str, object], target_name: str, tier: int
     ) -> dict[str, object]:
-        word = target_name if tier == 1 else self._swahili_words.get(target_name.casefold(), target_name)
+        word = (
+            target_name
+            if tier == 1
+            else self._swahili_words.get(target_name.casefold(), target_name)
+        )
         language = "English" if tier == 1 else "Kiswahili"
         return self._challenge(
             challenge_type="word_reading",
@@ -261,7 +267,9 @@ class LiteracyChallengeManager:
             content=note,
             tier=tier,
             answer="choice-0",
-            choices=[{"id": f"choice-{index}", "label": name} for index, name in enumerate(options[:3])],
+            choices=[
+                {"id": f"choice-{index}", "label": name} for index, name in enumerate(options[:3])
+            ],
             target_item_id=str(target["item_id"]),
         )
 
@@ -282,7 +290,9 @@ class LiteracyChallengeManager:
         word = str(target["name"]).casefold().replace(" ", "")
         missing_indexes = [1] if len(word) < 7 or tier < 6 else [1, 3]
         missing_letters = "".join(word[index] for index in missing_indexes)
-        pattern = " ".join("_" if index in missing_indexes else letter for index, letter in enumerate(word))
+        pattern = " ".join(
+            "_" if index in missing_indexes else letter for index, letter in enumerate(word)
+        )
         distractors = [letter for letter in "aeioub" if letter not in missing_letters]
         letters = list(dict.fromkeys([*missing_letters, *distractors]))[:6]
         return self._challenge(
@@ -296,14 +306,18 @@ class LiteracyChallengeManager:
         )
 
     def _conversation(self, tier: int, served: int) -> dict[str, object]:
-        phrase, meaning, options = self._conversation_prompts[served % len(self._conversation_prompts)]
+        phrase, meaning, options = self._conversation_prompts[
+            served % len(self._conversation_prompts)
+        ]
         return self._challenge(
             challenge_type="conversation",
             prompt="Your customer is speaking. Choose the meaning that helps you reply kindly.",
             content=f"“{phrase}”",
             tier=tier,
             answer="choice-0",
-            choices=[{"id": f"choice-{index}", "label": option} for index, option in enumerate(options)],
+            choices=[
+                {"id": f"choice-{index}", "label": option} for index, option in enumerate(options)
+            ],
         )
 
     @staticmethod
@@ -583,19 +597,25 @@ class MotivationManager:
         },
     }
 
-    def start_day(self, state: dict[str, object] | None, today: date, seed: int) -> dict[str, object]:
+    def start_day(
+        self, state: dict[str, object] | None, today: date, seed: int
+    ) -> dict[str, object]:
         updated = dict(state or {})
         today_value = today.isoformat()
         last_played = updated.get("last_played_on")
         if last_played != today_value:
             previous = self._parse_date(last_played)
             streak = int(updated.get("current_streak_days", 0))
-            updated["current_streak_days"] = streak + 1 if previous == today - timedelta(days=1) else 1
+            updated["current_streak_days"] = (
+                streak + 1 if previous == today - timedelta(days=1) else 1
+            )
             updated["last_played_on"] = today_value
 
         mission = updated.get("daily_mission")
         if not isinstance(mission, dict) or mission.get("date") != today_value:
-            template = self._MISSION_TEMPLATES[(today.toordinal() + seed) % len(self._MISSION_TEMPLATES)]
+            template = self._MISSION_TEMPLATES[
+                (today.toordinal() + seed) % len(self._MISSION_TEMPLATES)
+            ]
             updated["daily_mission"] = {
                 **template,
                 "date": today_value,
@@ -603,7 +623,9 @@ class MotivationManager:
                 "completed": False,
             }
         updated.setdefault("badges", [])
-        self._award(updated, "three-day-streak" if int(updated["current_streak_days"]) >= 3 else None)
+        self._award(
+            updated, "three-day-streak" if int(updated["current_streak_days"]) >= 3 else None
+        )
         return updated
 
     def record_event(self, state: dict[str, object], event: str) -> tuple[dict[str, object], bool]:
@@ -659,10 +681,13 @@ class MotivationManager:
     @staticmethod
     def _badges(state: dict[str, object]) -> list[dict[str, str]]:
         return [
-            {"id": str(badge["id"]), "name": str(badge["name"]), "description": str(badge["description"])}
+            {
+                "id": str(badge["id"]),
+                "name": str(badge["name"]),
+                "description": str(badge["description"]),
+            }
             for badge in state.get("badges", [])
-            if isinstance(badge, dict)
-            and {"id", "name", "description"}.issubset(badge)
+            if isinstance(badge, dict) and {"id", "name", "description"}.issubset(badge)
         ]
 
     @staticmethod
@@ -689,7 +714,9 @@ class LearningSummaryManager:
         literacy_moments_completed: int,
         skills_improving: list[str],
     ) -> dict[str, object]:
-        accuracy = round((correct_answers / questions_attempted) * 100) if questions_attempted else 0
+        accuracy = (
+            round((correct_answers / questions_attempted) * 100) if questions_attempted else 0
+        )
         celebrations = self._celebrations(
             questions_attempted, correct_answers, streak_days, badges, literacy_moments_completed
         )
@@ -740,7 +767,9 @@ class LearningSummaryManager:
     ) -> list[str]:
         celebrations: list[str] = []
         if attempts:
-            celebrations.append(f"Practised {attempts} learning moments and solved {correct} correctly.")
+            celebrations.append(
+                f"Practised {attempts} learning moments and solved {correct} correctly."
+            )
         if literacy_moments_completed:
             celebrations.append(
                 f"Completed {literacy_moments_completed} customer reading moment"

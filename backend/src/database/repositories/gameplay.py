@@ -28,7 +28,9 @@ class GameplayRepository:
 
     async def get_student_for_shopkeeper(self, shopkeeper_id: UUID) -> Student | None:
         return await self.session.scalar(
-            select(Student).where(Student.shopkeeper_id == shopkeeper_id, Student.is_demo.is_(False))
+            select(Student).where(
+                Student.shopkeeper_id == shopkeeper_id, Student.is_demo.is_(False)
+            )
         )
 
     async def create_session(
@@ -41,10 +43,9 @@ class GameplayRepository:
 
     async def save_game_state(self, game_session: GameSession, state: dict[str, object]) -> None:
         from sqlalchemy import update
+
         await self.session.execute(
-            update(GameSession)
-            .where(GameSession.id == game_session.id)
-            .values(game_state=state)
+            update(GameSession).where(GameSession.id == game_session.id).values(game_state=state)
         )
         game_session.game_state = state
         flag_modified(game_session, "game_state")

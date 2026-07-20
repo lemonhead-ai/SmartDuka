@@ -36,9 +36,7 @@ def verify_password(password: str, password_hash: str) -> bool:
             r=int(r),
             p=int(p),
         )
-        return hmac.compare_digest(
-            derived_key, base64.urlsafe_b64decode(expected.encode("ascii"))
-        )
+        return hmac.compare_digest(derived_key, base64.urlsafe_b64decode(expected.encode("ascii")))
     except (ValueError, TypeError):
         return False
 

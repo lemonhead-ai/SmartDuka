@@ -7,12 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.shared.context import (
     AgentContext,
+    BasketItemContext,
+    CustomerContext,
     GameplaySessionContext,
     LearnerProfile,
     MissionContext,
     ProgressContext,
-    BasketItemContext,
-    CustomerContext,
     RequestedItemContext,
 )
 from src.agents.shared.outputs import CustomerScenarioOutput, TutorAgentOutput
@@ -23,6 +23,7 @@ from src.contracts.gameplay_engine import (
     BasketResponse,
     BasketValidationResponse,
     ChallengeResponse,
+    ChatResponse,
     CheckoutResponse,
     CustomerResponse,
     HintResponse,
@@ -37,7 +38,6 @@ from src.contracts.gameplay_engine import (
     RewardResponse,
     SessionSummaryResponse,
     StartGameplaySessionResponse,
-    ChatResponse,
 )
 from src.core.exceptions import ApplicationError
 from src.database.models import GameSession, InventoryItem, Student, StudentProgress
@@ -229,7 +229,7 @@ class GameplayEngine:
             + ", please."
         )
         customer["greeting"] = str(offer["message"])
-        
+
         chat_history = state.setdefault("chat_history", [])
         offer_msg = (
             f"I only have {offer['available_quantity']} {str(offer['name']).lower()} left. "
@@ -237,12 +237,10 @@ class GameplayEngine:
         )
         chat_history.append({"sender": "shopkeeper", "message": offer_msg})
         chat_history.append({"sender": "customer", "message": str(offer["message"])})
-        
+
         state["request_version"] = int(state.get("request_version", 0)) + 1
         customer["request_version"] = int(state["request_version"])
-        self._prepare_literacy_challenge(
-            state, student, [item for _, item in stock_rows]
-        )
+        self._prepare_literacy_challenge(state, student, [item for _, item in stock_rows])
         await self._save(game_session, state)
         return ResolveStockOfferResponse(
             customer=self._customer_response(state),
@@ -292,7 +290,9 @@ class GameplayEngine:
         challenge = self._state(game_session)["challenge"]
         return self._challenge_response(challenge) if isinstance(challenge, dict) else None
 
-    async def current_literacy_challenge(self, session_id: UUID) -> LiteracyChallengeResponse | None:
+    async def current_literacy_challenge(
+        self, session_id: UUID
+    ) -> LiteracyChallengeResponse | None:
         game_session, _ = await self._session_and_student(session_id)
         return self._literacy_response(self._state(game_session))
 
@@ -494,10 +494,10 @@ class GameplayEngine:
         game_session, student = await self._session_and_student(session_id)
         state = self._state(game_session)
         customer = self._require_customer(state)
-        
+
         chat_history = state.setdefault("chat_history", [])
         chat_history.append({"sender": "shopkeeper", "message": message})
-        
+
         if self.orchestrator is None:
             return ChatResponse(reply="I am not sure what to say right now.")
 
@@ -505,7 +505,7 @@ class GameplayEngine:
         context = await self._agent_context(
             game_session, student, state, [item.name for item in inventory_items]
         )
-        
+
         # Inject the user message into the context as a recent shopkeeper action.
         context.progress.basket_feedback = f"The shopkeeper says: {message}"
 
@@ -670,7 +670,9 @@ class GameplayEngine:
             message=(
                 reward_message
                 if isinstance(reward_message, str)
-                else success_message if correct else retry_message
+                else success_message
+                if correct
+                else retry_message
             ),
         )
 
@@ -733,9 +735,7 @@ class GameplayEngine:
         return state
 
     @staticmethod
-    def _append_achievement_names(
-        existing: object, new_badges: list[dict[str, str]]
-    ) -> list[str]:
+    def _append_achievement_names(existing: object, new_badges: list[dict[str, str]]) -> list[str]:
         achievements = [str(name) for name in existing] if isinstance(existing, list) else []
         for badge in new_badges:
             if badge["name"] not in achievements:
@@ -831,6 +831,7 @@ class GameplayEngine:
             )
 
         from src.agents.shared.context import ChatMessageContext
+
         chat_history_ctx = [
             ChatMessageContext(sender=msg["sender"], message=msg["message"])
             for msg in state.get("chat_history", [])
@@ -881,7 +882,9 @@ class GameplayEngine:
             return await self._demo_student()
         student = await self.session.get(Student, self.student_id)
         if student is None:
-            raise ApplicationError("Your learner profile is unavailable. Please sign in again.", status_code=401)
+            raise ApplicationError(
+                "Your learner profile is unavailable. Please sign in again.", status_code=401
+            )
         return student
 
     async def _session_and_student(self, session_id: UUID) -> tuple[GameSession, Student]:
@@ -947,9 +950,7 @@ class GameplayEngine:
             available_item_names=[item.name for item in available_items],
         )
 
-    def _literacy_response(
-        self, state: dict[str, object]
-    ) -> LiteracyChallengeResponse | None:
+    def _literacy_response(self, state: dict[str, object]) -> LiteracyChallengeResponse | None:
         challenge = state.get("literacy_challenge")
         if not isinstance(challenge, dict):
             return None

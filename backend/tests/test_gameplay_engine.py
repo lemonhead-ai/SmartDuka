@@ -117,7 +117,9 @@ def test_literacy_challenges_vary_with_level_and_check_answers() -> None:
     word = manager.create(customer, tier=2, age=9, served=0, available_item_names=available)
     sentence = manager.create(customer, tier=3, age=9, served=0, available_item_names=available)
     spelling = manager.create(customer, tier=4, age=9, served=0, available_item_names=available)
-    conversation = manager.create(customer, tier=5, age=11, served=0, available_item_names=available)
+    conversation = manager.create(
+        customer, tier=5, age=11, served=0, available_item_names=available
+    )
 
     assert word is not None and word["type"] == "word_reading"
     assert word["content"] == "maziwa"

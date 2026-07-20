@@ -43,7 +43,9 @@ def set_session_cookie(response: Response, token: str, settings: Settings) -> No
     )
 
 
-@router.post("/sign-up", response_model=AuthenticatedShopkeeperResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/sign-up", response_model=AuthenticatedShopkeeperResponse, status_code=status.HTTP_201_CREATED
+)
 async def sign_up(
     payload: SignUpRequest,
     response: Response,
@@ -111,7 +113,9 @@ async def update_current_shopkeeper(
     return AuthenticatedShopkeeperResponse(shopkeeper=response_for(updated))
 
 
-@router.post("/password-reset", response_model=MessageResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/password-reset", response_model=MessageResponse, status_code=status.HTTP_202_ACCEPTED
+)
 async def request_password_reset(
     payload: PasswordResetRequest, db: DatabaseSession, settings: SettingsDependency
 ) -> MessageResponse:
@@ -124,7 +128,9 @@ async def request_password_reset(
 async def confirm_password_reset(
     payload: PasswordResetConfirmRequest, db: DatabaseSession, settings: SettingsDependency
 ) -> MessageResponse:
-    reset = await AuthService(AuthRepository(db), settings).reset_password(payload.token, payload.password)
+    reset = await AuthService(AuthRepository(db), settings).reset_password(
+        payload.token, payload.password
+    )
     if not reset:
         raise ApplicationError("This reset link is invalid or has expired.", status_code=400)
     await db.commit()

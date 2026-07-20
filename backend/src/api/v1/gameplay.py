@@ -11,6 +11,8 @@ from src.contracts.gameplay_engine import (
     BasketItemRequest,
     BasketResponse,
     ChallengeResponse,
+    ChatRequest,
+    ChatResponse,
     CheckoutResponse,
     HintResponse,
     InventoryItemResponse,
@@ -22,14 +24,12 @@ from src.contracts.gameplay_engine import (
     ResolveStockOfferResponse,
     SessionSummaryResponse,
     StartGameplaySessionResponse,
-    ChatRequest,
-    ChatResponse,
 )
-from src.dependencies.core import AIOrchestratorDependency
-from src.dependencies.database import DatabaseSession
-from src.dependencies.auth import OptionalCurrentShopkeeper
 from src.core.exceptions import ApplicationError
 from src.database.repositories.gameplay import GameplayRepository
+from src.dependencies.auth import OptionalCurrentShopkeeper
+from src.dependencies.core import AIOrchestratorDependency
+from src.dependencies.database import DatabaseSession
 from src.services.gameplay.engine import GameplayEngine
 
 router = APIRouter(prefix="/gameplay", tags=["gameplay"])
@@ -73,7 +73,8 @@ async def start_gameplay_session(
     summary="Serve the next customer",
 )
 async def next_customer(
-    session_id: UUID, engine: GameplayEngineDependency,
+    session_id: UUID,
+    engine: GameplayEngineDependency,
 ) -> NextCustomerResponse:
     return await engine.next_customer(session_id)
 
@@ -84,7 +85,8 @@ async def next_customer(
     summary="Tell a customer about limited stock",
 )
 async def resolve_stock_offer(
-    session_id: UUID, engine: GameplayEngineDependency,
+    session_id: UUID,
+    engine: GameplayEngineDependency,
 ) -> ResolveStockOfferResponse:
     return await engine.resolve_stock_offer(session_id)
 
@@ -107,7 +109,9 @@ async def chat_with_customer(
     response_model=list[InventoryItemResponse],
     summary="List available shop inventory",
 )
-async def list_inventory(session_id: UUID, engine: GameplayEngineDependency) -> list[InventoryItemResponse]:
+async def list_inventory(
+    session_id: UUID, engine: GameplayEngineDependency
+) -> list[InventoryItemResponse]:
     return await engine.list_inventory(session_id)
 
 
@@ -145,7 +149,9 @@ async def remove_basket_item(
     response_model=ChallengeResponse | None,
     summary="Get the active math challenge",
 )
-async def current_challenge(session_id: UUID, engine: GameplayEngineDependency) -> ChallengeResponse | None:
+async def current_challenge(
+    session_id: UUID, engine: GameplayEngineDependency
+) -> ChallengeResponse | None:
     return await engine.current_challenge(session_id)
 
 
@@ -187,9 +193,7 @@ async def answer_challenge(
 
 
 @router.post("/sessions/{session_id}/hint", response_model=HintResponse, summary="Request a hint")
-async def request_hint(
-    session_id: UUID, engine: GameplayEngineDependency
-) -> HintResponse:
+async def request_hint(session_id: UUID, engine: GameplayEngineDependency) -> HintResponse:
     return await engine.request_hint(session_id)
 
 
@@ -205,7 +209,9 @@ async def checkout(session_id: UUID, engine: GameplayEngineDependency) -> Checko
     response_model=SessionSummaryResponse,
     summary="Get session summary",
 )
-async def session_summary(session_id: UUID, engine: GameplayEngineDependency) -> SessionSummaryResponse:
+async def session_summary(
+    session_id: UUID, engine: GameplayEngineDependency
+) -> SessionSummaryResponse:
     return await engine.summary(session_id)
 
 

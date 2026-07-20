@@ -14,9 +14,7 @@ async def test_shopkeeper_can_register_read_session_and_sign_out(tmp_path: Path)
     )
 
     async with app.router.lifespan_context(app):
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             registered = await client.post(
                 "/api/v1/auth/sign-up",
                 json={
@@ -50,9 +48,7 @@ async def test_sign_in_rejects_invalid_credentials_and_duplicate_email(tmp_path:
     }
 
     async with app.router.lifespan_context(app):
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             assert (await client.post("/api/v1/auth/sign-up", json=payload)).status_code == 201
             assert (await client.post("/api/v1/auth/sign-up", json=payload)).status_code == 409
             invalid = await client.post(
@@ -69,9 +65,7 @@ async def test_authenticated_shopkeeper_can_create_and_read_only_their_duka(tmp_
     )
 
     async with app.router.lifespan_context(app):
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             sign_up = await client.post(
                 "/api/v1/auth/sign-up",
                 json={
@@ -128,5 +122,7 @@ async def test_authenticated_shopkeeper_can_create_and_read_only_their_duka(tmp_
             )
             assert second_shop.status_code == 201
             assert (
-                await client.get(f"/api/v1/gameplay/sessions/{first_session.json()['session_id']}/inventory")
+                await client.get(
+                    f"/api/v1/gameplay/sessions/{first_session.json()['session_id']}/inventory"
+                )
             ).status_code == 404

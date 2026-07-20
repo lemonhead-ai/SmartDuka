@@ -16,7 +16,9 @@ class AuthService:
         self.repository = repository
         self.settings = settings
 
-    async def register(self, email: str, display_name: str, password: str) -> tuple[Shopkeeper, str]:
+    async def register(
+        self, email: str, display_name: str, password: str
+    ) -> tuple[Shopkeeper, str]:
         normalized_email = email.strip().lower()
         normalized_name = display_name.strip()
         if not normalized_name:

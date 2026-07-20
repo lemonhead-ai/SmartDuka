@@ -72,4 +72,3 @@ class AgentContext(BaseModel):
     customer: CustomerContext | None = None
     basket: list[BasketItemContext] = Field(default_factory=list)
     chat_history: list[ChatMessageContext] = Field(default_factory=list)
-

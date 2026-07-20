@@ -12,7 +12,11 @@ class Student(Base):
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     shopkeeper_id: Mapped[UUID | None] = mapped_column(
-        Uuid, ForeignKey("shopkeepers.id", ondelete="SET NULL"), unique=True, nullable=True, index=True
+        Uuid,
+        ForeignKey("shopkeepers.id", ondelete="SET NULL"),
+        unique=True,
+        nullable=True,
+        index=True,
     )
     display_name: Mapped[str] = mapped_column(String(100))
     age: Mapped[int] = mapped_column(Integer)

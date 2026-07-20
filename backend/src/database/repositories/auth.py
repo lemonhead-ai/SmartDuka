@@ -24,7 +24,9 @@ class AuthRepository:
 
     async def update_profile_name(self, shopkeeper: Shopkeeper, display_name: str) -> Shopkeeper:
         shopkeeper.display_name = display_name
-        learner = await self.session.scalar(select(Student).where(Student.shopkeeper_id == shopkeeper.id))
+        learner = await self.session.scalar(
+            select(Student).where(Student.shopkeeper_id == shopkeeper.id)
+        )
         if learner is not None:
             learner.display_name = display_name
         await self.session.flush()
@@ -86,7 +88,9 @@ class AuthRepository:
     async def revoke_session(self, token_fingerprint: str) -> None:
         await self.session.execute(
             update(AuthSession)
-            .where(AuthSession.token_fingerprint == token_fingerprint, AuthSession.revoked_at.is_(None))
+            .where(
+                AuthSession.token_fingerprint == token_fingerprint, AuthSession.revoked_at.is_(None)
+            )
             .values(revoked_at=datetime.now(UTC))
         )
 

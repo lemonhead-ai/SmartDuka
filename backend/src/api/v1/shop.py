@@ -80,7 +80,9 @@ async def create_shop(
     repository = GameplayRepository(db)
     student = await owner_student(repository, shopkeeper)
     if student is None:
-        raise ApplicationError("Your learner profile is unavailable. Please sign in again.", status_code=401)
+        raise ApplicationError(
+            "Your learner profile is unavailable. Please sign in again.", status_code=401
+        )
     if await repository.get_shop(student.id):
         raise ApplicationError("This learner already has a duka.", status_code=409)
     catalogue = {item.id: item for item in await repository.list_inventory()}
@@ -169,7 +171,9 @@ async def restock_shop_item(
     repository = GameplayRepository(db)
     student = await owner_student(repository, shopkeeper)
     if student is None:
-        raise ApplicationError("Your learner profile is unavailable. Please sign in again.", status_code=401)
+        raise ApplicationError(
+            "Your learner profile is unavailable. Please sign in again.", status_code=401
+        )
     shop = await repository.get_shop(student.id)
     if shop is None:
         raise ApplicationError("Create your duka before restocking.", status_code=409)
@@ -196,7 +200,9 @@ async def restock_shop_item(
 
 
 @router.get("/ledger", response_model=ShopLedgerResponse, summary="Read the duka cash ledger")
-async def shop_ledger(db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper) -> ShopLedgerResponse:
+async def shop_ledger(
+    db: DatabaseSession, shopkeeper: OptionalCurrentShopkeeper
+) -> ShopLedgerResponse:
     repository = GameplayRepository(db)
     student = await owner_student(repository, shopkeeper)
     shop = await repository.get_shop(student.id) if student else None
