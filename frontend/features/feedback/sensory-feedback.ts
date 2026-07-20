@@ -63,6 +63,7 @@ export function playChatSound(direction: "incoming" | "outgoing"): void {
 }
 
 export function triggerSensoryFeedback(kind: ToastKind): void {
+  if (!soundEnabled()) return;
   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
     navigator.vibrate(vibrationPatterns[kind]);
   }

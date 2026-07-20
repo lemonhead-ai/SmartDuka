@@ -175,7 +175,7 @@ export default function ProfilePage() {
                         onClick={() => setAvatar(choice.value)} 
                         aria-label={`Choose ${choice.label}`} 
                         className={`rounded-full size-16 transition-all duration-200 hover:-translate-y-1 overflow-hidden p-2 flex items-center justify-center ${
-                            avatar === choice.value ? "bg-white dark:bg-canvas border-2 border-accent dark:border-white shadow-md scale-110" : "bg-canvas border border-line opacity-60 hover:opacity-100 hover:scale-105"
+                            avatar === choice.value ? "bg-white dark:bg-canvas border-2 border-accent ring-2 ring-accent/25 shadow-md scale-110" : "bg-canvas border border-line opacity-60 hover:opacity-100 hover:scale-105"
                         }`}
                     >
                         <Image 
@@ -214,7 +214,7 @@ export default function ProfilePage() {
                     onClick={() => { setShopTheme(theme.value); shopMutation.mutate({ theme: theme.value }); }} 
                     className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${theme.className} ${
                         shopTheme === theme.value 
-                          ? "ring-2 ring-ink/30 border-ink dark:ring-white/40 dark:border-white shadow-sm scale-105" 
+                          ? `border-2 ring-2 shadow-sm scale-105 ${theme.selectedClass}` 
                           : "border-transparent opacity-70 hover:opacity-100 hover:scale-[1.03]"
                     }`}
                 >

@@ -35,6 +35,7 @@ function applyPreferences(prefs: Preferences) {
   const theme = resolveTheme(prefs.theme);
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
+  document.documentElement.dataset.sound = String(prefs.sound);
   
   if (prefs.largeText) {
     document.documentElement.dataset.largeText = "true";

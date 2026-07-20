@@ -29,8 +29,8 @@ export function MissionCard({ motivation }: { motivation?: Motivation }) {
                 <span>{mission.progress} of {mission.target} complete</span>
                 <span>{mission.completed ? "Complete!" : `${progress}%`}</span>
               </div>
-              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-canvas border border-line/30">
-                <div className="h-full rounded-full bg-[#30D158] transition-[width] duration-500" style={{ width: `${progress}%` }} />
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-canvas">
+                <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${progress}%` }} />
               </div>
             </div>
           )}

@@ -37,14 +37,14 @@ export function BottomNavigation() {
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 className={`relative flex items-center justify-center h-10 rounded-full px-3.5 transition-colors duration-300 ${
                   isActive 
-                    ? 'text-[#047857] dark:text-[#30D158]' 
+                  ? 'text-accent' 
                     : 'text-ink/60 hover:text-ink/90'
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeBottomTabIndicator"
-                    className="absolute inset-0 bg-gradient-to-tr from-[#10B981]/20 to-[#10B981]/5 dark:from-[#30D158]/25 dark:to-[#30D158]/5 border border-[#10B981]/25 dark:border-[#30D158]/30 rounded-full shadow-inner z-0"
+                  className="absolute inset-0 rounded-full border border-accent/30 bg-gradient-to-tr from-accent/20 to-accent/5 shadow-inner z-0"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
