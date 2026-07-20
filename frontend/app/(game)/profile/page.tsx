@@ -250,9 +250,26 @@ export default function ProfilePage() {
         </Link>
       </section>
 
-      <button type="button" onClick={() => void logout()} className="inline-flex items-center gap-2 rounded-[14px] border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">
-        <Logout01Icon size={18} color="currentColor" /> Log out
-      </button>
+      <div className="flex flex-wrap items-center gap-4">
+        <button type="button" onClick={() => void logout()} className="inline-flex items-center gap-2 rounded-[14px] border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">
+          <Logout01Icon size={18} color="currentColor" /> Log out
+        </button>
+        <button 
+          type="button" 
+          onClick={async () => {
+            if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+              try {
+                await authApi.deleteAccount();
+                await logout();
+              } catch (e) {
+                alert("Failed to delete account. Please try again later.");
+              }
+            }
+          }} 
+          className="inline-flex items-center gap-2 rounded-[14px] bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700">
+          Delete account
+        </button>
+      </div>
 
     </div>
   );

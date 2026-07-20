@@ -47,5 +47,6 @@ export const authApi = {
     request<{ message: string }>("/auth/password-reset/confirm", {
       method: "POST",
       body: JSON.stringify({ token, password })
-    })
+    }),
+  deleteAccount: () => request<{ message: string }>("/auth/me", { method: "DELETE" })
 };

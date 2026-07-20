@@ -113,6 +113,19 @@ async def update_current_shopkeeper(
     return AuthenticatedShopkeeperResponse(shopkeeper=response_for(updated))
 
 
+@router.delete("/me", response_model=MessageResponse)
+async def delete_current_shopkeeper(
+    shopkeeper: CurrentShopkeeper,
+    db: DatabaseSession,
+    response: Response,
+    settings: SettingsDependency,
+) -> MessageResponse:
+    await AuthRepository(db).delete_shopkeeper(shopkeeper)
+    await db.commit()
+    response.delete_cookie(settings.auth_session_cookie_name, path="/")
+    return MessageResponse(message="Your account has been deleted.")
+
+
 @router.post(
     "/password-reset", response_model=MessageResponse, status_code=status.HTTP_202_ACCEPTED
 )

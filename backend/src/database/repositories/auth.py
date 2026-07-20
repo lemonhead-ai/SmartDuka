@@ -130,3 +130,8 @@ class AuthRepository:
         reset, shopkeeper = row
         reset.used_at = now
         return shopkeeper
+
+    async def delete_shopkeeper(self, shopkeeper: Shopkeeper) -> None:
+        await self.session.delete(shopkeeper)
+        await self.session.flush()
+
