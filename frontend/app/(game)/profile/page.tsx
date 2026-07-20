@@ -304,7 +304,7 @@ export default function ProfilePage() {
             aria-modal="true"
             aria-labelledby="delete-account-title"
             aria-describedby="delete-account-description"
-            className="w-full max-w-md rounded-[28px] border border-red-200 bg-surface p-6 shadow-2xl sm:p-7"
+            className="w-full max-w-md rounded-[28px] bg-surface p-6 shadow-2xl sm:p-7"
           >
             <div className="grid size-12 place-items-center rounded-2xl bg-red-100 text-xl text-red-700 dark:bg-red-950/50 dark:text-red-300" aria-hidden="true">!</div>
             <h2 id="delete-account-title" className="mt-5 text-2xl font-bold tracking-tight">Delete your account?</h2>
@@ -320,7 +320,7 @@ export default function ProfilePage() {
                 onChange={(event) => setDeleteConfirmation(event.target.value.toUpperCase())}
                 disabled={isDeleting}
                 autoComplete="off"
-                className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-semibold outline-none transition-colors focus:border-red-500 disabled:opacity-60"
+                className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-semibold outline-none transition-colors focus:border-red-500 focus-visible:outline-none disabled:opacity-60"
               />
             </label>
             {deleteError && <p role="alert" className="mt-3 rounded-[14px] bg-red-50 p-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-200">{deleteError}</p>}
