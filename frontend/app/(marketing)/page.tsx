@@ -105,8 +105,8 @@ export default function MarketingHomePage() {
         {isExpired && (
           <MiloAlert
             kind="warning"
-            message="Your session has expired. Please sign in again to continue managing your duka!"
-            className="mb-5 w-full max-w-md sm:mb-6"
+            message="Your session expired. Sign in again to keep managing your duka."
+            className="mb-4 w-full max-w-md sm:mb-6"
           />
         )}
         <p className={`text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
@@ -114,18 +114,22 @@ export default function MarketingHomePage() {
         }`}>
           Play. Learn. Grow.
         </p>
-        <h1 className="mt-4 text-4xl font-black leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl">
+        <h1 className={`font-black leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl ${
+          isExpired ? "mt-3 text-3xl sm:mt-4 sm:text-6xl" : "mt-4 text-4xl"
+        }`}>
           A learning adventure<br />in every duka.
         </h1>
-        <p className={`mt-4 max-w-xl text-sm leading-6 sm:text-base transition-colors ${
+        <p className={`max-w-xl text-[13px] leading-5 transition-colors sm:mt-4 sm:text-base sm:leading-6 ${
+          isExpired ? "mt-3" : "mt-4"
+        } ${
           isDark ? "text-slate-300" : "text-[#122116]/75"
         }`}>
           Run your own shop, help friendly customers, and build everyday maths and reading skills through play.
         </p>
-        <div className="mt-6 flex flex-col items-center gap-2">
+        <div className={`flex flex-col items-center gap-1.5 sm:gap-2 ${isExpired ? "mt-4 sm:mt-6" : "mt-6"}`}>
           <Link 
             href="/sign-up" 
-            className={`inline-flex rounded-full px-6 py-3 font-bold transition-all duration-200 shadow-md ${greenColorClass}`}
+            className={`inline-flex rounded-full px-5 py-2.5 font-bold transition-all duration-200 shadow-md sm:px-6 sm:py-3 ${greenColorClass}`}
           >
             Create my duka
           </Link>
@@ -138,7 +142,7 @@ export default function MarketingHomePage() {
       </div>
 
       {/* Card Wheel */}
-      <LandingCardWheel />
+      <LandingCardWheel compact={isExpired} />
     </main>
   );
 }

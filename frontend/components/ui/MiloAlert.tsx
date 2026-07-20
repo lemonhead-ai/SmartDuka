@@ -29,28 +29,28 @@ export function MiloAlert({ kind = "info", message, className = "" }: MiloAlertP
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 380, damping: 28 }}
-      className={`flex w-full flex-col items-center gap-2 sm:flex-row sm:items-end sm:gap-3 ${className}`}
+      className={`flex w-full items-center gap-2 sm:items-end sm:gap-3 ${className}`}
       role="alert"
       aria-live="polite"
     >
-      <div className="relative size-10 shrink-0 sm:size-12" aria-label="Milo, your learning buddy" role="img">
+      <div className="relative size-11 shrink-0 sm:size-12" aria-label="Milo, your learning buddy" role="img">
         <Image
           src="/mascots/milo.PNG"
           alt=""
           fill
-          sizes="(max-width: 639px) 40px, 48px"
+          sizes="(max-width: 639px) 44px, 48px"
           className="object-contain"
           priority
         />
       </div>
-      <div className={`relative w-full min-w-0 flex-1 px-3 py-2.5 border-ink dark:border-white border-[3px] shadow-elevated hand-drawn-bubble sm:px-4 sm:py-3 ${tone.bg}`}>
+      <div className={`relative min-w-0 flex-1 px-2.5 py-2 border-ink dark:border-white border-[3px] shadow-elevated hand-drawn-bubble sm:px-4 sm:py-3 ${tone.bg}`}>
         <span
-          className={`absolute -bottom-[9px] left-1/2 size-4 -translate-x-1/2 rotate-[-45deg] border-b-[3px] border-l-[3px] border-ink dark:border-white sm:left-8 sm:translate-x-0 ${tone.bg}`}
+          className={`absolute -left-[8px] top-1/2 size-3.5 -translate-y-1/2 rotate-45 border-b-[3px] border-l-[3px] border-ink dark:border-white sm:-bottom-[9px] sm:left-8 sm:top-auto sm:size-4 sm:translate-y-0 sm:rotate-[-45deg] ${tone.bg}`}
           aria-hidden="true"
         />
         <div className="relative z-10 min-w-0">
-          <p className={`text-[10px] font-bold uppercase tracking-[0.05em] ${tone.sender}`}>Milo</p>
-          <p className="mt-0.5 break-words text-[13px] font-semibold leading-5 text-ink dark:text-white sm:text-[14px] sm:leading-relaxed">
+          <p className={`text-[9px] font-bold uppercase tracking-[0.05em] sm:text-[10px] ${tone.sender}`}>Milo</p>
+          <p className="mt-0.5 break-words text-[12px] font-semibold leading-4 text-ink dark:text-white sm:text-[14px] sm:leading-relaxed">
             {cleanMessage}
           </p>
         </div>

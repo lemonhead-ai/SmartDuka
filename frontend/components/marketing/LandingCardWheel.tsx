@@ -44,7 +44,7 @@ const cards = [
   }
 ];
 
-export function LandingCardWheel() {
+export function LandingCardWheel({ compact = false }: { compact?: boolean }) {
   const [scrollPos, setScrollPos] = useState(2);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -170,7 +170,7 @@ export function LandingCardWheel() {
   const isAutoScrolling = !isDragging && !isSnapping;
 
   return (
-    <section className="relative h-[clamp(205px,34vh,360px)] shrink-0" aria-label="Smart Duka learning activities">
+    <section className={`relative shrink-0 ${compact ? "h-[clamp(150px,23vh,210px)] sm:h-[clamp(205px,34vh,360px)]" : "h-[clamp(205px,34vh,360px)]"}`} aria-label="Smart Duka learning activities">
       <div 
         className="absolute inset-x-0 bottom-0 top-0 cursor-grab touch-none select-none active:cursor-grabbing outline-none" 
         onWheel={handleWheel} 
@@ -211,7 +211,7 @@ export function LandingCardWheel() {
                   duration: isDragging ? 0 : isAutoScrolling ? 0.05 : 0.28, 
                   ease: isDragging || isAutoScrolling ? "linear" : [0.32, 0.72, 0, 1] 
                 }} 
-                className="absolute bottom-2 flex h-[clamp(165px,27vh,300px)] w-[148px] sm:w-[230px] flex-col overflow-visible rounded-[26px] p-4 sm:p-5 text-left shadow-2xl group cursor-pointer" 
+                className={`absolute bottom-2 flex w-[148px] sm:w-[230px] flex-col overflow-visible rounded-[26px] p-4 sm:p-5 text-left shadow-2xl group cursor-pointer ${compact ? "h-[140px] sm:h-[clamp(165px,27vh,300px)]" : "h-[clamp(165px,27vh,300px)]"}`}
                 style={{ 
                   backgroundColor: card.color, 
                   zIndex: Math.round(10 - distance * 2) 
