@@ -9,7 +9,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
+      - key: SMARTDUKA_ENVIRONMENT
+        value: production
       - key: SMARTDUKA_AUTH_COOKIE_SECURE
         value: "true"
-      # Link the environment group you created for secrets
+      # The linked environment group must provide SMARTDUKA_DATABASE_URL as a
+      # Supabase Session Pooler URI, alongside the model provider secrets.
       - fromGroup: SmartDuka secrets

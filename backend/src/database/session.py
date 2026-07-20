@@ -13,13 +13,22 @@ from src.database.base import Base
 
 class Database:
     def __init__(self, database_url: str) -> None:
-        self.engine: AsyncEngine = create_async_engine(database_url)
+        engine_options: dict[str, object] = {"pool_pre_ping": True}
+        if database_url.startswith("postgresql+asyncpg://"):
+            engine_options.update(
+                pool_size=5,
+                max_overflow=5,
+                pool_recycle=1800,
+                connect_args={"ssl": True},
+            )
+        self.engine: AsyncEngine = create_async_engine(database_url, **engine_options)
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
 
     async def create_schema(self) -> None:
         async with self.engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
             await connection.run_sync(self._apply_sqlite_demo_migrations)
+            await connection.run_sync(self._secure_postgres_tables)
 
     @staticmethod
     def _apply_sqlite_demo_migrations(connection: Connection) -> None:
@@ -64,6 +73,15 @@ class Database:
                 "CREATE UNIQUE INDEX IF NOT EXISTS uq_students_shopkeeper_id "
                 "ON students (shopkeeper_id) WHERE shopkeeper_id IS NOT NULL"
             )
+
+    @staticmethod
+    def _secure_postgres_tables(connection: Connection) -> None:
+        """Keep ORM-managed gameplay data inaccessible through Supabase's Data API."""
+
+        if connection.dialect.name != "postgresql":
+            return
+        for table in Base.metadata.sorted_tables:
+            connection.exec_driver_sql(f'ALTER TABLE "{table.name}" ENABLE ROW LEVEL SECURITY')
 
     async def dispose(self) -> None:
         await self.engine.dispose()
