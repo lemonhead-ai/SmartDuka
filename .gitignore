@@ -26,3 +26,5 @@ env/
 
 # ShipStudio metadata
 .shipstudio/
+
+.vercel
