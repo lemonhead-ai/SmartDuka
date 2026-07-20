@@ -60,11 +60,11 @@ export function ToastViewport() {
           key={toast.id}
           role="status"
           aria-live="polite"
-          initial={{ opacity: 0, x: 24, y: 12, scale: 0.96 }}
+          initial={{ opacity: 0, x: 24, y: -12, scale: 0.96 }}
           animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-          exit={{ opacity: 0, x: 24, y: 12, scale: 0.96 }}
+          exit={{ opacity: 0, x: 24, y: -12, scale: 0.96 }}
           transition={{ type: "spring", stiffness: 360, damping: 26 }}
-          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[100] flex w-[min(92vw,31rem)] items-end gap-3 sm:right-6"
+          className="fixed top-4 right-4 z-[100] flex w-[min(92vw,31rem)] items-start gap-3 sm:top-6 sm:right-6"
         >
           <div className="relative size-14 shrink-0" aria-label="Milo, your learning buddy" role="img">
             <Image src="/mascots/milo.PNG" alt="" fill sizes="56px" className="object-contain" priority />

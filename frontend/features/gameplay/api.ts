@@ -49,6 +49,22 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
   });
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined") {
+      const pathname = window.location.pathname;
+      if (
+        pathname !== "/" &&
+        pathname !== "/sign-in" &&
+        pathname !== "/sign-up" &&
+        pathname !== "/forgot-password" &&
+        pathname !== "/reset-password"
+      ) {
+        window.localStorage.removeItem(sessionTokenKey);
+        window.localStorage.removeItem("smart-duka-gameplay-session");
+        window.localStorage.removeItem("smart-duka-profile-name");
+        window.localStorage.removeItem("smart-duka-kid-profile");
+        window.location.href = "/?expired=true";
+      }
+    }
     const payload = await response.json().catch(() => null) as ApiError | null;
     throw new ApiRequestError(
       typeof payload?.detail === "string" ? payload.detail : "Something went wrong. Please try again.",

@@ -5,13 +5,19 @@ import Link from "next/link";
 import { usePreferences } from "@/components/theme/PreferencesProvider";
 import { LandingCardWheel } from "@/components/marketing/LandingCardWheel";
 import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
+import { MiloAlert } from "@/components/ui/MiloAlert";
 
 export default function MarketingHomePage() {
   const { preferences, setPreference } = usePreferences();
   const [mounted, setMounted] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setIsExpired(params.get("expired") === "true");
+    }
   }, []);
 
   const isDark = mounted && (preferences.theme === "dark" || (preferences.theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches));
@@ -94,6 +100,13 @@ export default function MarketingHomePage() {
 
       {/* Hero Content */}
       <div className="relative z-10 mx-auto flex min-h-0 max-w-3xl flex-1 flex-col items-center justify-center pb-2 pt-8 text-center sm:pt-10 px-6">
+        {isExpired && (
+          <MiloAlert
+            kind="warning"
+            message="Your session has expired. Please sign in again to continue managing your duka!"
+            className="mb-6 max-w-md w-full"
+          />
+        )}
         <p className={`text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
           isDark ? "text-[#2e7d32]" : "text-[#2e7d32]"
         }`}>
