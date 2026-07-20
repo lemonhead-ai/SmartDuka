@@ -52,7 +52,7 @@ export default function MarketingHomePage() {
       />
 
       {/* Navigation Header */}
-      <header className="w-full max-w-6xl mx-auto px-6 py-6 z-20">
+      <header className="z-20 mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 sm:py-6">
         <nav className="relative z-10 flex items-center justify-between gap-4">
           <SmartDukaLogo />
           <div className="flex items-center gap-2 sm:gap-3">
@@ -80,7 +80,7 @@ export default function MarketingHomePage() {
             </button>
             <Link 
               href="/sign-in" 
-              className={`rounded-full px-3 py-2 text-sm font-semibold sm:px-5 transition ${
+              className={`rounded-full px-2.5 py-2 text-sm font-semibold sm:px-5 transition ${
                 isDark ? "text-slate-200 hover:text-white" : "text-[#122116] hover:text-[#122116]/80"
               }`}
             >
@@ -88,7 +88,7 @@ export default function MarketingHomePage() {
             </Link>
             <Link 
               href="/sign-up" 
-              className={`rounded-full px-4 py-2 text-sm font-bold transition-all duration-200 ${
+              className={`rounded-full px-3 py-2 text-sm font-bold transition-all duration-200 sm:px-4 ${
                 isDark ? "bg-slate-100 text-[#0a0e0c] hover:bg-slate-200" : "bg-[#122116] text-white hover:bg-[#122116]/90"
               }`}
             >
@@ -99,12 +99,14 @@ export default function MarketingHomePage() {
       </header>
 
       {/* Hero Content */}
-      <div className="relative z-10 mx-auto flex min-h-0 max-w-3xl flex-1 flex-col items-center justify-center pb-2 pt-8 text-center sm:pt-10 px-6">
+      <div className={`relative z-10 mx-auto flex min-h-0 max-w-3xl flex-1 flex-col items-center pb-2 text-center px-4 sm:px-6 ${
+        isExpired ? "justify-start pt-2 sm:justify-center sm:pt-10" : "justify-center pt-8 sm:pt-10"
+      }`}>
         {isExpired && (
           <MiloAlert
             kind="warning"
             message="Your session has expired. Please sign in again to continue managing your duka!"
-            className="mb-6 max-w-md w-full"
+            className="mb-5 w-full max-w-md sm:mb-6"
           />
         )}
         <p className={`text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
