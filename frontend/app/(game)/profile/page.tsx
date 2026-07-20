@@ -43,7 +43,12 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [shopName, setShopName] = useState("");
   const [shopTheme, setShopTheme] = useState<"sunrise" | "ocean" | "leaf" | "berry">("leaf");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const deleteInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (accountQuery.data && !editing) setName(accountQuery.data.shopkeeper.display_name);
@@ -104,6 +109,30 @@ export default function ProfilePage() {
       inputRef.current.focus();
     }
   }, [editing]);
+
+  useEffect(() => {
+    if (deleteDialogOpen) deleteInputRef.current?.focus();
+  }, [deleteDialogOpen]);
+
+  const closeDeleteDialog = () => {
+    if (isDeleting) return;
+    setDeleteDialogOpen(false);
+    setDeleteConfirmation("");
+    setDeleteError(null);
+  };
+
+  const deleteAccount = async () => {
+    if (deleteConfirmation !== "DELETE" || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await authApi.deleteAccount();
+      await logout();
+    } catch {
+      setDeleteError("We could not delete your account. Please try again.");
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -256,20 +285,52 @@ export default function ProfilePage() {
         </button>
         <button 
           type="button" 
-          onClick={async () => {
-            if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-              try {
-                await authApi.deleteAccount();
-                await logout();
-              } catch (e) {
-                alert("Failed to delete account. Please try again later.");
-              }
-            }
-          }} 
+          onClick={() => setDeleteDialogOpen(true)}
           className="inline-flex items-center gap-2 rounded-[14px] bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700">
           Delete account
         </button>
       </div>
+
+      {deleteDialogOpen && (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/55 p-5 backdrop-blur-sm"
+          role="presentation"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") closeDeleteDialog();
+          }}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+            aria-describedby="delete-account-description"
+            className="w-full max-w-md rounded-[28px] border border-red-200 bg-surface p-6 shadow-2xl sm:p-7"
+          >
+            <div className="grid size-12 place-items-center rounded-2xl bg-red-100 text-xl text-red-700 dark:bg-red-950/50 dark:text-red-300" aria-hidden="true">!</div>
+            <h2 id="delete-account-title" className="mt-5 text-2xl font-bold tracking-tight">Delete your account?</h2>
+            <p id="delete-account-description" className="mt-3 text-sm leading-6 text-muted">
+              This permanently removes your duka, saved progress, and account details. It cannot be undone.
+            </p>
+            <label className="mt-6 grid gap-2 text-sm font-semibold text-ink" htmlFor="delete-confirmation">
+              Type <span className="font-bold text-red-600">DELETE</span> to continue
+              <input
+                ref={deleteInputRef}
+                id="delete-confirmation"
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value.toUpperCase())}
+                disabled={isDeleting}
+                autoComplete="off"
+                className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-semibold outline-none transition-colors focus:border-red-500 disabled:opacity-60"
+              />
+            </label>
+            {deleteError && <p role="alert" className="mt-3 rounded-[14px] bg-red-50 p-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-200">{deleteError}</p>}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={closeDeleteDialog} disabled={isDeleting} className="rounded-[14px] border border-line px-4 py-3 text-sm font-semibold transition-colors hover:bg-canvas disabled:opacity-50">Keep my account</button>
+              <button type="button" onClick={() => void deleteAccount()} disabled={deleteConfirmation !== "DELETE" || isDeleting} className="rounded-[14px] bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-45">{isDeleting ? "Deleting account…" : "Delete permanently"}</button>
+            </div>
+          </section>
+        </div>
+      )}
 
     </div>
   );
