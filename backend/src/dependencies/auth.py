@@ -31,6 +31,10 @@ async def get_optional_current_shopkeeper(
 ) -> Shopkeeper | None:
     token = request.cookies.get(settings.auth_session_cookie_name)
     if not token:
+        authorization = request.headers.get("Authorization", "")
+        if authorization.lower().startswith("bearer "):
+            token = authorization[7:].strip()
+    if not token:
         return None
     shopkeeper = await AuthRepository(db).get_session_shopkeeper(fingerprint_token(token))
     if shopkeeper is None:
