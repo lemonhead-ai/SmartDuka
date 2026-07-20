@@ -67,7 +67,7 @@ export function ToastViewport() {
           className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[100] flex w-[min(92vw,31rem)] items-end gap-3 sm:right-6"
         >
           <div className="relative size-14 shrink-0" aria-label="Milo, your learning buddy" role="img">
-            <Image src="/mascots/milo.png" alt="" fill sizes="56px" className="object-contain" priority />
+            <Image src="/mascots/milo.PNG" alt="" fill sizes="56px" className="object-contain" priority />
           </div>
           <div className={`relative min-w-0 flex-1 px-5 py-4 border-ink dark:border-white border-[3px] shadow-elevated sm:px-6 sm:py-5 hand-drawn-bubble ${tone.bg}`}>
             <span className={`absolute -bottom-[9px] left-8 size-4 rotate-[-45deg] border-b-[3px] border-l-[3px] border-ink dark:border-white ${tone.bg}`} aria-hidden="true" />

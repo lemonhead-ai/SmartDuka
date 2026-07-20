@@ -35,7 +35,7 @@ export function MiloAlert({ kind = "info", message, className = "" }: MiloAlertP
     >
       <div className="relative size-12 shrink-0" aria-label="Milo, your learning buddy" role="img">
         <Image
-          src="/mascots/milo.png"
+          src="/mascots/milo.PNG"
           alt=""
           fill
           sizes="48px"
