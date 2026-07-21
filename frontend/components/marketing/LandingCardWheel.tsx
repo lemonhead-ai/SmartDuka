@@ -36,25 +36,25 @@ const cards = [
     shadow: "rgba(217, 147, 182, 0.95)" // Vibrant pink shadow
   },
   { 
-    title: "Jack shop", 
+    title: "Gengar shops", 
     detail: "Grow your duka", 
     image: "/illustrations/jack.PNG", 
     color: "#8b5cf6", // Saturated purple
     shadow: "rgba(189, 168, 239, 0.95)" // Vibrant purple shadow
   },
   {
-    title: "Alligator",
+    title: "Alligator Curiosity",
     detail: "Learn by play",
     image: "/illustrations/alligator.PNG",
     color: "#2eb67d",
     shadow: "rgba(14, 134, 84, 0.85)"
   },
   {
-    title: "Spongebob",
+    title: "Sponge Bob survival",
     detail: "Skills for life",
     image: "/illustrations/spongebob (1).PNG",
-    color: "#5b7cfa",
-    shadow: "rgba(58, 81, 207, 0.85)"
+    color: "#faf25bff",
+    shadow: "rgba(0, 38, 255, 1)"
   }
 ];
 
