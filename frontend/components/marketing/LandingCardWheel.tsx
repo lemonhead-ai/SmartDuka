@@ -50,7 +50,7 @@ const cards = [
     shadow: "rgba(0, 251, 255, 1)"
   },
   {
-    title: "Sponge Bob survival",
+    title: "SpongeBob Survival",
     detail: "Skills for life",
     image: "/illustrations/spongebob (1).PNG",
     color: "#faf25bff",

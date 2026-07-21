@@ -6,7 +6,7 @@ This document separates the AI that helped build Smart Duka from the AI that cur
 
 ## Development Collaboration
 
-Smart Duka was developed collaboratively by the project team with OpenAI Codex and GPT-5.6 Terra assistance.
+Smart Duka was developed collaboratively by the project team with OpenAI Codex assistance.
 
 Codex supported the implementation work across the repository, including:
 
@@ -21,9 +21,9 @@ The human team remains responsible for product direction, educational decisions,
 
 ## Current Live Agent Runtime
 
-The live Smart Duka agent runtime currently uses Featherless AI with the `Qwen/Qwen3-32B` model.
+The live Smart Duka agent runtime currently uses Fireworks AI (via the Featherless API proxy) with the `Qwen/Qwen3-32B` model.
 
-Featherless is configured through server-side environment variables only. The browser never receives the provider API key. Qwen3 non-thinking mode is enabled (`enable_thinking=false`) for this short, structured educational-content workload. At application startup, the backend creates the configured agent bundle and injects the orchestrator into the gameplay and sync services through FastAPI dependencies.
+Fireworks/Featherless is configured through server-side environment variables only. The browser never receives the provider API key. Qwen3 non-thinking mode is enabled (`enable_thinking=false`) for this short, structured educational-content workload. At application startup, the backend creates the configured agent bundle and injects the orchestrator into the gameplay and sync services through FastAPI dependencies.
 
 The current runtime generates structured, validated content for:
 
@@ -39,20 +39,11 @@ Gameplay rules, basket validation, scoring, progress, rewards, shop cash, and ar
 
 Codex helped implement the typed ledger, adaptive difficulty progression, and tiered checkout challenges, including the corresponding automated checks and dashboard integration.
 
-Qwen3-32B is valuable for the child-facing parts of those features: natural customer stories, conversational wording, and hint-first tutoring. It is not used to calculate prices, change, discounts, division answers, or shop cash. Those values are deterministic so learners receive accurate feedback every time and the demo remains responsive within Featherless concurrency limits. GPT-5.6 Terra would strengthen the same conversational and adaptive teaching layer once its provider configuration is available; it is not required for arithmetic truth or ledger integrity.
+Qwen3-32B is valuable for the child-facing parts of those features: natural customer stories, conversational wording, and hint-first tutoring. It is not used to calculate prices, change, discounts, division answers, or shop cash. Those values are deterministic so learners receive accurate feedback every time and the demo remains responsive within Fireworks/Featherless concurrency limits. This separation ensures model inference errors never compromise the core arithmetic or ledger integrity.
 
-## Planned OpenAI Runtime Migration
+## Active Agent Runtime Configuration
 
-The team plans to obtain an OpenAI API key and then configure GPT-5.6 Terra as the live agent provider.
-
-The provider abstraction already keeps model configuration separate from the game engine. The migration will require:
-
-1. adding the OpenAI credential to the backend environment;
-2. selecting the OpenAI provider and GPT-5.6 Terra model in server configuration;
-3. running the existing agent, sync, gameplay, and smoke-test checks; and
-4. updating this record to mark GPT-5.6 Terra as the active live runtime.
-
-Until those steps are complete, Featherless AI with Qwen3-32B is the active production/demo agent provider.
+The active live runtime uses the `Qwen/Qwen3-32B` model hosted on Fireworks AI (via the Featherless API proxy). The provider abstraction keeps model configuration separate from the game engine, meaning other OpenAI-compatible endpoints or providers can be configured simply by editing server-side environment variables.
 
 ## Evidence in This Repository
 

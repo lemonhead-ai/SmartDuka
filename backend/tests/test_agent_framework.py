@@ -49,7 +49,7 @@ def build_context() -> AgentContext:
 
 @pytest.mark.asyncio
 async def test_structured_agent_validates_provider_json() -> None:
-    agent = CustomerTestAgent(StaticProvider(), PromptLoader(), "gpt-5.6")
+    agent = CustomerTestAgent(StaticProvider(), PromptLoader(), "Qwen/Qwen3-32B")
     result = await agent.run(build_context())
     assert len(result.scenarios) == 5
     assert result.scenarios[0].customer_name == "Akinyi"

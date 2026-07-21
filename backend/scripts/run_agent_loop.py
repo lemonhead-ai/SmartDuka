@@ -78,13 +78,13 @@ async def main() -> None:
     provider = StubProvider()
     prompt_loader = PromptLoader()
     agents = SimpleNamespace(
-        customer=CustomerAgent(provider, prompt_loader, "gpt-5.6"),
-        tutor=TutorAgent(provider, prompt_loader, "gpt-5.6"),
-        difficulty=DifficultyAgent(provider, prompt_loader, "gpt-5.6"),
-        mission=MissionAgent(provider, prompt_loader, "gpt-5.6"),
-        reward=RewardAgent(provider, prompt_loader, "gpt-5.6"),
-        insight=InsightAgent(provider, prompt_loader, "gpt-5.6"),
-        localization=LocalizationAgent(provider, prompt_loader, "gpt-5.6"),
+        customer=CustomerAgent(provider, prompt_loader, "Qwen/Qwen3-32B"),
+        tutor=TutorAgent(provider, prompt_loader, "Qwen/Qwen3-32B"),
+        difficulty=DifficultyAgent(provider, prompt_loader, "Qwen/Qwen3-32B"),
+        mission=MissionAgent(provider, prompt_loader, "Qwen/Qwen3-32B"),
+        reward=RewardAgent(provider, prompt_loader, "Qwen/Qwen3-32B"),
+        insight=InsightAgent(provider, prompt_loader, "Qwen/Qwen3-32B"),
+        localization=LocalizationAgent(provider, prompt_loader, "Qwen/Qwen3-32B"),
     )
     context = AgentContext(
         learner=LearnerProfile(student_id=uuid4(), age=9, difficulty_tier=2),

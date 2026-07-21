@@ -103,7 +103,7 @@ Being clear about scope is as important as being clear about vision.
 
 ## The Unfair Advantage
 
-Smart Duka's moat is not the technology — GPT-5.6 is available to everyone. The moat is:
+Smart Duka's moat is not the technology — large language models are available to everyone. The moat is:
 
 1. **Cultural depth** — the Localization Agent builds a compound advantage. Every month of operation generates more culturally-grounded training signal that makes the agent better.
 2. **Distribution insight** — teacher-champion and faith-community distribution gives us a channel that is invisible to Western EdTech companies.

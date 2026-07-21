@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     featherless_base_url: str = "https://api.featherless.ai/v1"
     featherless_enable_thinking: bool = False
     openai_api_key: str | None = None
-    openai_model: str = "gpt-5.6"
+    openai_model: str = "Qwen/Qwen3-32B"
     allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
     auth_session_cookie_name: str = "smartduka_session"
     auth_session_days: int = 14

@@ -67,9 +67,9 @@
    - [ ] Confirm graceful fallbacks preserve gameplay when an inference call fails.
    - [ ] Confirm real model responses are visible in the judge-ready flow without exposing credentials.
 
-31. [ ] **OpenAI runtime validation (blocked on user key)**: Add a user-provided OpenAI API key, configure GPT-5.6 Terra as an optional provider, and validate agent orchestration against it.
+31. [ ] **AI runtime validation (blocked on user key)**: Add a user-provided API key, configure the Fireworks/Featherless provider, and validate agent orchestration against it.
    - [ ] Do not commit or expose the key; use local/deployment environment variables only.
-   - [ ] Keep Featherless Qwen as the supported fallback until the OpenAI validation is complete.
+   - [ ] Keep Featherless Qwen as the active provider.
 
 32. [ ] **Deployment**: Deploy the FastAPI backend to Railway and the Next.js frontend to Vercel.
    - [ ] Configure production environment variables, CORS, health checks, and the frontend API URL.

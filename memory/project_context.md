@@ -4,7 +4,7 @@ Smart Duka is an agentic AI educational game for children aged 4–13 in East Af
 
 **Important Platform Change:** While the original brief specified a mobile-first PWA, we are prioritizing a **web-based application** for this hackathon build to ensure easy testing on desktop browsers (Windows/Chrome). The UI should be responsive, but desktop/web testing is the primary target.
 
-The project is split into a Next.js frontend (offline-first capability) and a Python FastAPI backend powered by GPT-5.6 Sol agents.
+The project is split into a Next.js frontend (offline-first capability) and a Python FastAPI backend powered by Qwen3-32B agents via Fireworks AI.
 
 ## Current State
 - The foundational folder structure is in place.

@@ -109,7 +109,7 @@ No existing product in the East African market delivers all three simultaneously
 
 The convergence of three technologies creates an opportunity that did not exist three years ago:
 
-1. **Large language models** (GPT-5.6) capable of generating unlimited, culturally-tuned content on demand.
+1. **Large language models** (like Qwen3-32B) capable of generating unlimited, culturally-tuned content on demand.
 2. **Agentic AI** capable of adapting that content in real time based on individual child behaviour.
 3. **Responsive web applications** that work well on low-spec Android devices.
 

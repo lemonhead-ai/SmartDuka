@@ -36,7 +36,7 @@ async def test_openai_provider_returns_output_text() -> None:
     result = await provider.complete(
         system_prompt="Return JSON.",
         user_prompt="{}",
-        model="gpt-5.6",
+        model="Qwen/Qwen3-32B",
         temperature=0.2,
         max_output_tokens=100,
     )

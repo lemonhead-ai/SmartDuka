@@ -12,7 +12,7 @@
 3. [Design System](#3-design-system)
 4. [Frontend — Next.js](#4-frontend--nextjs)
 5. [Backend — FastAPI](#5-backend--fastapi)
-6. [Agent Rules — GPT-5.6](#6-agent-rules--gpt-56)
+6. [Agent Rules — Qwen3-32B](#6-agent-rules--qwen3-32b)
 7. [Offline-First Strategy](#7-offline-first-strategy)
 8. [File & Folder Conventions](#8-file--folder-conventions)
 9. [Git & PR Rules](#9-git--pr-rules)
@@ -22,7 +22,7 @@
 ## 1. General Principles
 
 - This project is **Smart Duka** — an agentic AI education game for children aged 4–13 in East Africa.
-- The stack is: **Next.js (frontend)** + **Python FastAPI (backend)** + **GPT-5.6 Sol (agents)** + **OpenAI Codex (build tool)**.
+- The stack is: **Next.js (frontend)** + **Python FastAPI (backend)** + **Qwen3-32B via Fireworks AI (agents)** + **OpenAI Codex (build tool)**.
 - The product philosophy is: **offline-first, locally grounded, agent-personalised, minimalist UI**.
 - When in doubt, do less and do it right. A smaller, clean, working feature beats a large broken one.
 - Never make up functionality. If a spec is missing, leave a clearly labelled `// TODO:` and continue.
@@ -306,19 +306,19 @@ async def log_event(
 
 ---
 
-## 6. Agent Rules — GPT-5.6
+## 6. Agent Rules — Qwen3-32B
 
 ### 6.1 Model
 
-Always use `gpt-5.6` as the model string. Never use any other model in this project.
+Always use `Qwen/Qwen3-32B` as the model string. Never use any other model in this project.
 
 ```python
 from openai import AsyncOpenAI
 
-client = AsyncOpenAI()  # reads OPENAI_API_KEY from env
+client = AsyncOpenAI()  # reads api key from env
 
 response = await client.chat.completions.create(
-    model="gpt-5.6",
+    model="Qwen/Qwen3-32B",
     messages=[
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_message}

@@ -18,7 +18,7 @@
 | REST API v1 & Frontend Integration | Done | Consolidated typed gameplay REST API, consistent error contracts, OpenAPI docs, and live React Query frontend integration. |
 | Context-Aware Gameplay Validation | Done | Checkout now requires an exact requested basket match, with contextual tutor feedback and animated sensory feedback in the game UI. |
 | Demo Loop Recovery & Readiness | Done | Session state survives browser reloads, checkout shows real reward and mission progress, clean demo databases auto-upgrade, and the seeded duka is ready immediately. |
-| AI Collaboration Record | Done | A judge-friendly record distinguishes Codex/GPT-5.6 Terra development collaboration from the current Featherless GLM-5.2 live runtime and its planned OpenAI migration. |
+| AI Collaboration Record | Done | A judge-friendly record distinguishes Codex development collaboration from the current Fireworks AI Qwen3-32B live runtime. |
 | Setup Route Guard | Done | The setup page checks the live shop record first and redirects existing learners to the dashboard instead of presenting setup again. |
 | Inventory Management & Customer Stock Offers | Done | Learners can restock and add catalogue products from the dashboard; limited-stock requests pause for an AI customer accept-or-replace response. |
 | Session-Aware Adaptive Difficulty | Done | A forgiving three-attempt accuracy window adjusts the recommended tier between 1 and 7 and carries it into challenges, progress, and the next Qwen scenario batch. |
