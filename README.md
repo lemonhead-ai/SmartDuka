@@ -92,7 +92,7 @@ sequenceDiagram
 
 ## Demo
 
-> 📹 **[Watch the 3-minute demo on YouTube](#)** *(link added before submission)*
+> 📹 **[Watch the 3-minute demo on YouTube](https://youtu.be/8i-TpDyShjE?si=uoUkQtYhk8wIHzuS)**
 
 **Demo flow:**
 1. Child opens Smart Duka and lands on their dashboard — active mission shown.
