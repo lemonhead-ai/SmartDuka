@@ -215,17 +215,17 @@ export function LandingCardWheel() {
                 key={card.title} 
                 initial={false} 
                 animate={{ 
-                  x: offset * 180, // Spacing remains fixed relative to the center
+                  x: offset * 140,
                   y: distance * 28, 
                   scale: distance <= 1 ? 1.08 - 0.2 * distance : Math.max(0.72, 0.88 - 0.16 * (distance - 1)), 
                   rotate: offset * 8, 
-                  opacity: distance > 2 ? 0 : 1 - (distance * 0.4)
+                  opacity: distance > 3 ? 0 : 1 - (distance * 0.22)
                 }} 
                 transition={{ 
                   duration: isDragging ? 0 : isAutoScrolling ? 0.05 : 0.28, 
                   ease: isDragging || isAutoScrolling ? "linear" : [0.32, 0.72, 0, 1] 
                 }} 
-                className="absolute bottom-2 flex h-[clamp(165px,27vh,300px)] w-[148px] sm:w-[230px] flex-col overflow-visible rounded-[26px] p-4 sm:p-5 text-left shadow-2xl group cursor-pointer"
+                className="absolute bottom-2 flex h-[clamp(165px,27vh,300px)] w-[160px] sm:w-[180px] flex-col overflow-visible rounded-[26px] p-4 sm:p-5 text-left shadow-2xl group cursor-pointer"
                 style={{ 
                   backgroundColor: card.color, 
                   zIndex: Math.round(10 - distance * 2) 

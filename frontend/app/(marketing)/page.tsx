@@ -117,7 +117,7 @@ export default function MarketingHomePage() {
         <h1 className={`font-black leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl ${
           isExpired ? "mt-3 text-3xl sm:mt-4 sm:text-6xl" : "mt-4 text-4xl"
         }`}>
-          A learning adventure<br />in every duka.
+          An Adventure for every Kiddo!
         </h1>
         <p className={`max-w-xl text-[13px] leading-5 transition-colors sm:mt-4 sm:text-base sm:leading-6 ${
           isExpired ? "mt-3" : "mt-4"
@@ -133,11 +133,6 @@ export default function MarketingHomePage() {
           >
             Create my duka
           </Link>
-          <p className={`text-xs transition-colors ${
-            isDark ? "text-slate-500" : "text-[#122116]/50"
-          }`}>
-            Create an account first, then set up your duka.
-          </p>
         </div>
       </div>
 
