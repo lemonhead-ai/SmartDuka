@@ -225,7 +225,7 @@ export function LandingCardWheel() {
                   duration: isDragging ? 0 : isAutoScrolling ? 0.05 : 0.28, 
                   ease: isDragging || isAutoScrolling ? "linear" : [0.32, 0.72, 0, 1] 
                 }} 
-                className="absolute bottom-2 flex h-[clamp(165px,27vh,300px)] w-[160px] sm:w-[180px] flex-col overflow-visible rounded-[26px] p-4 sm:p-5 text-left shadow-2xl group cursor-pointer"
+                className="absolute bottom-2 flex h-[clamp(165px,27vh,300px)] w-[160px] sm:w-[180px] lg:w-[205px] flex-col overflow-visible rounded-[26px] p-4 sm:p-5 text-left shadow-2xl group cursor-pointer"
                 style={{ 
                   backgroundColor: card.color, 
                   zIndex: Math.round(10 - distance * 2) 
