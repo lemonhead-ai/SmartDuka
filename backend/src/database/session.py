@@ -1,5 +1,5 @@
-from collections.abc import AsyncIterator
 import ssl
+from collections.abc import AsyncIterator
 
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import (

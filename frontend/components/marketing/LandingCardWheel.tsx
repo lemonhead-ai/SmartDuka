@@ -12,7 +12,7 @@ const cards = [
     detail: "Count & add", 
     image: "/illustrations/mario.PNG", 
     color: "#ff4a6b", // Saturated red-pink
-    shadow: "rgba(255, 10, 80, 0.9)" // Vibrant red shadow
+    shadow: "rgba(202, 10, 255, 0.9)" // Vibrant red shadow
   },
   { 
     title: "Milo helps", 
@@ -46,8 +46,8 @@ const cards = [
     title: "Alligator Curiosity",
     detail: "Learn by play",
     image: "/illustrations/alligator.PNG",
-    color: "#2eb67d",
-    shadow: "rgba(14, 134, 84, 0.85)"
+    color: "#00ff11ff",
+    shadow: "rgba(0, 251, 255, 1)"
   },
   {
     title: "Sponge Bob survival",

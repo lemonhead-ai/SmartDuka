@@ -134,4 +134,3 @@ class AuthRepository:
     async def delete_shopkeeper(self, shopkeeper: Shopkeeper) -> None:
         await self.session.delete(shopkeeper)
         await self.session.flush()
-

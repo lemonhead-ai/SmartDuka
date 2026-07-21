@@ -49,7 +49,9 @@ class Settings(BaseSettings):
 
         parsed = urlsplit(value)
         query = [(key, item) for key, item in parse_qsl(parsed.query) if key != "sslmode"]
-        return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
+        return urlunsplit(
+            (parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment)
+        )
 
 
 @lru_cache
