@@ -110,7 +110,7 @@ sequenceDiagram
 
 ### What Codex built
 
-Codex was not used as an autocomplete tool. It was used as a **coding agent** — given structured task specifications from our `/docs/` folder and asked to return working, tested code via pull requests.
+Codex was not used as an autocomplete tool. It was used as a **coding agent**, given structured task specifications from our `/docs/` folder and asked to return working, tested code via pull requests.
 
 **Codex built the following from natural-language specs:**
 
@@ -193,7 +193,7 @@ Each agent calls the model with a system prompt loaded from disk and returns str
 ### Prerequisites
 - Node.js v18+
 - Python 3.12+
-- A Fireworks AI/Featherless API key (set in your environment)
+- A OpenAI API/Fireworks AI/Featherless API key (set in your environment)
 
 ### 1. Frontend
 
