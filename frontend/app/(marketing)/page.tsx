@@ -142,7 +142,7 @@ export default function MarketingHomePage() {
       </div>
 
       {/* Card Wheel */}
-      <LandingCardWheel compact={isExpired} />
+      <LandingCardWheel />
     </main>
   );
 }
