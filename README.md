@@ -1,4 +1,4 @@
-# Smart Duka 🛒
+# SmartDuka
 
 **An agentic AI learning game where Kenyan children practise maths and literacy by running a virtual corner shop — powered by Qwen3-32B on Fireworks AI and built with Codex.**
 
@@ -193,7 +193,7 @@ Each agent calls the model with a system prompt loaded from disk and returns str
 ### Prerequisites
 - Node.js v18+
 - Python 3.12+
-- A OpenAI API/Fireworks AI/Featherless API key (set in your environment)
+- A OpenAI API/Featherless API key (set in your environment)
 
 ### 1. Frontend
 
