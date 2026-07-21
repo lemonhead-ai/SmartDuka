@@ -32,22 +32,22 @@ All three agents run on **Qwen3-32B**, dynamically personalizing customer dialog
 
 ```mermaid
 graph TD
-    subgraph Client [Child's Device (Web App)]
-        FE[Next.js App Shell / Zustand / React Query]
+    subgraph Client ["Child's Device (Web App)"]
+        FE["Next.js App Shell / Zustand / React Query"]
     end
     
-    subgraph Server [FastAPI Backend]
-        API[FastAPI Router /api/v1/gameplay]
-        Engine[Gameplay Engine]
-        DB_Server[(SQLite Database)]
-        Orchestrator[Agent Orchestrator]
+    subgraph Server ["FastAPI Backend"]
+        API["FastAPI Router /api/v1/gameplay"]
+        Engine["Gameplay Engine"]
+        DB_Server[("SQLite Database")]
+        Orchestrator["Agent Orchestrator"]
         API --> Engine
         Engine --> DB_Server
         Engine --> Orchestrator
     end
     
-    subgraph External [LLM Provider]
-        FW[Fireworks AI / Qwen3-32B]
+    subgraph External ["LLM Provider"]
+        FW["Fireworks AI / Qwen3-32B"]
     end
     
     FE <-->|REST API Requests & Responses| API
