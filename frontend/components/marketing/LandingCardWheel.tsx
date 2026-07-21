@@ -43,16 +43,16 @@ const cards = [
     shadow: "rgba(189, 168, 239, 0.95)" // Vibrant purple shadow
   },
   {
-    title: "Real duka",
+    title: "Alligator",
     detail: "Learn by play",
-    image: "/mascots/milo.PNG",
+    image: "/illustrations/alligator.PNG",
     color: "#2eb67d",
     shadow: "rgba(14, 134, 84, 0.85)"
   },
   {
-    title: "Small wins",
+    title: "Spongebob",
     detail: "Skills for life",
-    image: "/illustrations/kirby.PNG",
+    image: "/illustrations/spongebob (1).PNG",
     color: "#5b7cfa",
     shadow: "rgba(58, 81, 207, 0.85)"
   }
