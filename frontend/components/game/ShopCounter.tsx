@@ -18,14 +18,6 @@ import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { gameplayApi } from "@/features/gameplay/api";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
 import type { ApiError, Basket, Checkout, SessionSummary } from "@/features/gameplay/types";
-import {
-  OfflineSyncManager,
-  completeScenario,
-  getOfflineMeta,
-  getPlayableScenarios,
-  queueGameEvent,
-} from "@/features/offline";
-import type { CachedScenario } from "@/features/offline";
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -54,8 +46,6 @@ export function ShopCounter() {
   const [answer, setAnswer] = useState("");
   const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary; basket: Basket; customerName: string } | null>(null);
   const [showReceipt3D, setShowReceipt3D] = useState(false);
-  const [offlineScenario, setOfflineScenario] = useState<CachedScenario | null>(null);
-  const [offlineBasket, setOfflineBasket] = useState<Record<string, number>>({});
   const [customerConversation, setCustomerConversation] = useState<CustomerConversationMessage[]>(() => {
     if (customer) {
       if (customer.chat_history && customer.chat_history.length > 0) {
@@ -159,14 +149,6 @@ export function ShopCounter() {
       void queryClient.invalidateQueries({ queryKey: ["learning-summary"] });
       void queryClient.invalidateQueries({ queryKey: ["shop-ledger"] });
       notify("success", result.reward?.message ?? "Checkout complete!");
-      void queueGameEvent("transaction_completed", {
-        sessionId,
-        customerId: customer?.id,
-        totalKes: basket?.total_kes ?? 0,
-        source: "live",
-      })
-        .then(() => new OfflineSyncManager().sync())
-        .catch(() => undefined);
     },
     onError: (error) => notify("error", errorMessage(error)),
   });
@@ -250,14 +232,6 @@ export function ShopCounter() {
     onError: (error) => notify("error", errorMessage(error)),
   });
 
-  const loadOfflineScenario = async () => {
-    const childId = await getOfflineMeta<string>("active-child-id");
-    if (!childId) return;
-    const [scenario] = await getPlayableScenarios(childId);
-    if (!scenario) return;
-    setOfflineScenario(scenario);
-    setOfflineBasket({});
-  };
   const startOrContinue = async () => {
     if (sessionId) {
       nextCustomerMutation.mutate(sessionId);
@@ -268,51 +242,9 @@ export function ShopCounter() {
       setSessionId(session.session_id);
       nextCustomerMutation.mutate(session.session_id);
     } catch {
-      await loadOfflineScenario();
-    }
-  };
-  const completeOfflineScenario = async () => {
-    if (!offlineScenario) return;
-    const items = (offlineScenario.payload.items ?? []) as { id: string; quantity: number }[];
-    const matches = items.length > 0 && items.every((item) => offlineBasket[item.id] === item.quantity);
-    if (!matches) {
-      const tutor = await getOfflineMeta<{ hint: string; encouragement: string }>("tutor-guidance");
-      notify("warning", tutor ? `${tutor.hint} ${tutor.encouragement}` : "Match the customer's list before completing the sale.");
       return;
     }
-    await completeScenario(offlineScenario.id);
-    await queueGameEvent("transaction_completed", { scenarioId: offlineScenario.id, correct: true, source: "offline" });
-    void new OfflineSyncManager().sync().catch(() => undefined);
-    notify("success", "Sale saved on this device. New adventures will sync when you are online.");
-    setOfflineScenario(null);
-    await loadOfflineScenario();
   };
-
-  if (offlineScenario) {
-    const items = (offlineScenario.payload.items ?? []) as { id: string; name: string; quantity: number; unitPriceKes: number }[];
-    return (
-      <section className="rounded-[24px] border border-line bg-surface p-6">
-        <p className="text-sm font-medium text-muted">Offline adventure</p>
-        <h1 className="mt-1 text-2xl font-semibold">{offlineScenario.customerName} is at the counter</h1>
-        <p className="mt-3 text-muted">{String(offlineScenario.payload.greeting ?? "Jambo!")}</p>
-        <p className="mt-5 rounded-[20px] bg-canvas p-4 text-lg font-medium">{String(offlineScenario.payload.shoppingRequest ?? "")}</p>
-        <div className="mt-6 space-y-3">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between rounded-[16px] border border-line p-4">
-              <div><p className="font-semibold">{item.name}</p><p className="text-sm text-muted">KES {item.unitPriceKes} · needs {item.quantity}</p></div>
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => setOfflineBasket((current) => ({ ...current, [item.id]: Math.max(0, (current[item.id] ?? 0) - 1) }))} className="rounded-lg border border-line px-3 py-1">−</button>
-                <span className="w-5 text-center">{offlineBasket[item.id] ?? 0}</span>
-                <button type="button" onClick={() => setOfflineBasket((current) => ({ ...current, [item.id]: Math.min(item.quantity + 2, (current[item.id] ?? 0) + 1) }))} className="rounded-lg border border-line px-3 py-1">+</button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <button type="button" onClick={() => void completeOfflineScenario()} className="mt-6 rounded-[14px] bg-ink px-5 py-3 font-semibold text-white">Complete sale</button>
-      </section>
-    );
-  }
-
   if (completion) {
     const reward = completion.checkout.reward;
     const mission = completion.summary.mission;

@@ -1,30 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FireIcon, Award01Icon, Store01Icon, Target01Icon } from "hugeicons-react";
 
 import { gameplayApi } from "@/features/gameplay/api";
-import { getOfflineMeta } from "@/features/offline";
-
-type Mission = { title: string; briefing: string; targetValue: number };
 
 export default function AdventurePage() {
-  const [mission, setMission] = useState<Mission | null>(null);
-  
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
   const progress = progressQuery.data;
 
   const accuracy = progress?.questions_attempted
     ? Math.round((progress.correct_answers / progress.questions_attempted) * 100)
     : 0;
-
-  useEffect(() => { 
-    void getOfflineMeta<Mission[]>("active-missions")
-      .then((missions) => setMission(missions?.[0] ?? null))
-      .catch((err) => console.error("Failed to load active missions", err)); 
-  }, []);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -44,13 +32,13 @@ export default function AdventurePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
             <div className="flex-1">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">Active Mission</p>
-                <h2 className="mt-3 text-3xl font-black tracking-tight text-ink">{mission?.title ?? "Preparing Your Next Adventure..."}</h2>
+                <h2 className="mt-3 text-3xl font-black tracking-tight text-ink">Keep your adventure going</h2>
                 <p className="mt-4 text-base leading-relaxed text-muted max-w-2xl">
-                    {mission?.briefing ?? "Preparing your shopkeeper mission details. Keep playing to load new local math and word challenges!"}
+                    Keep playing to build your maths, reading, and shopkeeper skills.
                 </p>
                 <div className="mt-6 inline-flex items-center gap-3 rounded-[16px] bg-canvas px-5 py-3 font-semibold border border-line text-ink">
                     <Target01Icon size={20} className="text-accent stroke-[2.5]" />
-                    Goal: serve {mission?.targetValue ?? 3} customers
+                    Goal: serve 3 customers
                 </div>
             </div>
             

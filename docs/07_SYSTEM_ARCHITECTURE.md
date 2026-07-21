@@ -1,11 +1,10 @@
 # System Architecture
 
-Smart Duka is a Next.js PWA with a FastAPI backend.
+Smart Duka is a connected Next.js web application with a FastAPI backend.
 
-1. On first online launch, the PWA calls `POST /api/v1/sync/bootstrap`.
-2. FastAPI runs Customer, Tutor, and Mission in one concurrent batch.
-3. The response contains five validated scenarios and an active mission, cached in IndexedDB.
-4. The shop can complete cached scenarios offline and queues events locally.
-5. When connectivity returns, `POST /api/v1/sync/upload` stores each event idempotently, updates progress, and refills the cache.
+1. The browser starts a live gameplay session through `/api/v1/gameplay`.
+2. FastAPI runs the configured Customer and Tutor workflow when agent guidance is needed.
+3. The gameplay engine validates transactions, records progress, and returns typed API responses.
+4. The frontend renders the updated game state and learner feedback.
 
-The backend uses SQLite for the reliable hackathon demo. The service boundary is deliberately small: gameplay routes provide a deterministic online demo, while sync owns AI generation and offline cache refill. If an agent batch fails, the server logs the precise failure and returns a sync error instead of silently generating replacement content. The frontend service worker caches the app shell; IndexedDB holds playable content and unsynced events.
+The backend uses persistent PostgreSQL for the deployed demo. The service boundary is deliberately small: gameplay routes provide the live experience, while AI services provide contextual guidance. If an agent batch fails, the server logs the precise failure and the gameplay engine continues safely with the available live state.

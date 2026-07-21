@@ -1,7 +1,7 @@
 {
   "name": "Smart Duka",
   "short_name": "Smart Duka",
-  "description": "An offline learning adventure in every duka.",
+  "description": "A learning adventure in every duka.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#FFF9F0",

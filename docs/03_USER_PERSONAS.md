@@ -40,7 +40,7 @@ Amina is 9 years old and lives in Kibera, Nairobi. She attends a public primary 
 - UI must be immediately understandable with minimal text — icons and illustrations lead.
 - Swahili must be the default, with English as a toggle, not the other way around.
 - Feedback must be immediate, visual, and audible — no silent correct/incorrect states.
-- Progress must persist reliably offline — loss of progress is a retention killer.
+- Progress must persist reliably between sessions — loss of progress is a retention killer.
 
 ---
 
@@ -158,5 +158,5 @@ Wanjiku is Amina's mother. She runs a small food stall in Kibera. She has a basi
 | Session length | 10–20 min | 30–45 min | 3–5 min (weekly) | 1–2 min (weekly) |
 | Key motivation | Competition, collecting | Challenge, business | Student outcomes | Child's progress |
 | Key friction | Feels like school | Too easy | Requires time | Hard to understand |
-| Critical feature | Swahili customers, offline | Ledger, difficulty ceiling | Plain-language report | Milestone alerts |
+| Critical feature | Swahili customers, accessible play | Ledger, difficulty ceiling | Plain-language report | Milestone alerts |
 | Design priority | Icons lead, audio feedback | Numbers visible, high ceiling | Single focus view | 2 sentences max |

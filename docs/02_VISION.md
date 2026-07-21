@@ -12,7 +12,7 @@ To give every child in East Africa — regardless of their connectivity, their s
 
 Smart Duka is not an app with an AI feature. It is an **AI system with a game interface**.
 
-The duka is the delivery mechanism. The agents are the engine. The offline architecture is the equaliser. The combination makes something that has never existed before at this level of localisation and personalisation: an education product that works as well in a rural village with no wifi as it does in an urban school with a full tech stack.
+The duka is the delivery mechanism. The agents are the engine. Together they create a localised and personalised education product that makes learning feel like play.
 
 ---
 
@@ -50,10 +50,8 @@ Target markets include West Africa (Nigeria, Ghana, Senegal), South Asia (India,
 
 These principles are not aspirational. They are constraints that govern every product decision.
 
-### 1. Offline is a right, not a feature
-The majority of our target users do not have reliable internet. Offline-first is not a technical checkbox — it is a statement that we believe access to good education should not depend on connectivity.
-
-Every gameplay loop must work with zero internet. Agents enhance the experience when connectivity exists; they never gatekeep it.
+### 1. Accessible learning, by design
+The current web experience is designed to be clear, responsive, and welcoming on the phones children and families already use. Dedicated mobile-app support is future roadmap work, not a claim of this release.
 
 ### 2. Cultural truth, not cultural decoration
 Localisation is not translating English content into Swahili. It is generating content that was conceived in Swahili, with Kenyan goods, Kenyan names, Kenyan prices, and Kenyan scenarios.
@@ -109,5 +107,5 @@ Smart Duka's moat is not the technology — GPT-5.6 is available to everyone. Th
 
 1. **Cultural depth** — the Localization Agent builds a compound advantage. Every month of operation generates more culturally-grounded training signal that makes the agent better.
 2. **Distribution insight** — teacher-champion and faith-community distribution gives us a channel that is invisible to Western EdTech companies.
-3. **Offline architecture** — offline-first with agentic pre-generation is a non-trivial technical pattern that takes time to replicate.
+3. **Gameplay intelligence** — agent-guided customer interactions and learner feedback make the experience more engaging and difficult to replicate.
 4. **Age-band breadth** — covering 4–13 in a single coherent product means we can grow with a child rather than lose them at each transition.

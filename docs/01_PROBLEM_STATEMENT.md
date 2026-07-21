@@ -111,8 +111,8 @@ The convergence of three technologies creates an opportunity that did not exist 
 
 1. **Large language models** (GPT-5.6) capable of generating unlimited, culturally-tuned content on demand.
 2. **Agentic AI** capable of adapting that content in real time based on individual child behaviour.
-3. **Progressive Web Apps** capable of full offline functionality on low-spec Android devices.
+3. **Responsive web applications** that work well on low-spec Android devices.
 
-Together, these make it possible to deliver **infinite, locally-grounded, individually personalised education** to a child in a rural Kenyan village — with no teacher present, no reliable internet, and no hardware more expensive than an entry-level smartphone.
+Together, these make it possible to deliver **locally-grounded, individually personalised education** through an entry-level smartphone with an internet connection.
 
 Smart Duka is built on this opportunity.

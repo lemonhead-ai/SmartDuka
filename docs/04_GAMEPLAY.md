@@ -243,32 +243,6 @@ The difficulty system is managed by two agents working together: the **Difficult
 
 ---
 
-## Offline Gameplay
-
-The full gameplay loop — customers, transactions, missions, rewards — functions with zero internet connectivity.
-
-### How it works
-- The Customer Agent pre-generates 20–30 customer scenarios during each sync window.
-- The Mission Agent pre-generates the next 3 daily missions during sync.
-- Scenario and mission batches are cached in IndexedDB on the device.
-- Gameplay draws from the cache — no real-time API calls during a session.
-- All session events are logged to the offline event store and synced on next connectivity.
-
-### What requires connectivity
-- Generating a new scenario batch (when cache drops below 5 scenarios).
-- Syncing session events for Insight Agent report generation.
-- Leaderboard updates.
-- Avatar item unlocks that require cloud asset download.
-
-### What never requires connectivity
-- All gameplay mechanics (transactions, change-giving, ledger).
-- Missions (from cache).
-- Customer interactions (from cache).
-- Coins, badges, and local reward animations.
-- Progress tracking (stored locally, synced when online).
-
----
-
 ## Age Band Summary
 
 | Band | Ages | Mode | Key features |

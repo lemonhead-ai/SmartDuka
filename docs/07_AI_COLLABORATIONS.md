@@ -13,7 +13,7 @@ Codex supported the implementation work across the repository, including:
 - reviewing and evolving the FastAPI and Next.js architecture;
 - creating typed API contracts, database foundations, gameplay services, and tests;
 - connecting the gameplay frontend to live versioned REST endpoints;
-- implementing offline event storage, sync reconciliation, and demo-readiness safeguards;
+- implementing live gameplay integrations and demo-readiness safeguards;
 - improving basket validation, contextual learner feedback, animations, and accessibility-oriented interaction feedback; and
 - validating changes through backend tests and frontend type and production-build checks.
 
@@ -62,7 +62,6 @@ Until those steps are complete, Featherless AI with Qwen3-32B is the active prod
 | Provider and agent-bundle creation | `backend/src/services/ai/factory.py`, `backend/src/services/ai/runtime.py` |
 | Agent orchestration | `backend/src/services/ai/orchestrator.py` |
 | Gameplay integration | `backend/src/services/gameplay/engine.py` |
-| Offline agent sync | `backend/src/services/sync/service.py` |
 | Prompt versions | `backend/src/prompts/` |
 | Automated checks | `backend/tests/` |
 
