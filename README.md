@@ -108,7 +108,9 @@ sequenceDiagram
 **Primary Codex Session ID:** `019f6a0b-5625-7a21-b715-debbb251489c`
 
 ### Collaboration Summary
-We collaborated with Codex to rapidly scaffold and implement SmartDuka's architecture. Codex acted as an agentic partner—scaffolding the FastAPI backend contracts, implementing the parallel agent orchestrator, building the Zustand state management slices, creating the adaptive educational tier logic, and writing unit tests to catch edge cases. This allowed us to focus on prompt engineering, design systems, and pedagogical flow while Codex accelerated development.
+We collaborated with Codex powered by **GPT 5.6 Terra** to build SmartDuka, leveraging its ability to dynamically scale reasoning (effortlessly switching from low-effort tasks for rapid scaffolding to high-effort modes for complex agent synchronization and edge-case testing). As an agentic partner, Codex was instrumental in rapidly building out SmartDuka's architecture: from database schemas and FastAPI contract layers to parallelized agent orchestrators and client-side Zustand store slices. 
+
+Critically, development never stopped even when away from the laptop: using **Codex Mobile**, we could trigger edits, review code, and deploy features on the go from miles away. Codex made building continuous, highly autonomous, and incredibly fast.
 
 <details>
 <summary><strong>Read the full Codex collaboration story</strong></summary>
@@ -139,6 +141,9 @@ Codex implemented the `try/except json.loads()` pattern for all agents with logg
 
 **Test suites**
 Unit tests for change calculation logic, basket validation, discount application, and bundle pricing were Codex output. These caught three edge cases in the division challenge that manual testing had missed.
+
+**Codex Mobile & On-the-Go Development**
+A game-changer during the hackathon was using **Codex Mobile**. Even when miles away from the workstation, development never stalled. We could seamlessly prompt updates, check test runs, and implement gameplay adjustments directly from a phone, proving that you never have to stop building just because you are on the go or away from your laptop.
 
 ### Where we made human decisions
 
@@ -265,7 +270,7 @@ Financial literacy is not a bonus feature. In a region where 70%+ of adults are 
 
 **Martin Mwai** — [@lemonhead-ai](https://github.com/lemonhead-ai) · Nairobi, Kenya
 
-*Computer Science student, Kisii University. Crafting fluid animations and effortlessly immersive user experiences.*
+*Computer Science graduate, Kisii University. Crafting fluid animations and effortlessly immersive user experiences.*
 
 ---
 
