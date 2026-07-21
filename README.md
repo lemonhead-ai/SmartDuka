@@ -105,6 +105,11 @@ sequenceDiagram
 
 ## How We Used Codex
 
+**Primary Codex Session ID:** `019f6a0b-5625-7a21-b715-debbb251489c`
+
+### Collaboration Summary
+We collaborated with Codex to rapidly scaffold and implement SmartDuka's architecture. Codex acted as an agentic partner—scaffolding the FastAPI backend contracts, implementing the parallel agent orchestrator, building the Zustand state management slices, creating the adaptive educational tier logic, and writing unit tests to catch edge cases. This allowed us to focus on prompt engineering, design systems, and pedagogical flow while Codex accelerated development.
+
 <details>
 <summary><strong>Read the full Codex collaboration story</strong></summary>
 
