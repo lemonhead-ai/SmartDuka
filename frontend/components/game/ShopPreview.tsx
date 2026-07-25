@@ -14,11 +14,12 @@ const categoryLabels: Record<string, string> = {
   household_items: "Home essentials",
 };
 
-const shopThemeClasses = {
+const shopThemeClasses: Record<string, string> = {
   sunrise: "border-orange-200/70 dark:border-orange-900/40",
   ocean: "border-blue-200/70 dark:border-blue-900/40",
   leaf: "border-emerald-200/70 dark:border-emerald-900/40",
   berry: "border-pink-200/70 dark:border-pink-900/40",
+  charcoal: "border-slate-300/70 dark:border-slate-800/40",
 };
 
 export function ShopPreview() {

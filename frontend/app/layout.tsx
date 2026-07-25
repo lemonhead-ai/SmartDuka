@@ -5,7 +5,12 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "Smart Duka",
   description: "A learning adventure in every duka.",
-  manifest: "/manifest.webmanifest"
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/logo/logo.PNG"
+  }
 };
 
 export const viewport: Viewport = { themeColor: "#FF8A3D" };

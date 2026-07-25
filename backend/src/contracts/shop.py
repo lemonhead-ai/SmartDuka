@@ -38,7 +38,7 @@ class RestockShopItemRequest(BaseModel):
 
 class UpdateShopRequest(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=80)
-    theme: Literal["sunrise", "ocean", "leaf", "berry"] | None = None
+    theme: Literal["sunrise", "ocean", "leaf", "berry", "charcoal"] | None = None
 
 
 class ShopResponse(BaseModel):

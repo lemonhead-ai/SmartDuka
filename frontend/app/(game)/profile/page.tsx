@@ -18,7 +18,7 @@ const LockSVG = () => (
   </svg>
 );
 import { useGameplaySessionStore } from "@/features/gameplay/store";
-import { avatarChoices, shopThemes, useKidProfileStore } from "@/features/kids/store";
+import { avatarChoices, shopThemes, useKidProfileStore, type ShopTheme } from "@/features/kids/store";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 const avatarImageMap: Record<string, string> = {
@@ -43,7 +43,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [shopName, setShopName] = useState("");
-  const [shopTheme, setShopTheme] = useState<"sunrise" | "ocean" | "leaf" | "berry">("leaf");
+  const [shopTheme, setShopTheme] = useState<ShopTheme>("leaf");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -52,12 +52,17 @@ export default function ProfilePage() {
   const deleteInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (accountQuery.data && !editing) setName(accountQuery.data.shopkeeper.display_name);
-  }, [accountQuery.data, editing]);
+    if (accountQuery.data) {
+      if (!editing) setName(accountQuery.data.shopkeeper.display_name);
+      if (accountQuery.data.shopkeeper.avatar) {
+        setAvatar(accountQuery.data.shopkeeper.avatar as any);
+      }
+    }
+  }, [accountQuery.data, editing, setAvatar]);
   useEffect(() => {
     if (shopQuery.data) {
       setShopName(shopQuery.data.name);
-      setShopTheme(shopQuery.data.theme);
+      setShopTheme(shopQuery.data.theme as ShopTheme);
     }
   }, [shopQuery.data]);
 
@@ -202,7 +207,7 @@ export default function ProfilePage() {
                     <button 
                         key={choice.value} 
                         type="button" 
-                        onClick={() => setAvatar(choice.value)} 
+                        onClick={() => { setAvatar(choice.value); profileMutation.mutate({ avatar: choice.value }); }} 
                         aria-label={`Choose ${choice.label}`} 
                         className={`rounded-full size-16 transition-all duration-200 hover:-translate-y-1 overflow-hidden p-2 flex items-center justify-center ${
                             avatar === choice.value ? "bg-white dark:bg-canvas border-2 border-accent ring-2 ring-accent/25 shadow-md scale-110" : "bg-canvas border border-line opacity-60 hover:opacity-100 hover:scale-105"

@@ -22,13 +22,25 @@ const doodles = [
   "/illustrations/jack.PNG"
 ];
 
-export function Receipt3DModal({
+export type Receipt3DCardProps = {
+  shopName: string;
+  customerName: string;
+  basket: Basket;
+  reward: Reward | null;
+  className?: string;
+  showCloseButton?: boolean;
+  onClose?: () => void;
+};
+
+export function Receipt3DCard({
   shopName,
   customerName,
   basket,
   reward,
+  className,
+  showCloseButton,
   onClose,
-}: Receipt3DModalProps) {
+}: Receipt3DCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -571,38 +583,32 @@ export function Receipt3DModal({
   }, [shopName, customerName, basket, reward]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 dark:bg-black/85 backdrop-blur-md p-4"
+    <div
+      ref={containerRef}
+      className={`relative w-full overflow-hidden rounded-[24px] border border-[#d2d0c6] dark:border-zinc-800/85 bg-[#deddd5] dark:bg-[#111112] shadow-lg flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none ${className ?? "h-[450px]"}`}
     >
-      <div
-        ref={containerRef}
-        className="relative w-full max-w-md h-[70vh] aspect-[3/4.2] rounded-[24px] overflow-hidden border border-[#d2d0c6] dark:border-zinc-800/85 bg-[#deddd5] dark:bg-[#111112] shadow-2xl flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none"
-      >
-        {/* Repeated Low-opacity Mascot Doodle Grid */}
-        <div className="absolute inset-0 grid grid-cols-4 gap-6 p-6 opacity-[0.06] dark:opacity-[0.03] pointer-events-none select-none overflow-hidden z-0">
-          {Array.from({ length: 24 }).map((_, idx) => (
-            <div key={idx} className="flex items-center justify-center aspect-square">
-              <img
-                src={doodles[idx % doodles.length]}
-                alt="mascot doodle"
-                className="w-12 h-12 object-contain grayscale"
-              />
-            </div>
-          ))}
-        </div>
+      {/* Repeated Low-opacity Mascot Doodle Grid */}
+      <div className="absolute inset-0 grid grid-cols-4 gap-6 p-6 opacity-[0.06] dark:opacity-[0.03] pointer-events-none select-none overflow-hidden z-0">
+        {Array.from({ length: 24 }).map((_, idx) => (
+          <div key={idx} className="flex items-center justify-center aspect-square">
+            <img
+              src={doodles[idx % doodles.length]}
+              alt="mascot doodle"
+              className="w-12 h-12 object-contain grayscale"
+            />
+          </div>
+        ))}
+      </div>
 
-        {/* 3D WebGL Canvas Layer */}
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-0" />
-        
-        {/* Receipt Slot Dispenser (Aligns precisely with screenY 16.5% top row of paper) */}
-        <div className="absolute top-[16.5%] left-1/2 -translate-x-1/2 w-[71%] h-[18px] bg-black dark:bg-[#050505] rounded-full border border-[#cac8be] dark:border-zinc-800 shadow-inner z-10 flex items-center justify-center">
-          <div className="w-[98%] h-[6px] bg-zinc-950 rounded-full" />
-        </div>
+      {/* 3D WebGL Canvas Layer */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-0" />
+      
+      {/* Receipt Slot Dispenser (Aligns precisely with screenY 16.5% top row of paper) */}
+      <div className="absolute top-[16.5%] left-1/2 -translate-x-1/2 w-[71%] h-[18px] bg-black dark:bg-[#050505] rounded-full border border-[#cac8be] dark:border-zinc-800 shadow-inner z-10 flex items-center justify-center">
+        <div className="w-[98%] h-[6px] bg-zinc-950 rounded-full" />
+      </div>
 
-        {/* Close Button */}
+      {showCloseButton && onClose && (
         <button
           type="button"
           onClick={onClose}
@@ -611,14 +617,41 @@ export function Receipt3DModal({
         >
           <Cancel01Icon size={18} />
         </button>
+      )}
 
-        {/* Hover Hint Info */}
-        <div className="absolute bottom-6 z-20 pointer-events-none text-center bg-[#cdcbc0]/75 dark:bg-black/40 px-4 py-2 rounded-full border border-[#bab8ae]/30 dark:border-white/5 backdrop-blur-sm">
-          <p className="text-xs sm:text-sm font-semibold tracking-wider text-zinc-700 dark:text-zinc-300">
-            Grab and drag the receipt to swing it!
-          </p>
-        </div>
+      {/* Hover Hint Info */}
+      <div className="absolute bottom-4 z-20 pointer-events-none text-center bg-[#cdcbc0]/75 dark:bg-black/40 px-4 py-1.5 rounded-full border border-[#bab8ae]/30 dark:border-white/5 backdrop-blur-sm">
+        <p className="text-xs font-semibold tracking-wider text-zinc-700 dark:text-zinc-300">
+          Grab and drag the receipt to swing it!
+        </p>
       </div>
+    </div>
+  );
+}
+
+export function Receipt3DModal({
+  shopName,
+  customerName,
+  basket,
+  reward,
+  onClose,
+}: Receipt3DModalProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 dark:bg-black/85 backdrop-blur-md p-4"
+    >
+      <Receipt3DCard
+        shopName={shopName}
+        customerName={customerName}
+        basket={basket}
+        reward={reward}
+        showCloseButton
+        onClose={onClose}
+        className="max-w-md h-[70vh] aspect-[3/4.2] shadow-2xl"
+      />
 
       {/* Action Footer Buttons */}
       <div className="mt-6 flex flex-wrap gap-4 justify-center">

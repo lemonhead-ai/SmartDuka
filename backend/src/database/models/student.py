@@ -19,6 +19,7 @@ class Student(Base):
         index=True,
     )
     display_name: Mapped[str] = mapped_column(String(100))
+    avatar: Mapped[str] = mapped_column(String(32), default="milo")
     age: Mapped[int] = mapped_column(Integer)
     language: Mapped[str] = mapped_column(String(8), default="sw")
     difficulty_tier: Mapped[int] = mapped_column(Integer, default=2)

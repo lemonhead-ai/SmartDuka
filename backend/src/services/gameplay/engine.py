@@ -468,6 +468,25 @@ class GameplayEngine:
             list(state["achievements"]),
         )
         progress = await self._ensure_progress(student)
+        sale_base_coins = 15
+        sale_base_xp = 25
+        sale_base_stars = 1
+
+        total_sale_coins = sale_base_coins + int(state.get("pending_customer_coins", 0))
+        total_sale_xp = sale_base_xp + int(state.get("pending_customer_xp", 0))
+        total_sale_stars = sale_base_stars + int(state.get("pending_customer_stars", 0))
+
+        state["coins_earned"] = int(state["coins_earned"]) + sale_base_coins
+        state["xp_earned"] = int(state["xp_earned"]) + sale_base_xp
+        state["stars_earned"] = int(state["stars_earned"]) + sale_base_stars
+        progress.coins_earned += sale_base_coins
+        progress.xp_earned += sale_base_xp
+        progress.stars_earned += sale_base_stars
+
+        state["pending_customer_coins"] = 0
+        state["pending_customer_xp"] = 0
+        state["pending_customer_stars"] = 0
+
         motivation_state = self._start_daily_motivation(progress, student)
         motivation_state, mission_completed_today = self.motivation.record_event(
             motivation_state, "sales"
@@ -488,7 +507,10 @@ class GameplayEngine:
         state["challenge"] = None
         await self._save(game_session, state)
         reward = RewardResponse(
-            coins=0, xp=0, stars=0, message="Sale complete—your customer is smiling!"
+            coins=total_sale_coins,
+            xp=total_sale_xp,
+            stars=total_sale_stars,
+            message="Your customer is smiling!",
         )
         return CheckoutResponse(
             status="completed",
@@ -673,6 +695,9 @@ class GameplayEngine:
         state["coins_earned"] = int(state["coins_earned"]) + coins
         state["xp_earned"] = int(state["xp_earned"]) + xp
         state["stars_earned"] = int(state["stars_earned"]) + stars
+        state["pending_customer_coins"] = int(state.get("pending_customer_coins", 0)) + coins
+        state["pending_customer_xp"] = int(state.get("pending_customer_xp", 0)) + xp
+        state["pending_customer_stars"] = int(state.get("pending_customer_stars", 0)) + stars
         state["difficulty_attempts"] = int(state.get("difficulty_attempts", 0)) + 1
         state["difficulty_correct"] = int(state.get("difficulty_correct", 0)) + int(correct)
         current_tier = int(state.get("recommended_tier") or student.difficulty_tier)

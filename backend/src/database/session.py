@@ -43,7 +43,11 @@ class Database:
 
         table_names = set(connection.dialect.get_table_names(connection))
         additions = {
-            "students": {"shopkeeper_id": "CHAR(32)"},
+            "shopkeepers": {"avatar": "VARCHAR(32) NOT NULL DEFAULT 'milo'"},
+            "students": {
+                "shopkeeper_id": "CHAR(32)",
+                "avatar": "VARCHAR(32) NOT NULL DEFAULT 'milo'",
+            },
             "game_sessions": {"game_state": "JSON NOT NULL DEFAULT '{}'"},
             "student_progress": {
                 "hints_used": "INTEGER NOT NULL DEFAULT 0",

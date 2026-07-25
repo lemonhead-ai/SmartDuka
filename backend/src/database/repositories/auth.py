@@ -22,13 +22,22 @@ class AuthRepository:
     async def get_shopkeeper(self, shopkeeper_id: object) -> Shopkeeper | None:
         return await self.session.get(Shopkeeper, shopkeeper_id)
 
-    async def update_profile_name(self, shopkeeper: Shopkeeper, display_name: str) -> Shopkeeper:
-        shopkeeper.display_name = display_name
+    async def update_profile(
+        self, shopkeeper: Shopkeeper, display_name: str | None = None, avatar: str | None = None
+    ) -> Shopkeeper:
+        if display_name is not None:
+            shopkeeper.display_name = display_name
+        if avatar is not None:
+            shopkeeper.avatar = avatar
+
         learner = await self.session.scalar(
             select(Student).where(Student.shopkeeper_id == shopkeeper.id)
         )
         if learner is not None:
-            learner.display_name = display_name
+            if display_name is not None:
+                learner.display_name = display_name
+            if avatar is not None:
+                learner.avatar = avatar
         await self.session.flush()
         return shopkeeper
 

@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AdventureIcon, SidebarLeftIcon, SidebarRightIcon, DashboardSquare01Icon, ShoppingBag01Icon } from "hugeicons-react";
 import { SmartDukaLogo } from "@/components/common/SmartDukaLogo";
 import { gameplayApi } from "@/features/gameplay/api";
+import { authApi } from "@/features/auth/api";
 import { useKidProfileStore } from "@/features/kids/store";
 
 const avatarImageMap: Record<string, string> = {
@@ -53,8 +54,16 @@ export function GameNavigation({ onWidthChange }: GameNavigationProps) {
   }, [pathname]);
 
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
-  const displayName = progressQuery.data?.student_name || "Shopkeeper";
+  const accountQuery = useQuery({ queryKey: ["auth", "me"], queryFn: authApi.me, retry: false });
+  const displayName = progressQuery.data?.student_name || accountQuery.data?.shopkeeper.display_name || "Shopkeeper";
   const avatar = useKidProfileStore((state) => state.avatar);
+  const setAvatar = useKidProfileStore((state) => state.setAvatar);
+
+  useEffect(() => {
+    if (accountQuery.data?.shopkeeper.avatar) {
+      setAvatar(accountQuery.data.shopkeeper.avatar as any);
+    }
+  }, [accountQuery.data, setAvatar]);
 
   return (
     <motion.aside className={`tahoe-sidebar relative hidden flex-col border-r border-line px-3 py-5 lg:flex ${resizing ? "select-none" : ""}`} animate={{ width: expanded ? sidebarWidth : 68 }} transition={resizing ? { duration: 0 } : { type: "tween", duration: expanded ? 0.35 : 0.28, ease: [0.32, 0.72, 0, 1] }}>

@@ -19,6 +19,7 @@ class ShopkeeperResponse(BaseModel):
     id: UUID
     email: str
     display_name: str
+    avatar: str = "milo"
     created_at: datetime
 
 
@@ -34,7 +35,8 @@ class SignInRequest(EmailRequestModel):
 
 
 class UpdateProfileRequest(BaseModel):
-    display_name: str = Field(min_length=2, max_length=100)
+    display_name: str | None = Field(default=None, min_length=2, max_length=100)
+    avatar: str | None = Field(default=None, max_length=32)
 
 
 class AuthenticatedShopkeeperResponse(BaseModel):

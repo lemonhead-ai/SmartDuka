@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type KidAvatar = "mario" | "milo" | "stitch" | "kirby" | "jack";
-export type ShopTheme = "sunrise" | "ocean" | "leaf" | "berry";
+export type ShopTheme = "sunrise" | "ocean" | "leaf" | "berry" | "charcoal";
 
 type KidProfile = {
   avatar: KidAvatar;
@@ -25,7 +25,8 @@ export const shopThemes: { value: ShopTheme; label: string; className: string; s
   { value: "sunrise", label: "Sunrise", className: "bg-orange-100/70 dark:bg-orange-950/40 text-orange-900 dark:text-orange-200 border-orange-200 dark:border-orange-900/50", selectedClass: "border-orange-700 dark:border-orange-300 ring-orange-500/25" },
   { value: "ocean", label: "Ocean", className: "bg-blue-100/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-900/50", selectedClass: "border-blue-700 dark:border-blue-300 ring-blue-500/25" },
   { value: "leaf", label: "Leaf", className: "bg-green-100/70 dark:bg-green-950/40 text-green-900 dark:text-green-200 border-green-200 dark:border-green-900/50", selectedClass: "border-green-700 dark:border-green-300 ring-green-500/25" },
-  { value: "berry", label: "Berry", className: "bg-pink-100/70 dark:bg-pink-950/40 text-pink-900 dark:text-pink-200 border-pink-200 dark:border-pink-900/50", selectedClass: "border-pink-700 dark:border-pink-300 ring-pink-500/25" }
+  { value: "berry", label: "Berry", className: "bg-pink-100/70 dark:bg-pink-950/40 text-pink-900 dark:text-pink-200 border-pink-200 dark:border-pink-900/50", selectedClass: "border-pink-700 dark:border-pink-300 ring-pink-500/25" },
+  { value: "charcoal", label: "Charcoal", className: "bg-slate-200/80 dark:bg-slate-900/60 text-slate-900 dark:text-slate-200 border-slate-300 dark:border-slate-700/60", selectedClass: "border-slate-800 dark:border-slate-300 ring-slate-500/25" }
 ];
 
 export const useKidProfileStore = create<KidProfile>()(persist((set) => ({

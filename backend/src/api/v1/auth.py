@@ -27,6 +27,7 @@ def response_for(shopkeeper: object) -> ShopkeeperResponse:
         id=shopkeeper.id,
         email=shopkeeper.email,
         display_name=shopkeeper.display_name,
+        avatar=getattr(shopkeeper, "avatar", "milo") or "milo",
         created_at=shopkeeper.created_at,
     )
 
@@ -108,7 +109,11 @@ async def update_current_shopkeeper(
     shopkeeper: CurrentShopkeeper,
     db: DatabaseSession,
 ) -> AuthenticatedShopkeeperResponse:
-    updated = await AuthRepository(db).update_profile_name(shopkeeper, payload.display_name.strip())
+    updated = await AuthRepository(db).update_profile(
+        shopkeeper,
+        display_name=payload.display_name.strip() if payload.display_name else None,
+        avatar=payload.avatar.strip() if payload.avatar else None,
+    )
     await db.commit()
     return AuthenticatedShopkeeperResponse(shopkeeper=response_for(updated))
 

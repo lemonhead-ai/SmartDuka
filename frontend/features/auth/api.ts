@@ -6,6 +6,7 @@ export type Shopkeeper = {
   id: string;
   email: string;
   display_name: string;
+  avatar: string;
   created_at: string;
 };
 
@@ -54,7 +55,10 @@ export const authApi = {
     }),
   signOut: () => request<{ message: string }>("/auth/sign-out", { method: "POST" }),
   me: () => request<AuthResponse>("/auth/me"),
-  updateProfile: (displayName: string) => request<AuthResponse>("/auth/me", { method: "PATCH", body: JSON.stringify({ display_name: displayName }) }),
+  updateProfile: (payload: { display_name?: string; avatar?: string } | string) => {
+    const body = typeof payload === "string" ? { display_name: payload } : payload;
+    return request<AuthResponse>("/auth/me", { method: "PATCH", body: JSON.stringify(body) });
+  },
   requestPasswordReset: (email: string) =>
     request<{ message: string }>("/auth/password-reset", {
       method: "POST",

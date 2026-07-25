@@ -12,7 +12,7 @@ import {
   type CustomerConversationMessage,
 } from "@/components/game/CustomerConversationPanel";
 import { printSaleReceipt } from "@/components/game/SaleReceipt";
-import { Receipt3DModal } from "@/components/game/Receipt3DModal";
+import { Receipt3DCard } from "@/components/game/Receipt3DModal";
 import { triggerSensoryFeedback } from "@/features/feedback/sensory-feedback";
 import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { gameplayApi } from "@/features/gameplay/api";
@@ -46,7 +46,6 @@ export function ShopCounter() {
   const queryClient = useQueryClient();
   const [answer, setAnswer] = useState("");
   const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary; basket: Basket; customerName: string } | null>(null);
-  const [showReceipt3D, setShowReceipt3D] = useState(false);
   const [customerConversation, setCustomerConversation] = useState<CustomerConversationMessage[]>(() => {
     if (customer) {
       if (customer.chat_history && customer.chat_history.length > 0) {
@@ -265,7 +264,8 @@ export function ShopCounter() {
     const accuracy = completion.summary.questions_attempted
       ? Math.round((completion.summary.correct_answers / completion.summary.questions_attempted) * 100)
       : null;
-    const rewardMessage = (reward?.message ?? "Wonderful work at the counter!").replace(/[—–]/g, ": ");
+    const rawMessage = reward?.message ?? "Wonderful work at the counter!";
+    const rewardMessage = rawMessage.replace(/^Sale complete[:—–-]\s*/i, "").replace(/[—–]/g, ": ");
 
     return (
       <motion.section initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-4xl rounded-[24px] border border-line bg-surface p-6 sm:p-8">
@@ -274,16 +274,57 @@ export function ShopCounter() {
           <p className="mt-3 text-sm font-semibold text-muted">Sale complete</p>
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{rewardMessage}</h1>
         </header>
-        <div className="mt-7 grid grid-cols-3 gap-3"><Stat label="Coins earned" value={reward?.coins ?? 0} prefix="+" /><Stat label="XP earned" value={reward?.xp ?? 0} prefix="+" /><Stat label="Stars earned" value={reward?.stars ?? 0} prefix="+" /></div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-[1.35fr_.65fr]">
-          <article className="rounded-[20px] bg-canvas p-5"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">{mission.title}</p><p className="mt-1 text-sm text-muted">{mission.completed ? "Mission complete. Brilliant work!" : `${mission.target - mission.progress} more to finish your mission.`}</p></div><span className="shrink-0 text-sm font-bold text-accent">{mission.progress}/{mission.target}</span></div><div className="mt-4 h-2.5 overflow-hidden rounded-full bg-line"><div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${missionProgress}%` }} /></div></article>
-          <article className="rounded-[20px] bg-canvas p-5"><p className="text-sm font-semibold">Session so far</p><p className="mt-2 text-sm text-muted">{completion.summary.customers_served} customer{completion.summary.customers_served === 1 ? "" : "s"} helped{accuracy !== null ? ` · ${accuracy}% maths accuracy` : ""}</p>{completion.summary.achievements.length > 0 && <p className="mt-2 text-sm font-medium text-leaf">Unlocked: {completion.summary.achievements.at(-1)}</p>}</article>
+        <div className="mt-7 grid grid-cols-3 gap-3">
+          <Stat label="Coins earned" value={reward?.coins ?? 0} prefix="+" />
+          <Stat label="XP earned" value={reward?.xp ?? 0} prefix="+" />
+          <Stat label="Stars earned" value={reward?.stars ?? 0} prefix="+" />
         </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_1fr] items-start">
+          {/* Live Interactive 3D WebGL Receipt Canvas */}
+          <Receipt3DCard
+            shopName={shopQuery.data?.name ?? "Smart Duka"}
+            customerName={completion.customerName}
+            basket={completion.basket}
+            reward={reward}
+            className="h-[480px] w-full shadow-md"
+          />
+
+          {/* Mission & Session Summary */}
+          <div className="space-y-4">
+            <article className="rounded-[20px] bg-canvas p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold">{mission.title}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    {mission.completed ? "Mission complete. Brilliant work!" : `${mission.target - mission.progress} more to finish your mission.`}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-bold text-accent">{mission.progress}/{mission.target}</span>
+              </div>
+              <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-line">
+                <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${missionProgress}%` }} />
+              </div>
+            </article>
+
+            <article className="rounded-[20px] bg-canvas p-5">
+              <p className="text-sm font-semibold">Session so far</p>
+              <p className="mt-2 text-sm text-muted">
+                {completion.summary.customers_served} customer{completion.summary.customers_served === 1 ? "" : "s"} helped
+                {accuracy !== null ? ` · ${accuracy}% maths accuracy` : ""}
+              </p>
+              {completion.summary.achievements.length > 0 && (
+                <p className="mt-2 text-sm font-medium text-leaf">Unlocked: {completion.summary.achievements.at(-1)}</p>
+              )}
+            </article>
+          </div>
+        </div>
+
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <button 
             type="button" 
-            onClick={() => setShowReceipt3D(true)} 
-            className="rounded-full border border-line px-6 py-3 font-semibold text-ink hover:bg-canvas transition-transform hover:scale-[1.03]"
+            onClick={() => printSaleReceipt({ shopName: shopQuery.data?.name ?? "Smart Duka", customerName: completion.customerName, basket: completion.basket, reward })} 
+            className="rounded-full border border-line px-5 py-3 font-semibold text-ink hover:bg-canvas transition-transform hover:scale-[1.03]"
           >
             Print receipt
           </button>
@@ -296,16 +337,6 @@ export function ShopCounter() {
             Serve next customer
           </motion.button>
         </div>
-
-        {showReceipt3D && (
-          <Receipt3DModal
-            shopName={shopQuery.data?.name ?? "Smart Duka"}
-            customerName={completion.customerName}
-            basket={completion.basket}
-            reward={reward}
-            onClose={() => setShowReceipt3D(false)}
-          />
-        )}
       </motion.section>
     );
   }

@@ -123,16 +123,17 @@ async def test_authenticated_shopkeeper_can_create_and_read_only_their_duka(tmp_
             assert (await client.get("/api/v1/shop")).json()["id"] == created.json()["id"]
 
             renamed_profile = await client.patch(
-                "/api/v1/auth/me", json={"display_name": "Amina W."}
+                "/api/v1/auth/me", json={"display_name": "Amina W.", "avatar": "kirby"}
             )
             assert renamed_profile.status_code == 200
             assert renamed_profile.json()["shopkeeper"]["display_name"] == "Amina W."
+            assert renamed_profile.json()["shopkeeper"]["avatar"] == "kirby"
             renamed_shop = await client.patch(
-                "/api/v1/shop", json={"name": "Amina's Bright Duka", "theme": "ocean"}
+                "/api/v1/shop", json={"name": "Amina's Bright Duka", "theme": "charcoal"}
             )
             assert renamed_shop.status_code == 200
             assert renamed_shop.json()["name"] == "Amina's Bright Duka"
-            assert renamed_shop.json()["theme"] == "ocean"
+            assert renamed_shop.json()["theme"] == "charcoal"
 
             first_session = await client.post("/api/v1/gameplay/sessions")
             assert first_session.status_code == 201
