@@ -85,8 +85,8 @@ sequenceDiagram
 | ![Dashboard](assets/screenshots/smartduka.png) | ![Shop Screen](assets/screenshots/smartduka1.png) |
 | **Milo Hints & Tutor Guidance** | **Stock Room & Supplier Restocking** |
 | ![Milo Hints](assets/screenshots/smartduka2.png) | ![Stock Room](assets/screenshots/smartduka3.png) |
-| **First-Run Onboarding & Setup** | |
-| ![Onboarding](assets/screenshots/smartduka4.png) | |
+| **First-Run Onboarding & Setup** | **3D Receipt & Sale Completion** |
+| ![Onboarding](assets/screenshots/smartduka4.png) | ![Sale Completion](assets/screenshots/smartduka5.png) |
 
 ---
 

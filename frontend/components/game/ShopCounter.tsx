@@ -274,12 +274,6 @@ export function ShopCounter() {
           <p className="mt-3 text-sm font-semibold text-muted">Sale complete</p>
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{rewardMessage}</h1>
         </header>
-        <div className="mt-7 grid grid-cols-3 gap-3">
-          <Stat label="Coins earned" value={reward?.coins ?? 0} prefix="+" />
-          <Stat label="XP earned" value={reward?.xp ?? 0} prefix="+" />
-          <Stat label="Stars earned" value={reward?.stars ?? 0} prefix="+" />
-        </div>
-
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_1fr] items-start">
           {/* Live Interactive 3D WebGL Receipt Canvas */}
           <Receipt3DCard
@@ -290,7 +284,7 @@ export function ShopCounter() {
             className="h-[480px] w-full shadow-md"
           />
 
-          {/* Mission & Session Summary */}
+          {/* Mission, Session Summary & 2x2 Awarding Stat Cards */}
           <div className="space-y-4">
             <article className="rounded-[20px] bg-canvas p-5">
               <div className="flex items-center justify-between gap-4">
@@ -317,6 +311,14 @@ export function ShopCounter() {
                 <p className="mt-2 text-sm font-medium text-leaf">Unlocked: {completion.summary.achievements.at(-1)}</p>
               )}
             </article>
+
+            {/* 2x2 Grid of 4 Awarding Stat Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <Stat label="Coins earned" value={reward?.coins ?? 0} prefix="+" />
+              <Stat label="XP earned" value={reward?.xp ?? 0} prefix="+" />
+              <Stat label="Stars earned" value={reward?.stars ?? 0} prefix="+" />
+              <Stat label="Items sold" value={completion.basket.lines.reduce((sum, line) => sum + line.quantity, 0)} prefix="+" />
+            </div>
           </div>
         </div>
 
