@@ -10,6 +10,7 @@ from src.contracts.gameplay_engine import (
     AnswerLiteracyChallengeResponse,
     BasketItemRequest,
     BasketResponse,
+    BasketSubmissionRequest,
     ChallengeResponse,
     ChatRequest,
     ChatResponse,
@@ -176,7 +177,7 @@ async def answer_literacy_challenge(
     payload: AnswerLiteracyChallengeRequest,
     engine: GameplayEngineDependency,
 ) -> AnswerLiteracyChallengeResponse:
-    return await engine.submit_literacy_answer(session_id, payload.answer)
+    return await engine.submit_literacy_answer(session_id, payload.answer, payload.items)
 
 
 @router.post(
@@ -200,8 +201,12 @@ async def request_hint(session_id: UUID, engine: GameplayEngineDependency) -> Hi
 @router.post(
     "/sessions/{session_id}/checkout", response_model=CheckoutResponse, summary="Checkout basket"
 )
-async def checkout(session_id: UUID, engine: GameplayEngineDependency) -> CheckoutResponse:
-    return await engine.checkout(session_id)
+async def checkout(
+    session_id: UUID,
+    engine: GameplayEngineDependency,
+    payload: BasketSubmissionRequest | None = None,
+) -> CheckoutResponse:
+    return await engine.checkout(session_id, payload.items if payload else None)
 
 
 @router.get(

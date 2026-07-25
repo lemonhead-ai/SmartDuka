@@ -52,10 +52,21 @@ class LiteracyChallengeResponse(BaseModel):
     attempts: int = Field(ge=0)
     complete: bool
     is_available: bool
+    target_item_id: UUID | None = None
+
+
+class BasketItemRequest(BaseModel):
+    item_id: UUID
+    quantity: int = Field(ge=1)
+
+
+class BasketSubmissionRequest(BaseModel):
+    items: list[BasketItemRequest] = Field(default_factory=list, max_length=30)
 
 
 class AnswerLiteracyChallengeRequest(BaseModel):
     answer: str = Field(min_length=1, max_length=100)
+    items: list[BasketItemRequest] | None = None
 
 
 class AnswerLiteracyChallengeResponse(BaseModel):
@@ -65,11 +76,6 @@ class AnswerLiteracyChallengeResponse(BaseModel):
     challenge_complete: bool
     challenge: LiteracyChallengeResponse
     rewards_preview: "RewardResponse | None" = None
-
-
-class BasketItemRequest(BaseModel):
-    item_id: UUID
-    quantity: int = Field(ge=1, le=10)
 
 
 class BasketLineResponse(BaseModel):

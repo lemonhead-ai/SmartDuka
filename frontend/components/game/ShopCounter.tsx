@@ -16,6 +16,7 @@ import { Receipt3DModal } from "@/components/game/Receipt3DModal";
 import { triggerSensoryFeedback } from "@/features/feedback/sensory-feedback";
 import { useToastStore, type ToastKind } from "@/features/feedback/toast-store";
 import { gameplayApi } from "@/features/gameplay/api";
+import { addLocalBasketItem, removeLocalBasketItem } from "@/features/gameplay/basket";
 import { useGameplaySessionStore } from "@/features/gameplay/store";
 import type { ApiError, Basket, Checkout, SessionSummary } from "@/features/gameplay/types";
 
@@ -102,23 +103,32 @@ export function ShopCounter() {
     mutationFn: gameplayApi.startSession,
     onError: (error) => notify("error", errorMessage(error)),
   });
-  const addItemMutation = useMutation({
-    mutationFn: ({ itemId }: { itemId: string; revision: number }) => gameplayApi.addBasketItem(sessionId ?? "", itemId),
-    onSuccess: (result, variables) => {
-      if (variables.revision === customerRevision.current && result.request_version === variables.revision) showBasketFeedback(result);
-    },
-    onError: (error) => notify("error", errorMessage(error)),
-  });
-  const removeItemMutation = useMutation({
-    mutationFn: ({ itemId }: { itemId: string; revision: number }) => gameplayApi.removeBasketItem(sessionId ?? "", itemId),
-    onSuccess: (result, variables) => {
-      if (variables.revision === customerRevision.current && result.request_version === variables.revision) showBasketFeedback(result);
-    },
-    onError: (error) => notify("error", errorMessage(error)),
-  });
+  const selectLocalItem = (item: import("@/features/gameplay/types").InventoryItem) => {
+    if (!customer) return;
+    const currentLiteracy = useGameplaySessionStore.getState().literacyChallenge;
+    const nextBasket = addLocalBasketItem(customer, basket, item, currentLiteracy);
+    if (nextBasket === null) {
+      notify("warning", `Only ${item.stock} ${item.name.toLowerCase()} are available.`);
+      return;
+    }
+    const literacy = nextBasket.literacy_challenge;
+    if (literacy?.type === "spelling" && literacy.target_item_id) {
+      nextBasket.literacy_challenge = {
+        ...literacy,
+        is_available: nextBasket.lines.some((line) => line.item.id === literacy.target_item_id),
+      };
+    }
+    showBasketFeedback(nextBasket);
+  };
+  const removeLocalItem = (itemId: string) => {
+    if (customer) {
+      const currentLiteracy = useGameplaySessionStore.getState().literacyChallenge;
+      showBasketFeedback(removeLocalBasketItem(customer, basket, itemId, currentLiteracy));
+    }
+  };
   const literacyAnswerMutation = useMutation({
     mutationFn: ({ answer: literacyAnswer }: { answer: string; itemId?: string }) =>
-      gameplayApi.answerLiteracyChallenge(sessionId ?? "", literacyAnswer),
+      gameplayApi.answerLiteracyChallenge(sessionId ?? "", literacyAnswer, basket),
     onSuccess: (result, variables) => {
       setLiteracyChallenge(result.challenge);
       notify(result.is_correct ? "success" : "warning", result.feedback);
@@ -127,12 +137,15 @@ export function ShopCounter() {
         void queryClient.invalidateQueries({ queryKey: ["motivation"] });
         void queryClient.invalidateQueries({ queryKey: ["learning-summary"] });
       }
-      if (result.is_correct && variables.itemId) addItemMutation.mutate({ itemId: variables.itemId, revision: customerRevision.current });
+      if (result.is_correct && variables.itemId) {
+        const selected = inventoryQuery.data?.find((item) => item.id === variables.itemId);
+        if (selected) selectLocalItem(selected);
+      }
     },
     onError: (error) => notify("error", errorMessage(error)),
   });
   const checkoutMutation = useMutation({
-    mutationFn: () => gameplayApi.checkout(sessionId ?? ""),
+    mutationFn: () => gameplayApi.checkout(sessionId ?? "", basket as Basket),
     onSuccess: async (result) => {
       if (result.challenge) {
         setChallenge(result.challenge);
@@ -356,11 +369,11 @@ export function ShopCounter() {
           
           <div className="flex items-end justify-between gap-3"><div><h2 className="font-bold">Available items</h2><p className="mt-1 text-sm text-muted">Use the shopping list above to fill the basket.</p></div><span className="text-sm font-semibold text-muted">Pick items</span></div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {inventoryQuery.data?.map((product) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={product.id} onClick={() => literacyChallenge?.type === "word_reading" && !literacyChallenge.complete ? literacyAnswerMutation.mutate({ answer: product.id, itemId: product.id }) : addItemMutation.mutate({ itemId: product.id, revision: customerRevision.current })} disabled={addItemMutation.isPending || literacyAnswerMutation.isPending || Boolean(challenge)} className="rounded-[20px] border border-line bg-canvas p-4 text-left disabled:opacity-50"><p className="font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">KES {product.price_kes} · {product.stock} left</p></motion.button>)}
+            {inventoryQuery.data?.map((product) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={product.id} onClick={() => literacyChallenge?.type === "word_reading" && !literacyChallenge.complete ? literacyAnswerMutation.mutate({ answer: product.id, itemId: product.id }) : selectLocalItem(product)} disabled={literacyAnswerMutation.isPending || Boolean(challenge)} className="rounded-[20px] border border-line bg-canvas p-4 text-left disabled:opacity-50"><p className="font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">KES {product.price_kes} · {product.stock} left</p></motion.button>)}
           </div>
           {inventoryQuery.isLoading && <p className="text-sm text-muted" aria-live="polite">Loading inventory…</p>}
           
-          <div className="rounded-[20px] bg-canvas p-4"><p className="font-medium">{basket?.lines.length ? basket.lines.map((line) => `${line.quantity} × ${line.item.name}`).join(", ") : "Add items to the basket."}</p>{basket?.lines.map((line) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={line.item.id} onClick={() => removeItemMutation.mutate({ itemId: line.item.id, revision: customerRevision.current })} className="mr-2 mt-3 rounded-[14px] border border-line px-3 py-2 text-sm">Remove {line.item.name}</motion.button>)}</div>
+          <div className="rounded-[20px] bg-canvas p-4"><p className="font-medium">{basket?.lines.length ? basket.lines.map((line) => `${line.quantity} × ${line.item.name}`).join(", ") : "Add items to the basket."}</p>{basket?.lines.map((line) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={line.item.id} onClick={() => removeLocalItem(line.item.id)} className="mr-2 mt-3 rounded-[14px] border border-line px-3 py-2 text-sm">Remove {line.item.name}</motion.button>)}</div>
           
           {literacyChallenge?.type === "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
           

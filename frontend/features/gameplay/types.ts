@@ -118,6 +118,7 @@ export type LiteracyChallenge = {
   attempts: number;
   complete: boolean;
   is_available: boolean;
+  target_item_id?: string | null;
 };
 
 export type LiteracyAnswer = {

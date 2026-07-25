@@ -85,15 +85,11 @@ export const gameplayApi = {
     }),
   resolveStockOffer: (sessionId: string) => request<{ customer: Customer; basket: Basket; literacy_challenge: LiteracyChallenge | null }>(`/gameplay/sessions/${sessionId}/customers/stock-offer`, { method: "POST" }),
   inventory: (sessionId: string) => request<InventoryItem[]>(`/gameplay/sessions/${sessionId}/inventory`),
-  addBasketItem: (sessionId: string, itemId: string) =>
-    request<Basket>(`/gameplay/sessions/${sessionId}/basket/items`, {
+  checkout: (sessionId: string, basket: Basket) =>
+    request<Checkout>(`/gameplay/sessions/${sessionId}/checkout`, {
       method: "POST",
-      body: JSON.stringify({ item_id: itemId, quantity: 1 })
+      body: JSON.stringify({ items: basket.lines.map((line) => ({ item_id: line.item.id, quantity: line.quantity })) })
     }),
-  removeBasketItem: (sessionId: string, itemId: string) =>
-    request<Basket>(`/gameplay/sessions/${sessionId}/basket/items/${itemId}`, { method: "DELETE" }),
-  checkout: (sessionId: string) =>
-    request<Checkout>(`/gameplay/sessions/${sessionId}/checkout`, { method: "POST" }),
   answerChallenge: (sessionId: string, answer: number) =>
     request<Answer>(`/gameplay/sessions/${sessionId}/challenge/answer`, {
       method: "POST",
@@ -105,10 +101,10 @@ export const gameplayApi = {
     request<Challenge | null>(`/gameplay/sessions/${sessionId}/challenge`),
   currentLiteracyChallenge: (sessionId: string) =>
     request<LiteracyChallenge | null>(`/gameplay/sessions/${sessionId}/literacy`),
-  answerLiteracyChallenge: (sessionId: string, answer: string) =>
+  answerLiteracyChallenge: (sessionId: string, answer: string, basket?: Basket | null) =>
     request<LiteracyAnswer>(`/gameplay/sessions/${sessionId}/literacy/answer`, {
       method: "POST",
-      body: JSON.stringify({ answer })
+      body: JSON.stringify({ answer, ...(basket ? { items: basket.lines.map((line) => ({ item_id: line.item.id, quantity: line.quantity })) } : {}) })
     }),
   progress: () => request<PlayerProgress>("/gameplay/progress"),
   motivation: () => request<Motivation>("/gameplay/motivation"),

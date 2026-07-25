@@ -19,6 +19,7 @@ from src.agents.shared.outputs import CustomerScenarioOutput, TutorAgentOutput
 from src.contracts.gameplay_engine import (
     AnswerChallengeResponse,
     AnswerLiteracyChallengeResponse,
+    BasketItemRequest,
     BasketLineResponse,
     BasketResponse,
     BasketValidationResponse,
@@ -297,10 +298,12 @@ class GameplayEngine:
         return self._literacy_response(self._state(game_session))
 
     async def submit_literacy_answer(
-        self, session_id: UUID, answer: str
+        self, session_id: UUID, answer: str, items: list[BasketItemRequest] | None = None
     ) -> AnswerLiteracyChallengeResponse:
         game_session, student = await self._session_and_student(session_id)
         state = self._state(game_session)
+        if items is not None:
+            await self._replace_basket_from_submission(student, state, items)
         challenge = self._require_literacy_challenge(state)
         if bool(challenge["complete"]):
             raise ApplicationError("That customer message is already complete.", status_code=409)
@@ -388,10 +391,14 @@ class GameplayEngine:
             rewards_preview=reward,
         )
 
-    async def checkout(self, session_id: UUID) -> CheckoutResponse:
+    async def checkout(
+        self, session_id: UUID, items: list[BasketItemRequest] | None = None
+    ) -> CheckoutResponse:
         game_session, student = await self._session_and_student(session_id)
         state = self._state(game_session)
         self._require_customer(state)
+        if items is not None:
+            await self._replace_basket_from_submission(student, state, items)
         basket = await self._basket_response(state)
         if not basket.lines:
             raise ApplicationError("Add at least one item before checkout.", status_code=422)
@@ -626,6 +633,26 @@ class GameplayEngine:
                 else int(state.get("request_version", 0))
             ),
         )
+
+    async def _replace_basket_from_submission(
+        self, student: Student, state: dict[str, object], items: list[BasketItemRequest]
+    ) -> None:
+        quantities: dict[UUID, int] = {}
+        for item in items:
+            quantities[item.item_id] = quantities.get(item.item_id, 0) + item.quantity
+        lines: list[BasketLine] = []
+        for item_id, quantity in quantities.items():
+            shop_stock = await self.repository.get_shop_stock(student.id, item_id)
+            if shop_stock is None:
+                raise ApplicationError(
+                    "An item in the basket is not available in this shop.", status_code=409
+                )
+            if quantity > shop_stock.stock:
+                raise ApplicationError(
+                    "An item is no longer available in the requested quantity.", status_code=409
+                )
+            lines.append(BasketLine(item_id=item_id, quantity=quantity))
+        state["basket"] = self._serialize_lines(lines)
 
     async def _record_learning_attempt(
         self,
@@ -967,6 +994,11 @@ class GameplayEngine:
             attempts=int(challenge["attempts"]),
             complete=bool(challenge["complete"]),
             is_available=self._literacy_is_available(state, challenge),
+            target_item_id=(
+                UUID(str(challenge["target_item_id"]))
+                if challenge.get("target_item_id") is not None
+                else None
+            ),
         )
 
     def _literacy_is_available(

@@ -28,9 +28,17 @@ export const useGameplaySessionStore = create<GameplaySessionStore>()(
       literacyChallenge: null,
       setSessionId: (sessionId) => set({ sessionId, customer: null, basket: null, challenge: null, literacyChallenge: null }),
       setCustomer: (customer) => set({ customer }),
-      setBasket: (basket) => set({ basket }),
+      setBasket: (basket) =>
+        set((state) => ({
+          basket,
+          literacyChallenge: basket?.literacy_challenge ?? state.literacyChallenge,
+        })),
       setChallenge: (challenge) => set({ challenge }),
-      setLiteracyChallenge: (literacyChallenge) => set({ literacyChallenge }),
+      setLiteracyChallenge: (literacyChallenge) =>
+        set((state) => ({
+          literacyChallenge,
+          basket: state.basket ? { ...state.basket, literacy_challenge: literacyChallenge } : null,
+        })),
       clearCurrentCustomer: () => set({ customer: null, basket: null, challenge: null, literacyChallenge: null }),
       clearSession: () => set({ sessionId: null, customer: null, basket: null, challenge: null, literacyChallenge: null })
     }),

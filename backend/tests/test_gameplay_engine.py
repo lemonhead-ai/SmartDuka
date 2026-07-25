@@ -174,23 +174,23 @@ async def test_complete_gameplay_loop_and_progress(tmp_path: Path) -> None:
             inventory = await client.get(f"/api/v1/gameplay/sessions/{session_id}/inventory")
             assert inventory.status_code == 200
             inventory_by_id = {item["id"]: item for item in inventory.json()}
-            for requested_item in customer_payload["requested_items"]:
-                for _ in range(requested_item["quantity"]):
-                    added = await client.post(
-                        f"/api/v1/gameplay/sessions/{session_id}/basket/items",
-                        json={"item_id": requested_item["item_id"], "quantity": 1},
-                    )
-                    assert added.status_code == 200
-            assert added.json()["validation"]["is_valid"] is True
-            assert added.json()["total_kes"] == sum(
+            checkout_items = [
+                {"item_id": item["item_id"], "quantity": item["quantity"]}
+                for item in customer_payload["requested_items"]
+            ]
+            expected_total = sum(
                 inventory_by_id[item["item_id"]]["price_kes"] * item["quantity"]
                 for item in customer_payload["requested_items"]
             )
 
-            checkout = await client.post(f"/api/v1/gameplay/sessions/{session_id}/checkout")
+            checkout = await client.post(
+                f"/api/v1/gameplay/sessions/{session_id}/checkout",
+                json={"items": checkout_items},
+            )
             assert checkout.status_code == 200
             challenge = checkout.json()["challenge"]
             assert checkout.json()["status"] == "challenge_required"
+            assert challenge["total_kes"] == expected_total
 
             hinted = await client.post(f"/api/v1/gameplay/sessions/{session_id}/hint")
             assert hinted.status_code == 200
