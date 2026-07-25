@@ -360,10 +360,17 @@ class LiteracyChallengeManager:
             if challenge["type"] == "spelling":
                 return "Well spelled! That shop word is ready for the counter."
             return "Wonderful listening! You understood what your customer said."
-        attempts = int(challenge["attempts"])
+
+        attempts = int(challenge.get("attempts", 1))
+        if challenge.get("type") == "word_reading":
+            word = str(challenge.get("content", "the word"))
+            if attempts == 1:
+                return f"Find '{word}' on the shelf first! Select the matching item ({word}) before picking other items for {customer_name}."
+            return f"Almost there! Look for '{word}' on the shelf and select that item first to solve the reading moment."
+
         if attempts == 1:
             return "Good try. Read the customer message once more, then look for the key word."
-        return "Almost there. Take your timeâ€”the customer is happy to wait while you think."
+        return f"Almost there. Take your time - {customer_name} is happy to wait while you think."
 
 
 class MathChallengeManager:
