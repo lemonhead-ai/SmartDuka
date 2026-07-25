@@ -319,25 +319,26 @@ export function ShopCounter() {
               <Stat label="Stars earned" value={reward?.stars ?? 0} prefix="+" />
               <Stat label="Items sold" value={completion.basket.lines.reduce((sum, line) => sum + line.quantity, 0)} prefix="+" />
             </div>
-          </div>
-        </div>
 
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <button 
-            type="button" 
-            onClick={() => printSaleReceipt({ shopName: shopQuery.data?.name ?? "Smart Duka", customerName: completion.customerName, basket: completion.basket, reward })} 
-            className="rounded-full border border-line px-5 py-3 font-semibold text-ink hover:bg-canvas transition-transform hover:scale-[1.03]"
-          >
-            Print receipt
-          </button>
-          <motion.button 
-            type="button" 
-            whileTap={{ scale: 0.97 }} 
-            onClick={() => { setCompletion(null); if (sessionId) nextCustomerMutation.mutate(sessionId); }} 
-            className="rounded-full bg-accent px-6 py-3 font-semibold text-white hover:scale-[1.03] transition-transform"
-          >
-            Serve next customer
-          </motion.button>
+            {/* Action Buttons directly below the 4 stat cards */}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button 
+                type="button" 
+                onClick={() => printSaleReceipt({ shopName: shopQuery.data?.name ?? "Smart Duka", customerName: completion.customerName, basket: completion.basket, reward })} 
+                className="flex-1 min-w-[130px] rounded-full border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:bg-canvas transition-transform hover:scale-[1.02] text-center"
+              >
+                Print receipt
+              </button>
+              <motion.button 
+                type="button" 
+                whileTap={{ scale: 0.97 }} 
+                onClick={() => { setCompletion(null); if (sessionId) nextCustomerMutation.mutate(sessionId); }} 
+                className="flex-1 min-w-[150px] rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:scale-[1.02] transition-transform text-center"
+              >
+                Next customer
+              </motion.button>
+            </div>
+          </div>
         </div>
       </motion.section>
     );
