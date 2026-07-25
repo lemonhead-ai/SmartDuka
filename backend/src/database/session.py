@@ -1,6 +1,7 @@
 import ssl
 from collections.abc import AsyncIterator
 
+from sqlalchemy import inspect
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -32,23 +33,24 @@ class Database:
     async def create_schema(self) -> None:
         async with self.engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
-            await connection.run_sync(self._apply_sqlite_demo_migrations)
+            await connection.run_sync(self._apply_schema_migrations)
             await connection.run_sync(self._secure_postgres_tables)
 
     @staticmethod
-    def _apply_sqlite_demo_migrations(connection: Connection) -> None:
-        """Apply safe, additive upgrades for existing local demo databases."""
-        if connection.dialect.name != "sqlite":
-            return
-
+    def _apply_schema_migrations(connection: Connection) -> None:
+        """Apply safe, additive upgrades for existing databases across all SQL dialects."""
         table_names = set(connection.dialect.get_table_names(connection))
+        is_postgres = connection.dialect.name == "postgresql"
+        json_type = "JSONB NOT NULL DEFAULT '{}'" if is_postgres else "JSON NOT NULL DEFAULT '{}'"
+        id_type = "UUID" if is_postgres else "CHAR(32)"
+
         additions = {
             "shopkeepers": {"avatar": "VARCHAR(32) NOT NULL DEFAULT 'milo'"},
             "students": {
-                "shopkeeper_id": "CHAR(32)",
+                "shopkeeper_id": id_type,
                 "avatar": "VARCHAR(32) NOT NULL DEFAULT 'milo'",
             },
-            "game_sessions": {"game_state": "JSON NOT NULL DEFAULT '{}'"},
+            "game_sessions": {"game_state": json_type},
             "student_progress": {
                 "hints_used": "INTEGER NOT NULL DEFAULT 0",
                 "time_spent_seconds": "INTEGER NOT NULL DEFAULT 0",
@@ -58,7 +60,7 @@ class Database:
                 "missions_completed": "INTEGER NOT NULL DEFAULT 0",
                 "current_learning_level": "INTEGER NOT NULL DEFAULT 1",
                 "literacy_moments_completed": "INTEGER NOT NULL DEFAULT 0",
-                "motivation_state": "JSON NOT NULL DEFAULT '{}'",
+                "motivation_state": json_type,
             },
             "inventory_items": {"supplier_cost_kes": "INTEGER NOT NULL DEFAULT 0"},
             "shops": {
@@ -66,12 +68,11 @@ class Database:
                 "theme": "VARCHAR(20) NOT NULL DEFAULT 'leaf'",
             },
         }
+        inspector = inspect(connection)
         for table_name, columns in additions.items():
             if table_name not in table_names:
                 continue
-            existing = {
-                row[1] for row in connection.exec_driver_sql(f"PRAGMA table_info({table_name})")
-            }
+            existing = {col["name"] for col in inspector.get_columns(table_name)}
             for column_name, definition in columns.items():
                 if column_name not in existing:
                     connection.exec_driver_sql(
