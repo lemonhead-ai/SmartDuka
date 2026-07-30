@@ -1,13 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Award02Icon, FireIcon, Store01Icon } from "hugeicons-react";
+import { Award02Icon, FireIcon, Store01Icon, PackageIcon, Invoice01Icon, ShoppingBag01Icon } from "hugeicons-react";
 import Link from "next/link";
 
 import { StatCard } from "@/components/cards/StatCard";
 import { MissionCard } from "@/components/game/MissionCard";
-import { ShopManagement } from "@/components/game/ShopManagement";
-import { ShopLedger } from "@/components/game/ShopLedger";
 import { ShopPreview } from "@/components/game/ShopPreview";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { gameplayApi } from "@/features/gameplay/api";
@@ -17,10 +15,6 @@ export default function DashboardPage() {
   const progressQuery = useQuery({
     queryKey: ["player-progress"],
     queryFn: gameplayApi.progress,
-  });
-  const ledgerQuery = useQuery({
-    queryKey: ["shop-ledger"],
-    queryFn: gameplayApi.ledger,
   });
   const motivationQuery = useQuery({
     queryKey: ["motivation"],
@@ -47,7 +41,51 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {(progressQuery.isError || ledgerQuery.isError || motivationQuery.isError) && <MiloAlert kind="warning" message="Some dashboard details could not load yet. You can still continue playing." />}
+      {(progressQuery.isError || motivationQuery.isError) && (
+        <MiloAlert kind="warning" message="Some dashboard details could not load yet. You can still continue playing." />
+      )}
+
+      {/* Quick Action Navigation Buttons */}
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Link
+          href="/shop?tab=counter"
+          className="flex items-center gap-3 rounded-[28px] border border-line bg-surface p-4 transition-all hover:border-accent hover:shadow-md"
+        >
+          <div className="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+            <ShoppingBag01Icon size={20} />
+          </div>
+          <div>
+            <p className="font-semibold text-ink text-sm">Open Counter</p>
+            <p className="text-xs text-muted">Serve new customers</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/shop?tab=stock"
+          className="flex items-center gap-3 rounded-[28px] border border-line bg-surface p-4 transition-all hover:border-accent hover:shadow-md"
+        >
+          <div className="grid size-10 place-items-center rounded-xl bg-amber-100 text-amber-700">
+            <PackageIcon size={20} />
+          </div>
+          <div>
+            <p className="font-semibold text-ink text-sm">Stock Room</p>
+            <p className="text-xs text-muted">Restock shop inventory</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/shop?tab=ledger"
+          className="flex items-center gap-3 rounded-[28px] border border-line bg-surface p-4 transition-all hover:border-accent hover:shadow-md"
+        >
+          <div className="grid size-10 place-items-center rounded-xl bg-sky-100 text-sky-700">
+            <Invoice01Icon size={20} />
+          </div>
+          <div>
+            <p className="font-semibold text-ink text-sm">Shop Ledger</p>
+            <p className="text-xs text-muted">View sales & profit</p>
+          </div>
+        </Link>
+      </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
         <StatCard icon={FireIcon} label="Current streak" value={`${progress?.daily_streak_days ?? 0} days`} detail="Daily streak tracking is ready." tone="muted" />
@@ -73,10 +111,6 @@ export default function DashboardPage() {
         </article>
       </section>
 
-      <div id="stock-room" className="scroll-mt-6">
-        <ShopManagement />
-      </div>
-
       {motivationQuery.data?.badges.length ? (
         <section className="rounded-[24px] border border-line bg-surface p-6">
           <p className="text-sm font-medium text-muted">Your badges</p>
@@ -90,8 +124,6 @@ export default function DashboardPage() {
           </div>
         </section>
       ) : null}
-
-      <ShopLedger ledger={ledgerQuery.data} isLoading={ledgerQuery.isLoading} />
     </div>
   );
 }

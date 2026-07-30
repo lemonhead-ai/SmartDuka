@@ -12,8 +12,8 @@
   --color-black: #1D1D1F;
   --color-accent: #16a34a;
   --color-accent-strong: #15803d;
-  --radius-button: 14px;
-  --radius-card: 24px;
+  --radius-button: 9999px;
+  --radius-card: 36px;
   --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 

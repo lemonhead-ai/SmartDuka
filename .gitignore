@@ -18,8 +18,13 @@ venv/
 env/
 .pytest_cache/
 .pytest_cache_tmp/
+tmp_pytest/
+backend/tmp_pytest/
 backend/pytest_tmp/
 backend/.pytest_cache_tmp/
+backend/data/audio_cache/
+data/audio_cache/
+*.mp3
 
 # Misc
 .DS_Store

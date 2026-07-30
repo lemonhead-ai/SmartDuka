@@ -11,7 +11,7 @@ function formatAmount(amount: number) {
 
 export function ShopLedger({ ledger, isLoading }: ShopLedgerProps) {
   return (
-    <section className="rounded-[24px] border border-line bg-surface p-6">
+    <section className="rounded-[36px] border border-line bg-surface p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-muted">Duka money</p>

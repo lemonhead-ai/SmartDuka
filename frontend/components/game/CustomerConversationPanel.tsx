@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
+import { AudioSpeakerButton } from "@/components/ui/AudioSpeakerButton";
 import { playChatSound } from "@/features/feedback/sensory-feedback";
 
 export type CustomerConversationMessage = {
@@ -41,7 +42,7 @@ export function CustomerConversationPanel({
   }, [messages]);
 
   return (
-    <aside className="group/chat relative rounded-[20px] border border-line bg-canvas p-4" aria-label={`Conversation with ${customerName}`}>
+    <aside className="group/chat relative rounded-[32px] border border-line bg-canvas p-4" aria-label={`Conversation with ${customerName}`}>
       <p className="mb-4 text-center text-xs font-semibold text-muted">Chat with {customerName}</p>
       <div
         className="chat-scroll max-h-72 space-y-3 overflow-y-auto pr-2"
@@ -104,7 +105,29 @@ export function CustomerConversationPanel({
 }
 
 function MessageBubble({ side, children }: { side: CustomerConversationMessage["side"]; children: React.ReactNode }) {
-  return <motion.p data-chat-message initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`w-fit max-w-[90%] rounded-[18px] px-3 py-2 text-sm leading-relaxed ${side === "outgoing" ? "ml-auto bg-[#007AFF] text-white" : "bg-[#e5e5ea] text-[#1c1c1e] dark:bg-[#2c2c2e] dark:text-white"}`}>{children}</motion.p>;
+  const textContent = typeof children === "string" ? children : "";
+
+  return (
+    <motion.div
+      data-chat-message
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`flex items-start gap-1.5 ${side === "outgoing" ? "justify-end" : "justify-start"}`}
+    >
+      {side === "incoming" && textContent && (
+        <AudioSpeakerButton text={textContent} size="sm" className="mt-1 shrink-0 border-0 bg-transparent p-1 text-muted hover:text-accent" />
+      )}
+      <p
+        className={`w-fit max-w-[90%] rounded-[18px] px-3 py-2 text-sm leading-relaxed ${
+          side === "outgoing"
+            ? "ml-auto bg-[#007AFF] text-white"
+            : "bg-[#e5e5ea] text-[#1c1c1e] dark:bg-[#2c2c2e] dark:text-white"
+        }`}
+      >
+        {children}
+      </p>
+    </motion.div>
+  );
 }
 
 function TypingIndicator() {

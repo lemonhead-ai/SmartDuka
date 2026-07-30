@@ -7,6 +7,8 @@ import { useRef, useState } from "react";
 
 import { LiteracyMoment } from "@/components/game/LiteracyMoment";
 import { ShoppingListPanel } from "@/components/game/ShoppingListPanel";
+import { PatienceMeter } from "@/components/game/PatienceMeter";
+import { AudioSpeakerButton } from "@/components/ui/AudioSpeakerButton";
 import {
   CustomerConversationPanel,
   type CustomerConversationMessage,
@@ -384,17 +386,18 @@ export function ShopCounter() {
 
   if (!customer) {
     const pending = startMutation.isPending || nextCustomerMutation.isPending;
-    return <section className="rounded-[24px] border border-line bg-surface p-6" aria-busy={pending}><p className="text-sm font-medium text-muted">Smart Duka session</p><h1 className="mt-1 text-2xl font-semibold">Ready to serve a customer?</h1><p className="mt-3 text-muted">Start a live demo session to receive a customer and stock your basket.</p><div className="mt-6 flex flex-wrap gap-3"><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => void startOrContinue()} disabled={pending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{pending ? "Loading…" : sessionId ? "Next customer" : "Start session"}</motion.button><Link href="/dashboard#stock-room" className="rounded-[14px] border border-line px-5 py-3 font-semibold">Manage stock</Link></div></section>;
+    return <section className="rounded-[24px] border border-line bg-surface p-6" aria-busy={pending}><p className="text-sm font-medium text-muted">Smart Duka session</p><h1 className="mt-1 text-2xl font-semibold">Ready to serve a customer?</h1><p className="mt-3 text-muted">Start a live demo session to receive a customer and stock your basket.</p><div className="mt-6 flex flex-wrap gap-3"><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => void startOrContinue()} disabled={pending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{pending ? "Loading…" : sessionId ? "Next customer" : "Start session"}</motion.button><Link href="/shop?tab=stock" className="rounded-[14px] border border-line px-5 py-3 font-semibold">Manage stock</Link></div></section>;
   }
 
   const literacyNeedsAttention = Boolean(literacyChallenge && !literacyChallenge.complete && literacyChallenge.is_available);
   const answerLiteracy = (answerValue: string) => literacyAnswerMutation.mutate({ answer: answerValue });
 
   return (
-    <section className="rounded-[24px] border border-line bg-surface p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/dashboard#stock-room" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
+    <section className="rounded-[36px] border border-line bg-surface p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/shop?tab=stock" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
       
       <div className="mt-6 space-y-6">
+        <PatienceMeter customerName={customer.name} />
         <ShoppingListPanel customer={customer} basket={basket} />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* Left Column: Shelves, Basket, Checkout */}
@@ -403,7 +406,34 @@ export function ShopCounter() {
           
           <div className="flex items-end justify-between gap-3"><div><h2 className="font-bold">Available items</h2><p className="mt-1 text-sm text-muted">Use the shopping list above to fill the basket.</p></div><span className="text-sm font-semibold text-muted">Pick items</span></div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {inventoryQuery.data?.map((product) => <motion.button type="button" whileTap={{ scale: 0.97 }} key={product.id} onClick={() => literacyChallenge?.type === "word_reading" && !literacyChallenge.complete ? literacyAnswerMutation.mutate({ answer: product.id, itemId: product.id }) : selectLocalItem(product)} disabled={literacyAnswerMutation.isPending || Boolean(challenge)} className="rounded-[20px] border border-line bg-canvas p-4 text-left disabled:opacity-50"><p className="font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">KES {product.price_kes} · {product.stock} left</p></motion.button>)}
+            {inventoryQuery.data?.map((product) => (
+              <motion.div
+                key={product.id}
+                whileHover={{ scale: 1.02 }}
+                className="relative flex flex-col justify-between rounded-[28px] border border-line bg-canvas p-4"
+              >
+                <div className="flex items-start justify-between gap-1">
+                  <p className="font-semibold text-ink leading-tight">{product.name}</p>
+                  <AudioSpeakerButton text={`${product.name}, ${product.price_kes} Shillings`} size="sm" className="shrink-0" />
+                </div>
+                <p className="mt-2 text-xs font-medium text-muted">
+                  KES {product.price_kes} · {product.stock} left
+                </p>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() =>
+                    literacyChallenge?.type === "word_reading" && !literacyChallenge.complete
+                      ? literacyAnswerMutation.mutate({ answer: product.id, itemId: product.id })
+                      : selectLocalItem(product)
+                  }
+                  disabled={literacyAnswerMutation.isPending || Boolean(challenge)}
+                  className="mt-3 w-full rounded-full bg-surface border border-line py-2 text-xs font-semibold text-ink hover:border-accent hover:text-accent disabled:opacity-50 transition-colors"
+                >
+                  + Add to basket
+                </motion.button>
+              </motion.div>
+            ))}
           </div>
           {inventoryQuery.isLoading && <p className="text-sm text-muted" aria-live="polite">Loading inventory…</p>}
           

@@ -10,6 +10,7 @@ import { Settings02Icon, Logout01Icon, Award01Icon, Award02Icon, CheckmarkCircle
 import { gameplayApi } from "@/features/gameplay/api";
 import { authApi } from "@/features/auth/api";
 import { MiloAlert } from "@/components/ui/MiloAlert";
+import { SocialShiftersImpactCard } from "@/components/profile/SocialShiftersImpactCard";
 
 const LockSVG = () => (
   <svg className="size-5 text-muted/65" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -225,6 +226,8 @@ export default function ProfilePage() {
             </div>
         </div>
       </section>
+
+      <SocialShiftersImpactCard progress={progress} />
 
       <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-[24px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">

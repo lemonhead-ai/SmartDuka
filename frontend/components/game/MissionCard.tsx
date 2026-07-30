@@ -9,7 +9,7 @@ export function MissionCard({ motivation }: { motivation?: Motivation }) {
   const progress = mission ? Math.round((mission.progress / mission.target) * 100) : 0;
 
   return (
-    <section className="rounded-[24px] border border-line bg-surface p-7 sm:p-8 relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.005]">
+    <section className="rounded-[36px] border border-line bg-surface p-7 sm:p-8 relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.005]">
       {/* Subtle glow background */}
       <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-accent/5 rounded-full blur-3xl -z-10 pointer-events-none" />
 

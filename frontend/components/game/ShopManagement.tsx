@@ -28,12 +28,12 @@ export function ShopManagement() {
     onError: () => showToast("error", "That product could not be added right now.")
   });
 
-  if (shop.isLoading) return <section className="rounded-[24px] border border-line bg-surface p-6" aria-busy="true"><p className="text-sm font-medium text-muted">Stock room</p><div className="mt-4 h-7 w-48 rounded-[14px] bg-canvas" /><div className="mt-5 h-20 rounded-[20px] bg-canvas" /></section>;
-  if (shop.isError || !shop.data) return <section className="rounded-[24px] border border-line bg-surface p-6"><p className="text-sm font-medium text-muted">Stock room</p><h2 className="mt-1 text-xl font-semibold">Your stock room is taking a moment</h2><MiloAlert kind="error" message="Refresh to try loading your shelf again." className="mt-4" /><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => void shop.refetch()} className="mt-5 rounded-[14px] border border-line px-4 py-2 font-semibold">Refresh stock room</motion.button></section>;
+  if (shop.isLoading) return <section className="rounded-[36px] border border-line bg-surface p-6" aria-busy="true"><p className="text-sm font-medium text-muted">Stock room</p><div className="mt-4 h-7 w-48 rounded-[14px] bg-canvas" /><div className="mt-5 h-20 rounded-[20px] bg-canvas" /></section>;
+  if (shop.isError || !shop.data) return <section className="rounded-[36px] border border-line bg-surface p-6"><p className="text-sm font-medium text-muted">Stock room</p><h2 className="mt-1 text-xl font-semibold">Your stock room is taking a moment</h2><MiloAlert kind="error" message="Refresh to try loading your shelf again." className="mt-4" /><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => void shop.refetch()} className="mt-5 rounded-[14px] border border-line px-4 py-2 font-semibold">Refresh stock room</motion.button></section>;
 
   const stocked = new Set(shop.data.items.map((item) => item.id));
   const additions = (catalog.data ?? []).filter((item) => !stocked.has(item.id));
-  return <section className="rounded-[24px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.002]" aria-busy={restock.isPending || add.isPending} aria-labelledby="stock-room-title">
+  return <section className="rounded-[36px] border border-line bg-surface p-6 transition-all duration-300 hover:shadow-md hover:scale-[1.002]" aria-busy={restock.isPending || add.isPending} aria-labelledby="stock-room-title">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="text-sm font-medium text-muted">Stock room</p>
