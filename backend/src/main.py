@@ -27,12 +27,19 @@ def create_application(settings: Settings | None = None) -> FastAPI:
         async with database.session_factory() as session:
             await seed_demo_data(session)
         application.state.database = database
+        has_featherless_key = bool(configured_settings.featherless_api_key and configured_settings.featherless_api_key.strip())
+        has_gemini_key = bool(configured_settings.gemini_api_key and configured_settings.gemini_api_key.strip())
+        has_openai_key = bool(configured_settings.openai_api_key and configured_settings.openai_api_key.strip())
+
         provider_is_configured = (
             configured_settings.llm_provider == "featherless"
-            and configured_settings.featherless_api_key is not None
+            and (has_featherless_key or has_gemini_key)
+        ) or (
+            configured_settings.llm_provider in ("gemini", "google")
+            and has_gemini_key
         ) or (
             configured_settings.llm_provider == "openai"
-            and configured_settings.openai_api_key is not None
+            and has_openai_key
         )
         if provider_is_configured:
             application.state.ai_orchestrator = create_ai_orchestrator(configured_settings)

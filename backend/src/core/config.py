@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     featherless_model: str = "Qwen/Qwen3-32B"
     featherless_base_url: str = "https://api.featherless.ai/v1"
     featherless_enable_thinking: bool = False
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
     openai_api_key: str | None = None
     openai_model: str = "Qwen/Qwen3-32B"
     allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])

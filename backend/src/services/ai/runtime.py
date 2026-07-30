@@ -22,11 +22,12 @@ def create_ai_orchestrator(
     settings: Settings, provider: LLMProvider | None = None
 ) -> AIOrchestrator:
     configured_provider = provider or create_llm_provider(settings)
-    model = (
-        settings.featherless_model
-        if settings.llm_provider == "featherless"
-        else settings.openai_model
-    )
+    if settings.llm_provider in ("gemini", "google"):
+        model = settings.gemini_model
+    elif settings.llm_provider == "featherless":
+        model = settings.featherless_model
+    else:
+        model = settings.openai_model
     prompt_loader = PromptLoader()
     common_kwargs = {
         "provider": configured_provider,
