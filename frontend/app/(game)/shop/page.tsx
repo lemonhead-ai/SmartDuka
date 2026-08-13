@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShoppingBag01Icon, PackageIcon, Invoice01Icon } from "hugeicons-react";
 
@@ -13,7 +13,7 @@ import { gameplayApi } from "@/features/gameplay/api";
 
 type ShopTab = "counter" | "stock" | "ledger";
 
-export default function ShopPage() {
+function ShopPageContent() {
   const searchParams = useSearchParams();
   const defaultTab = (searchParams.get("tab") as ShopTab) || "counter";
   const [activeTab, setActiveTab] = useState<ShopTab>(defaultTab);
@@ -92,5 +92,13 @@ export default function ShopPage() {
         </motion.div>
       )}
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-muted">Loading shop...</div>}>
+      <ShopPageContent />
+    </Suspense>
   );
 }
