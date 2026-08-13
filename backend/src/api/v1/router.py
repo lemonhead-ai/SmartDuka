@@ -7,6 +7,7 @@ from .gameplay import router as gameplay_router
 from .health import router as health_router
 from .shop import router as shop_router
 from .sync import router as sync_router
+from .telemetry import router as telemetry_router
 from .tts import router as tts_router
 
 api_router = APIRouter(
@@ -22,6 +23,7 @@ api_router.include_router(health_router)
 api_router.include_router(auth_router)
 api_router.include_router(gameplay_router)
 api_router.include_router(sync_router)
+api_router.include_router(telemetry_router)
 api_router.include_router(shop_router)
 api_router.include_router(tts_router)
 

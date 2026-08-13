@@ -4,14 +4,70 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { ShoppingBag01Icon, PackageIcon, Invoice01Icon } from "hugeicons-react";
+import {
+  ShoppingBag01Icon,
+  PackageIcon,
+  BookOpen01Icon,
+  Book02Icon,
+  ShieldKeyIcon,
+  Invoice01Icon,
+} from "hugeicons-react";
 
 import { ShopCounter } from "@/components/game/ShopCounter";
 import { ShopManagement } from "@/components/game/ShopManagement";
+import { WordItemMatcher } from "@/components/game/WordItemMatcher";
+import { ShopDeniBook } from "@/components/game/ShopDeniBook";
+import { ShopHygieneInspector } from "@/components/game/ShopHygieneInspector";
 import { ShopLedger } from "@/components/game/ShopLedger";
 import { gameplayApi } from "@/features/gameplay/api";
 
-type ShopTab = "counter" | "stock" | "ledger";
+type ShopTab = "counter" | "stock" | "wordmatch" | "deni" | "hygiene" | "ledger";
+
+interface TabConfig {
+  id: ShopTab;
+  label: string;
+  subLabel: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}
+
+const SHOP_TABS: TabConfig[] = [
+  {
+    id: "counter",
+    label: "Counter",
+    subLabel: "Dukani",
+    icon: ShoppingBag01Icon,
+  },
+  {
+    id: "stock",
+    label: "Stock Room",
+    subLabel: "Stoo",
+    icon: PackageIcon,
+  },
+  {
+    id: "wordmatch",
+    label: "Word Match",
+    subLabel: "Kusoma",
+    icon: BookOpen01Icon,
+  },
+  {
+    id: "deni",
+    label: "Deni Book",
+    subLabel: "Madaftari",
+    icon: Book02Icon,
+  },
+  {
+    id: "hygiene",
+    label: "Hygiene",
+    subLabel: "Usafi",
+    icon: ShieldKeyIcon,
+  },
+  {
+    id: "ledger",
+    label: "Finances",
+    subLabel: "Hesabu",
+    icon: Invoice01Icon,
+  },
+];
 
 function ShopPageContent() {
   const searchParams = useSearchParams();
@@ -20,7 +76,7 @@ function ShopPageContent() {
 
   useEffect(() => {
     const tabParam = searchParams.get("tab") as ShopTab;
-    if (tabParam && ["counter", "stock", "ledger"].includes(tabParam)) {
+    if (tabParam && SHOP_TABS.some((t) => t.id === tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -30,48 +86,45 @@ function ShopPageContent() {
     queryFn: gameplayApi.ledger,
   });
 
-  const tabs: { id: ShopTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
-    { id: "counter", label: "Shop Counter", icon: ShoppingBag01Icon },
-    { id: "stock", label: "Stock Room", icon: PackageIcon },
-    { id: "ledger", label: "Finances & Ledger", icon: Invoice01Icon },
-  ];
-
   return (
     <div className="space-y-6">
-      {/* Sub-navigation Tab Bar */}
+      {/* Header Info */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
         <div>
           <h1 className="text-2xl font-bold text-ink sm:text-3xl">My Duka</h1>
-          <p className="mt-1 text-xs text-muted">Serve customers, restock goods, and manage your shop finances.</p>
+          <p className="mt-1 text-xs text-muted">
+            Serve customers, match Swahili words to goods, track credit balances (Deni), and manage shop finances.
+          </p>
         </div>
-
-        <nav className="flex items-center gap-1.5 rounded-2xl bg-canvas p-1 border border-line" aria-label="Shop view sections">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-colors ${
-                  isActive ? "text-white" : "text-muted hover:text-ink"
-                }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeShopTab"
-                    className="absolute inset-0 rounded-xl bg-accent shadow-sm"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <Icon size={16} className="relative z-10 shrink-0" />
-                <span className="relative z-10">{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
       </div>
+
+      {/* Theme-Consistent Square Navigation Cards Grid */}
+      <nav aria-label="Shop Navigation" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {SHOP_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <motion.button
+              key={tab.id}
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all min-h-[90px] ${
+                isActive
+                  ? "bg-accent text-white border-accent shadow-md ring-2 ring-accent/20 font-bold"
+                  : "bg-surface hover:bg-canvas border-line text-muted hover:text-ink shadow-sm"
+              }`}
+            >
+              <Icon size={22} className={`mb-1.5 shrink-0 ${isActive ? "text-white" : "text-muted"}`} />
+              <span className="text-xs font-bold leading-tight">{tab.label}</span>
+              <span className={`text-[10px] mt-0.5 ${isActive ? "text-white/80" : "text-muted/70"}`}>
+                {tab.subLabel}
+              </span>
+            </motion.button>
+          );
+        })}
+      </nav>
 
       {/* Tab Panels */}
       {activeTab === "counter" && (
@@ -83,6 +136,24 @@ function ShopPageContent() {
       {activeTab === "stock" && (
         <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <ShopManagement />
+        </motion.div>
+      )}
+
+      {activeTab === "wordmatch" && (
+        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <WordItemMatcher />
+        </motion.div>
+      )}
+
+      {activeTab === "deni" && (
+        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <ShopDeniBook />
+        </motion.div>
+      )}
+
+      {activeTab === "hygiene" && (
+        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <ShopHygieneInspector />
         </motion.div>
       )}
 
