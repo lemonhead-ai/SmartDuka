@@ -12,6 +12,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { ApiRequestError, gameplayApi } from "@/features/gameplay/api";
 import { MiloAlert } from "@/components/ui/MiloAlert";
 import { formatMiloMessage } from "@/features/feedback/toast-store";
+import { AuthBackground } from "@/components/auth/AuthBackground";
 
 type AuthMode = "sign-in" | "sign-up" | "forgot-password";
 
@@ -82,27 +83,34 @@ export function AuthCard({ mode }: { mode: AuthMode }) {
     }
   };
 
-  return <main id="main-content" className="grid min-h-dvh place-items-center bg-canvas px-5 py-10">
-    <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="w-full max-w-md rounded-[24px] border border-line bg-surface p-6 shadow-card sm:p-8">
-      <div className="flex justify-center"><SmartDukaLogo /></div>
-      <h1 className="mt-8 text-3xl font-bold tracking-tight">{content.title}</h1>
-      <p className="mt-2 text-sm leading-6 text-muted">{content.description}</p>
-      <form className="mt-7 grid gap-4" onSubmit={submit} noValidate>
-        {mode === "sign-up" && <label className="grid gap-2 text-sm font-semibold">Your name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} required minLength={2} autoComplete="name" className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-normal" /></label>}
-        <label className="grid gap-2 text-sm font-semibold">Email address<input value={email} onChange={(event) => setEmail(event.target.value)} required type="email" autoComplete="email" className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-normal" /></label>
-        {mode !== "forgot-password" && <PasswordField label="Password" value={password} onChange={setPassword} showPassword={showPassword} onToggle={() => setShowPassword((current) => !current)} autoComplete={mode === "sign-up" ? "new-password" : "current-password"} helper="Use at least 6 characters." />}
-        {mode === "sign-up" && <PasswordField label="Confirm password" value={confirmPassword} onChange={setConfirmPassword} showPassword={showPassword} onToggle={() => setShowPassword((current) => !current)} autoComplete="new-password" error={confirmPassword.length > 0 && password !== confirmPassword ? "Passwords do not match yet." : undefined} />}
-        {error && <MiloAlert kind="error" message={error} />}
-        {message && <MiloAlert kind="success" message={message} />}
-        <motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} disabled={isSubmitting} className="mt-2 rounded-[14px] bg-ink px-5 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Please wait…" : content.submit}</motion.button>
-      </form>
-      <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold text-accent">
-        {mode === "sign-in" && <><Link href="/sign-up">Create an account</Link><Link href="/forgot-password">Forgot password?</Link></>}
-        {mode === "sign-up" && <Link href="/sign-in">Already have an account? Sign in</Link>}
-        {mode === "forgot-password" && <Link href="/sign-in">Back to sign in</Link>}
-      </div>
-    </motion.section>
-  </main>;
+  return (
+    <AuthBackground>
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="w-full max-w-md rounded-[24px] border border-line bg-surface p-6 shadow-card sm:p-8 backdrop-blur-sm"
+      >
+        <div className="flex justify-center"><SmartDukaLogo /></div>
+        <h1 className="mt-8 text-3xl font-bold tracking-tight">{content.title}</h1>
+        <p className="mt-2 text-sm leading-6 text-muted">{content.description}</p>
+        <form className="mt-7 grid gap-4" onSubmit={submit} noValidate>
+          {mode === "sign-up" && <label className="grid gap-2 text-sm font-semibold">Your name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} required minLength={2} autoComplete="name" className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-normal" /></label>}
+          <label className="grid gap-2 text-sm font-semibold">Email address<input value={email} onChange={(event) => setEmail(event.target.value)} required type="email" autoComplete="email" className="rounded-[14px] border border-line bg-canvas px-4 py-3 font-normal" /></label>
+          {mode !== "forgot-password" && <PasswordField label="Password" value={password} onChange={setPassword} showPassword={showPassword} onToggle={() => setShowPassword((current) => !current)} autoComplete={mode === "sign-up" ? "new-password" : "current-password"} helper="Use at least 6 characters." />}
+          {mode === "sign-up" && <PasswordField label="Confirm password" value={confirmPassword} onChange={setConfirmPassword} showPassword={showPassword} onToggle={() => setShowPassword((current) => !current)} autoComplete="new-password" error={confirmPassword.length > 0 && password !== confirmPassword ? "Passwords do not match yet." : undefined} />}
+          {error && <MiloAlert kind="error" message={error} />}
+          {message && <MiloAlert kind="success" message={message} />}
+          <motion.button whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} disabled={isSubmitting} className="mt-2 rounded-[14px] bg-ink px-5 py-3 font-bold text-white disabled:opacity-50">{isSubmitting ? "Please wait…" : content.submit}</motion.button>
+        </form>
+        <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold text-accent">
+          {mode === "sign-in" && <><Link href="/sign-up">Create an account</Link><Link href="/forgot-password">Forgot password?</Link></>}
+          {mode === "sign-up" && <Link href="/sign-in">Already have an account? Sign in</Link>}
+          {mode === "forgot-password" && <Link href="/sign-in">Back to sign in</Link>}
+        </div>
+      </motion.section>
+    </AuthBackground>
+  );
 }
 
 function PasswordField({ label, value, onChange, showPassword, onToggle, autoComplete, helper, error }: { label: string; value: string; onChange: (value: string) => void; showPassword: boolean; onToggle: () => void; autoComplete: string; helper?: string; error?: string }) {
