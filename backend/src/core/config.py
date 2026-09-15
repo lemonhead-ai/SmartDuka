@@ -20,17 +20,27 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
     database_url: str = "sqlite+aiosqlite:///./smartduka.db"
-    llm_provider: str = "featherless"
+    llm_provider: str = "ollama"
+    # Ollama settings (Local Free Meta Llama)
+    ollama_base_url: str = "http://localhost:11434/v1"
+    ollama_model: str = "llama3.2"
+    # Groq settings (Free Cloud Meta Llama 3.3 / 3.1)
+    groq_api_key: str | None = None
+    groq_model: str = "llama-3.3-70b-versatile"
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    # OpenRouter settings (Free Cloud Meta Llama 3.x)
+    openrouter_api_key: str | None = None
+    openrouter_model: str = "meta-llama/llama-3.2-3b-instruct:free"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
     featherless_api_key: str | None = None
-    # Featherless model remains configurable via SMARTDUKA_FEATHERLESS_MODEL.
-    featherless_model: str = "Qwen/Qwen3-32B"
+    featherless_model: str = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     featherless_base_url: str = "https://api.featherless.ai/v1"
     featherless_enable_thinking: bool = False
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
     openai_api_key: str | None = None
-    openai_model: str = "Qwen/Qwen3-32B"
+    openai_model: str = "gpt-4o-mini"
     allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
     auth_session_cookie_name: str = "smartduka_session"
     auth_session_days: int = 14

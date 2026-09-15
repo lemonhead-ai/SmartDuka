@@ -30,8 +30,18 @@ def create_application(settings: Settings | None = None) -> FastAPI:
         has_featherless_key = bool(configured_settings.featherless_api_key and configured_settings.featherless_api_key.strip())
         has_gemini_key = bool(configured_settings.gemini_api_key and configured_settings.gemini_api_key.strip())
         has_openai_key = bool(configured_settings.openai_api_key and configured_settings.openai_api_key.strip())
+        has_groq_key = bool(configured_settings.groq_api_key and configured_settings.groq_api_key.strip())
+        has_openrouter_key = bool(configured_settings.openrouter_api_key and configured_settings.openrouter_api_key.strip())
 
         provider_is_configured = (
+            configured_settings.llm_provider == "ollama"
+        ) or (
+            configured_settings.llm_provider == "groq"
+            and (has_groq_key or has_gemini_key)
+        ) or (
+            configured_settings.llm_provider == "openrouter"
+            and has_openrouter_key
+        ) or (
             configured_settings.llm_provider == "featherless"
             and (has_featherless_key or has_gemini_key)
         ) or (

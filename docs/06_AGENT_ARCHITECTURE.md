@@ -1,6 +1,6 @@
 # Agent Architecture
 
-Smart Duka uses one Featherless-hosted Qwen3-32B model through two focused runtime roles. This avoids a slow multi-agent chain and remains well within the subscription's three-concurrent-task limit.
+Smart Duka operates on **Meta Llama 3.x** architectures (Meta Llama 3.2 3B locally on-device via Ollama for zero-cost offline edge execution, and Meta Llama 3.3 70B / 3.1 8B in the cloud via Groq, OpenRouter, or Featherless, with Google Gemini fallback). This avoids slow multi-agent chains while maintaining responsive, low-latency execution.
 
 | Role | When it runs | Output | Purpose |
 |---|---|---|---|

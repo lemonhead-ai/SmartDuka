@@ -49,6 +49,44 @@ def test_gemini_runtime_builds_all_agents_with_configured_model() -> None:
     assert orchestrator.agents.tutor.model == "gemini-2.5-flash"
 
 
+def test_ollama_runtime_builds_all_agents_with_configured_model() -> None:
+    settings = Settings(
+        llm_provider="ollama",
+        ollama_model="llama3.2",
+    )
+
+    orchestrator = create_ai_orchestrator(settings, provider=StubProvider())
+
+    assert orchestrator.agents.customer.model == "llama3.2"
+    assert orchestrator.agents.tutor.model == "llama3.2"
+
+
+def test_groq_runtime_builds_all_agents_with_configured_model() -> None:
+    settings = Settings(
+        llm_provider="groq",
+        groq_api_key="gsk_test",
+        groq_model="llama-3.3-70b-versatile",
+    )
+
+    orchestrator = create_ai_orchestrator(settings, provider=StubProvider())
+
+    assert orchestrator.agents.customer.model == "llama-3.3-70b-versatile"
+    assert orchestrator.agents.tutor.model == "llama-3.3-70b-versatile"
+
+
+def test_openrouter_runtime_builds_all_agents_with_configured_model() -> None:
+    settings = Settings(
+        llm_provider="openrouter",
+        openrouter_api_key="sk-or-test",
+        openrouter_model="meta-llama/llama-3.2-3b-instruct:free",
+    )
+
+    orchestrator = create_ai_orchestrator(settings, provider=StubProvider())
+
+    assert orchestrator.agents.customer.model == "meta-llama/llama-3.2-3b-instruct:free"
+    assert orchestrator.agents.tutor.model == "meta-llama/llama-3.2-3b-instruct:free"
+
+
 class FailingProvider(LLMProvider):
     async def complete(
         self,
@@ -109,6 +147,25 @@ async def test_application_creates_featherless_orchestrator_at_startup(tmp_path:
             llm_provider="featherless",
             featherless_api_key="test-key",
             featherless_model="glm-5.2",
+        )
+    )
+
+    async with app.router.lifespan_context(app):
+        assert app.state.ai_orchestrator is not None
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post("/api/v1/gameplay/sessions")
+            assert response.status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_application_creates_ollama_orchestrator_at_startup(tmp_path: Path) -> None:
+    database_path = tmp_path / "ollama_runtime.db"
+    app = create_application(
+        Settings(
+            database_url=f"sqlite+aiosqlite:///{database_path.as_posix()}",
+            llm_provider="ollama",
+            ollama_model="llama3.2",
         )
     )
 
