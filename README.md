@@ -1,279 +1,225 @@
-# SmartDuka
+# SmartDuka 🏪🇰🇪
 
-**An agentic AI learning game where Kenyan children practise maths and literacy by running a virtual corner shop — powered by Qwen3-32B on Fireworks AI and built with Codex.**
+**An agentic AI learning game where Kenyan children master CBC numeracy, literacy, and financial skills by running a virtual corner shop — powered by Meta Llama 3.3 70B via OpenRouter & Groq, with offline Ollama local fallback.**
 
-> OpenAI Build Week 2026 · Education Track · [openai.devpost.com](https://openai.devpost.com)
-
----
-
-## The Problem
-
-Over 90% of children in Sub-Saharan Africa cannot read or understand a simple text by age 10. Fewer than 1 in 3 can perform basic arithmetic by the end of Grade 3. No existing EdTech product addresses this in a way that is culturally relevant and adapts to each individual child.
-
-The gap is not a content problem. It is a **relevance, access, and personalisation problem**.
+> CBC (Competency-Based Curriculum) Aligned · Early Primary (Grade 1–4) · Built with Next.js 16 & FastAPI
 
 ---
 
-## The Solution
+## 🌟 The Mission
 
-Smart Duka is a game where a child runs a virtual *duka* — a Swahili corner shop. They serve AI-generated customers, read shopping lists in Swahili, calculate change in Kenyan Shillings, manage stock, and balance a daily ledger. The maths and literacy are not exercises layered onto a game. They are the game.
+Over 90% of children in Sub-Saharan Africa cannot read or understand a simple text by age 10, and fewer than 1 in 3 can perform basic arithmetic by the end of Grade 3. Most existing EdTech products rely on dry, abstract drills that feel disconnected from a child's everyday reality.
 
-Three Fireworks AI / Qwen3-32B agents run concurrently in the background:
+**SmartDuka** flips the classroom into a familiar neighborhood *duka* (corner shop). The math, reading, and financial decisions are not tacked onto a game — **running the shop is the game**. 
 
-- **Customer Agent** — generates culturally grounded NPC customers with Kenyan names, local goods (unga, sukari, mandazi), and shopping lists calibrated to each child's skill level.
-- **Tutor Agent** — tracks error patterns across transactions and injects contextual guidance via Milo, a toast-style mascot character, without interrupting the play flow.
-- **Mission Agent** — generates daily narrative quests that give each session a story arc and a goal.
-
-All three agents run on **Qwen3-32B**, dynamically personalizing customer dialogue, math challenge hints, and learning quests in real time.
+Children welcome AI customers speaking Sheng, Swahili, and English, calculate change in Kenyan Shillings (KES), balance their *Daftari ya Deni* (credit ledger), inspect food hygiene in the store, and solve curriculum-aligned math puzzles with the help of **Milo**, their friendly shop mentor.
 
 ---
 
-## System Architecture
+## ✨ Key Features & Pedagogical Systems
+
+### 1. 🤖 Multi-Provider Agentic AI (Meta Llama 3.3 70B)
+SmartDuka features an autonomous AI orchestrator with sub-3-second response times and intelligent fallback failovers:
+- **Customer Agent**: Generates culturally authentic Kenyan customers (e.g., Amani, Baraka, Tatu, Wanjiku) with unique personalities, shopping requests, and adaptive difficulty.
+- **Conversational Customer Chat**: Customers dynamically negotiate when items are low in stock (e.g., agreeing to substitute juice for milk, accepting partial stock), updating the counter basket in real time.
+- **Tutor Agent (Milo)**: Watches error patterns across transactions and delivers gentle, encouraging Socratic hints without breaking gameplay flow.
+- **Mission Agent**: Crafts daily narrative quests (e.g., *"Earn 200 KES to buy new crates"*, *"Serve 3 customers without basket errors"*).
+
+### 2. 📚 Kenyan CBC Curriculum Alignment
+Designed to reflect Kenya's **Competency-Based Curriculum (CBC)** for Grades 1 through 3:
+- **Strand 1.0 — Numbers**: Counting, addition, subtraction, bundle multiplication, and fair division.
+- **Strand 2.0 — Measurement & Money**: Kenyan Shilling (KES) currency calculations, change calculation, and percentage discounts (with exact decimal and rounded shilling support).
+- **Strand 3.0 — Language & Literacy**: Bilingual shopping lists (Swahili & English), vocabulary word-item matching, and reading comprehension.
+- **Strand 4.0 — Hygiene & Nutrition**: Safe storekeeping, refrigeration rules for perishables (milk, dairy), and shelf inspection.
+
+### 3. 📖 *Daftari ya Deni* (Credit Ledger & Trust System)
+Teaches real-world micro-commerce and community economics:
+- Trusted neighborhood customers can request items on store credit (*deni*).
+- Children evaluate customer creditworthiness, record debits, and balance repayment ledgers.
+
+### 4. 🎙️ Sauti Audio & Voice Synthesis (TTS)
+- Voice support across dialogue, shopping lists, and items in both English and Swahili.
+- Synchronized audio coordinator preventing dual-voice collisions, leveraging Web Speech API with cached server-side synthesis fallbacks.
+
+### 5. 🧾 3D Interactive Receipts & Analytics
+- Dynamic 3D sale completion cards showing breakdown of items, discounts, cash tendered, and change given.
+- Diagnostic analytics tracking error taxonomy categories (`arithmetic_calculation`, `credit_balance`, `reading_interpretation`, `storage_hygiene`).
+
+---
+
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
-    subgraph Client ["Child's Device (Web App)"]
-        FE["Next.js App Shell / Zustand / React Query"]
+    subgraph Client ["Frontend (Next.js 16 App Router)"]
+        UI["Shop Counter, Shelves & Basket"]
+        Chat["Customer Conversation Panel"]
+        Deni["Daftari ya Deni (Ledger)"]
+        TTS["Sauti Audio Coordinator (useTTS)"]
+        State["Zustand + React Query + IndexedDB"]
     end
-    
-    subgraph Server ["FastAPI Backend"]
-        API["FastAPI Router /api/v1/gameplay"]
-        Engine["Gameplay Engine"]
-        DB_Server[("SQLite Database")]
-        Orchestrator["Agent Orchestrator"]
-        API --> Engine
-        Engine --> DB_Server
+
+    subgraph Server ["Backend (FastAPI Engine)"]
+        Router["/api/v1 (Auth, Gameplay, Shop, Telemetry)"]
+        Engine["Gameplay Engine & Basket Validator"]
+        CBC["CBC Curriculum & Diagnostics Engine"]
+        Orchestrator["AI Agent Orchestrator"]
+        DB[("Database: SQLite / Supabase PostgreSQL")]
+        
+        Router --> Engine
+        Router --> CBC
+        Engine --> DB
         Engine --> Orchestrator
     end
-    
-    subgraph External ["LLM Provider"]
-        FW["Fireworks AI / Qwen3-32B"]
+
+    subgraph AI_Layer ["Resilient Multi-Provider AI"]
+        direction TB
+        P1["Primary: OpenRouter (Meta Llama 3.3 70B)"]
+        P2["Fast Cloud: Groq (Meta Llama 3.3 70B)"]
+        P3["Local / Offline: Ollama (Meta Llama 3.2)"]
+        P4["Cloud Failover: Google Gemini 3.6 Flash / OpenAI"]
+        
+        Orchestrator --> P1
+        P1 -.->|failover / timeout| P2
+        P2 -.->|failover / offline| P3
+        P3 -.->|cloud backup| P4
     end
-    
-    FE <-->|REST API Requests & Responses| API
-    Orchestrator <-->|Chat Completions API| FW
-```
 
-**The key architectural decision:** the application leverages a client-server architecture with Next.js on the frontend and FastAPI on the backend. AI orchestration is integrated directly into the gameplay loop, dynamically shaping customer interactions, tutor feedback, and learning difficulty based on player actions.
-
----
-
-## Agent Orchestration Workflow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant FE as Next.js Client
-    participant API as FastAPI Backend
-    participant Orch as Agent Orchestrator
-    participant Qwen as Fireworks AI (Qwen3-32B)
-    
-    FE->>API: POST /api/v1/gameplay/sessions/{session_id}/customers/next
-    API->>Orch: Run Customer Agent (Difficulty & Skill Profile)
-    Orch->>Qwen: Prompt (generate customer, list, dialogue)
-    Qwen-->>Orch: Schema-Validated JSON
-    Orch-->>API: Customer Scenario Payload
-    API-->>FE: Return Next Customer Details
+    Client <-->|REST API / JSON| Router
 ```
 
 ---
 
-## Screenshots
+## 💻 Tech Stack
 
-| Dashboard & Missions | Shop Screen & Selected Items |
-| :---: | :---: |
-| ![Dashboard](assets/screenshots/smartduka.png) | ![Shop Screen](assets/screenshots/smartduka1.png) |
-| **Milo Hints & Tutor Guidance** | **Stock Room & Supplier Restocking** |
-| ![Milo Hints](assets/screenshots/smartduka2.png) | ![Stock Room](assets/screenshots/smartduka3.png) |
-| **First-Run Onboarding & Setup** | **3D Receipt & Sale Completion** |
-| ![Onboarding](assets/screenshots/smartduka4.png) | ![Sale Completion](assets/screenshots/smartduka5.png) |
-
----
-
-## Demo
-
-> 📹 **[Watch the 3-minute demo on YouTube](https://youtu.be/8i-TpDyShjE?si=uoUkQtYhk8wIHzuS)**
-
-**Demo flow:**
-1. Child opens Smart Duka and lands on their dashboard — active mission shown.
-2. They enter the shop. A live Qwen3-32B customer arrives with a Swahili shopping list.
-3. Child selects items, calculates change, completes the transaction.
-4. Milo (Tutor Agent) provides contextual feedback on a calculation error.
-5. Out-of-stock negotiation: customer requests unavailable juice, agrees to take milk instead — the basket updates live.
-
----
-
-## How We Used Codex
-
-**Primary Codex Session ID:** `019f6a0b-5625-7a21-b715-debbb251489c`
-
-### Collaboration Summary
-We collaborated with Codex powered by **GPT 5.6 Terra** to build SmartDuka, leveraging its ability to dynamically scale reasoning (effortlessly switching from low-effort tasks for rapid scaffolding to high-effort modes for complex agent synchronization and edge-case testing). As an agentic partner, Codex was instrumental in rapidly building out SmartDuka's architecture: from database schemas and FastAPI contract layers to parallelized agent orchestrators and client-side Zustand store slices. 
-
-Critically, development never stopped even when away from the laptop: using **Codex Mobile**, we could trigger edits, review code, and deploy features on the go from miles away. Codex made building continuous, highly autonomous, and incredibly fast.
-
-<details>
-<summary><strong>Read the full Codex collaboration story</strong></summary>
-
-### What Codex built
-
-Codex was not used as an autocomplete tool. It was used as a **coding agent**, given structured task specifications from our `/docs/` folder and asked to return working, tested code via pull requests.
-
-**Codex built the following from natural-language specs:**
-
-**Service worker and IndexedDB scaffolding**
-Codex scaffolded the client-side IndexedDB database schema and PWA service worker configurations to prepare the app shell for future offline-first capability and local asset caching.
-
-**FastAPI v1 contract layer**
-All `/api/v1/` routes — auth, gameplay, missions, sync, progress, rewards — were scaffolded from `docs/08_API_SPECIFICATION.md`. Codex generated the route handlers, Pydantic v2 request/response models, and dependency injection patterns in one session. The parallel agent orchestration via `asyncio.gather` was Codex output.
-
-**Agent orchestration pipeline**
-The concurrent sync cycle — Customer Agent, Tutor Agent, Mission Agent — running concurrently, was built by Codex from `docs/06_AGENT_ARCHITECTURE.md`. Codex correctly implemented the fallback strategy: if an agent fails or returns unparseable JSON, it logs the raw output, returns cached content, and never surfaces the failure to the child.
-
-**Adaptive difficulty system**
-The difficulty tier model (7 tiers, tier transition logic, scenario selection weights) was built by Codex from the spec in `docs/05_EDUCATIONAL_MODEL.md`. Codex implemented the "never change tier mid-session" rule and the conservative skill profile update logic.
-
-**PWA shell and responsive app shell**
-Codex scaffolded the Next.js App Router structure, the Zustand store slices, the sidebar component (glassmorphism, floating, expandable, Framer Motion animated), and the game layout — all from the design system spec in `docs/13_UI_UX_GUIDELINES.md`.
-
-**Schema-validated agent output**
-Codex implemented the `try/except json.loads()` pattern for all agents with logging of invalid output. This was explicitly specified and Codex followed it without deviation.
-
-**Test suites**
-Unit tests for change calculation logic, basket validation, discount application, and bundle pricing were Codex output. These caught three edge cases in the division challenge that manual testing had missed.
-
-**Codex Mobile & On-the-Go Development**
-A game-changer during the hackathon was using **Codex Mobile**. Even when miles away from the workstation, development never stalled. We could seamlessly prompt updates, check test runs, and implement gameplay adjustments directly from a phone, proving that you never have to stop building just because you are on the go or away from your laptop.
-
-### Where we made human decisions
-
-- **The duka framing.** The core product insight — that a corner shop is the right cultural scaffold for East African early education — was a human decision made before a single line of code was written.
-- **Milo's design.** The decision to use a toast-style mascot rather than an inline tutor panel was a UX call made after observing that children ignored overlay-style hints.
-- **Out-of-stock negotiation flow.** The customer negotiation mechanic (customer requests unavailable item → agrees to substitute → basket updates) was designed by the product team. Codex implemented it from a precise spec.
-- **Agent prompt engineering.** All system prompts in `backend/src/prompts/` were written by the team. Codex generated the scaffolding that loads and calls them — it did not author the prompts themselves.
-- **The "never block gameplay" rule.** Every agent failure path returns cached content. This architectural principle was a deliberate human decision and was written into the spec before Codex touched the codebase.
-
-### How Qwen3-32B powers the product at runtime
-
-Qwen3-32B runs the concurrent agents during gameplay sessions:
-
-```python
-# backend/src/services/sync/orchestrator.py
-async def run_sync(child_id: str, events: list[GameEvent]) -> SyncResponse:
-    difficulty, skill_profile = await asyncio.gather(
-        difficulty_agent.compute(child_id, events),
-        tutor_agent.analyse(child_id, events)
-    )
-    scenarios, missions = await asyncio.gather(
-        customer_agent.generate(difficulty, skill_profile),
-        mission_agent.generate(difficulty, skill_profile)
-    )
-    return SyncResponse(scenarios=scenarios, missions=missions, ...)
-```
-
-Each agent calls the model with a system prompt loaded from disk and returns structured JSON validated against a Pydantic schema. Invalid output is logged and rejected. The configurable provider (`SMARTDUKA_LLM_PROVIDER`) means the same codebase can target Featherless (Fireworks) or other OpenAI-compatible completions endpoints.
-
-</details>
-
----
-
-## What's Built
-
-| Feature | Status |
+| Layer | Technologies |
 |---|---|
-| Live Qwen3-32B customer scenarios (Kenyan names, Swahili, KES) | ✅ Done |
-| Adaptive difficulty (7 tiers, error-pattern tracking) | ✅ Done |
-| Tutor Agent — Milo feedback on transaction errors | ✅ Done |
-| Mission Agent — daily narrative quests | ✅ Done |
-| Client-side IndexedDB caching (PWA preparation) | ✅ Done |
-| Shop session: inventory, restocking, limited stock | ✅ Done |
-| Numeracy: change, multiplication, discounts, bundles, division | ✅ Done |
-| Out-of-stock customer negotiation + basket substitution | ✅ Done |
-| Cash ledger: revenue, expenses, profit, restock affordability | ✅ Done |
-| Rewards, progress, achievements | ✅ Done |
-| Dashboard, profile, sidebar, Milo polish | ✅ Done |
-| System / Light / Dark mode | ✅ Done |
-| FastAPI v1 contracts + Swagger docs | ✅ Done |
-| Persistent demo data + runtime recovery | ✅ Done |
+| **Frontend** | **Next.js 16** (App Router, React 19), **TypeScript**, **Tailwind CSS**, **Framer Motion**, **Zustand**, **TanStack React Query**, **HugeIcons** |
+| **PWA & Offline** | Service Worker, IndexedDB caching via `idb`, Web Speech API |
+| **Backend** | **Python 3.12+**, **FastAPI**, **Pydantic v2**, **SQLAlchemy (Async)**, **Alembic**, **Uvicorn**, **Ruff** |
+| **Primary AI Engine** | **Meta Llama 3.3 70B Instruct** (via OpenRouter & Groq) |
+| **Local AI Engine** | **Meta Llama 3.2** on-device via **Ollama** (zero cost, fully offline capable) |
+| **AI Fallback** | **Google Gemini 3.6 Flash** & **OpenAI** compatible endpoints |
+| **Database** | **SQLite + aiosqlite** (Local Dev) · **Supabase PostgreSQL** via Connection Pooler / Supavisor (Production) |
+| **Cloud Hosting** | **Render** (Backend API) · **Vercel / Next.js hosting** (Frontend Web App) |
 
 ---
 
-## Running the Project
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js v18+
-- Python 3.12+
-- A OpenAI API/Featherless API key (set in your environment)
+- **Node.js** v18.18+ or v20+
+- **Python** 3.12+
+- *(Optional for cloud AI)* An API key from **OpenRouter** or **Groq** (or Google Gemini)
+- *(Optional for offline AI)* **Ollama** with `llama3.2` installed: `ollama run llama3.2`
 
-### 1. Frontend
+---
 
-```bash
-cd frontend
-npm install
-npm run dev
-# → http://localhost:3000
-```
-
-### 2. Backend
+### 1. Backend Setup
 
 ```bash
 cd backend
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate        # macOS/Linux
-# .\.venv\Scripts\Activate.ps1  # Windows
+# 1. Create and activate virtual environment
+python -m venv venv
+# On Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+# On macOS/Linux:
+source venv/bin/activate
 
-# Install dependencies
+# 2. Install dependencies (including development and testing tools)
 pip install -e ".[dev]"
 
-# Configure environment
+# 3. Setup environment variables
 cp .env.example .env
-# Set SMARTDUKA_FEATHERLESS_API_KEY, SMARTDUKA_FEATHERLESS_MODEL=Qwen/Qwen3-32B, and SMARTDUKA_LLM_PROVIDER=featherless
+```
 
-# Start the server
-uvicorn src.main:app --reload
-# → http://localhost:8000
-# → Swagger docs at http://localhost:8000/docs
+Edit `backend/.env` with your preferred AI provider:
+```env
+# Choose: openrouter | groq | ollama | gemini
+SMARTDUKA_LLM_PROVIDER=openrouter
+
+# OpenRouter (Meta Llama 3.3 70B)
+SMARTDUKA_OPENROUTER_API_KEY=your-openrouter-key
+SMARTDUKA_OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct
+
+# Local development database (SQLite)
+SMARTDUKA_DATABASE_URL=sqlite+aiosqlite:///./smartduka.local.db
+```
+
+Start the backend API server:
+```bash
+uvicorn src.main:app --reload --port 8000
+```
+- **API Root**: [http://localhost:8000](http://localhost:8000)
+- **Interactive Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
+
+---
+
+### 2. Frontend Setup
+
+```bash
+cd frontend
+
+# Install packages
+npm install
+
+# Start development server
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+SmartDuka maintains an automated test suite enforcing both mathematical accuracy, gameplay logic, and AI runtime resilience:
+
+```bash
+# In the backend directory:
+# Run full gameplay engine tests (Basket matching, discounts, ledger, change calculation)
+pytest tests/test_gameplay_engine.py
+
+# Run AI runtime orchestrator tests (OpenRouter, Groq, Ollama, and Fallback providers)
+pytest tests/test_ai_runtime.py
+
+# Format and lint code with Ruff
+python -m ruff format --check .
+python -m ruff check .
 ```
 
 ---
 
-## Tech Stack
+## 📊 Pedagogical Framework
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16 (App Router), TypeScript, Tailwind CSS, Framer Motion, HugeIcons, Zustand |
-| Caching | IndexedDB via `idb`, service worker shell |
-| Backend | Python 3.12, FastAPI, SQLAlchemy async, Pydantic v2, Alembic |
-| AI | Qwen3-32B via Fireworks AI / Featherless (provider-configurable) |
-| Build agent | OpenAI Codex |
-| Database | SQLite + aiosqlite (dev) |
-
----
-
-## The Impact
-
-Smart Duka targets a problem that affects hundreds of millions of children. The duka mechanic works because every East African child already understands a corner shop — the cultural context is not learned, it is lived. Qwen3-32B makes the experience infinite and personalised.
-
-Financial literacy is not a bonus feature. In a region where 70%+ of adults are excluded from formal financial systems, teaching a child to calculate change, manage a budget, and understand profit before age 10 is an intervention with 30-year compounding returns.
-
----
-
-## Track
-
-**Education** — Smart Duka addresses numeracy, literacy, and financial literacy simultaneously, for children aged 4–13, in a region where the learning crisis is most acute.
+```
+Early Primary CBC Competency Strands
+ ├── 1.0 Numbers
+ │    ├── Whole Numbers & Counting
+ │    ├── Addition & Subtraction (Giving Change)
+ │    └── Multiplication & Fair Division
+ ├── 2.0 Measurement & Trade
+ │    ├── Kenyan Shillings & Cents (KES)
+ │    ├── Percentage Discounts (Bundle pricing)
+ │    └── Credit Accounting (Daftari ya Deni)
+ ├── 3.0 Language & Communication
+ │    ├── Conversational Dialogue (Swahili / English)
+ │    └── Reading Comprehension & Spelling
+ └── 4.0 Science & Hygiene
+      ├── Store Hygiene Inspection
+      └── Perishable Food & Dairy Cold Storage
+```
 
 ---
 
-## Built By
+## 👤 Author
 
-**Martin Mwai** — [@lemonhead-ai](https://github.com/lemonhead-ai) · Nairobi, Kenya
-
-*Computer Science graduate, Kisii University. Crafting fluid animations and effortlessly immersive user experiences.*
+**Martin Mwai** — [@lemonhead-ai](https://github.com/lemonhead-ai) · Nairobi, Kenya  
+*Computer Science graduate, Kisii University. Passionate about empowering early childhood education through culturally grounded agentic AI.*
 
 ---
 
-## License
+## 📄 License
 
-MIT — see [LICENSE](./LICENSE)
+This project is licensed under the [MIT License](./LICENSE).
