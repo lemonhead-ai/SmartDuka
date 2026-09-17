@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class CbcStrand(str, Enum):
+class CbcStrand(StrEnum):
     NUMBERS = "1.0_numbers"
     MEASUREMENT = "2.0_measurement"
     LANGUAGE = "3.0_language"

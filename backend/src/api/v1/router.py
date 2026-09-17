@@ -26,4 +26,3 @@ api_router.include_router(sync_router)
 api_router.include_router(telemetry_router)
 api_router.include_router(shop_router)
 api_router.include_router(tts_router)
-

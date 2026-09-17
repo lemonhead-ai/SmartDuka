@@ -39,7 +39,9 @@ class LiteracyService:
         ]
 
     @staticmethod
-    def evaluate_discount_math(original_price: int, discount_percent: int, user_answer: int) -> dict:
+    def evaluate_discount_math(
+        original_price: int, discount_percent: int, user_answer: int
+    ) -> dict:
         discount_amount = int(original_price * (discount_percent / 100.0))
         correct_discounted_price = original_price - discount_amount
         is_correct = user_answer == correct_discounted_price

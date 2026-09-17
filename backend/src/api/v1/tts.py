@@ -25,7 +25,7 @@ class TTSRequest(BaseModel):
 
 def _get_cache_path(text: str, lang: str) -> Path:
     text_clean = text.strip().lower()
-    hash_key = hashlib.md5(f"{lang}:{text_clean}".encode("utf-8")).hexdigest()
+    hash_key = hashlib.md5(f"{lang}:{text_clean}".encode()).hexdigest()
     return AUDIO_CACHE_DIR / f"{hash_key}.mp3"
 
 
@@ -58,7 +58,9 @@ async def stream_speech(
             client = AsyncOpenAI(api_key=openai_key)
             response = await client.audio.speech.create(
                 model="tts-1",
-                voice=voice if voice in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"] else "nova",
+                voice=voice
+                if voice in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+                else "nova",
                 input=text,
             )
             audio_bytes = await response.aread()
@@ -104,4 +106,4 @@ async def stream_speech(
     except Exception as exc:
         if isinstance(exc, HTTPException):
             raise exc
-        raise HTTPException(status_code=500, detail=f"TTS synthesis error: {exc}")
+        raise HTTPException(status_code=500, detail=f"TTS synthesis error: {exc}") from exc

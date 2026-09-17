@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ErrorTaxonomyCategory(str, Enum):
+class ErrorTaxonomyCategory(StrEnum):
     ARITHMETIC_CALCULATION = "arithmetic_calculation"
     CREDIT_BALANCE = "credit_balance"
     READING_INTERPRETATION = "reading_interpretation"

@@ -34,7 +34,11 @@ class AIOrchestrator:
             return result
         except TimeoutError:
             duration = time.time() - start_time
-            self.logger.warning("AI operation timed out after %.2fs (limit was %.1fs)", duration, self.request_timeout_seconds)
+            self.logger.warning(
+                "AI operation timed out after %.2fs (limit was %.1fs)",
+                duration,
+                self.request_timeout_seconds,
+            )
             raise
 
     async def cloud_readiness(self) -> None:
@@ -53,7 +57,9 @@ class AIOrchestrator:
             )
         )
         try:
-            response = json.loads(raw_output.strip().removeprefix("```json").removesuffix("```").strip())
+            response = json.loads(
+                raw_output.strip().removeprefix("```json").removesuffix("```").strip()
+            )
         except json.JSONDecodeError as error:
             raise ValueError("Cloud AI readiness check returned invalid JSON.") from error
         if response != {"status": "ready"}:

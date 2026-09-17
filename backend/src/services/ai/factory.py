@@ -19,14 +19,18 @@ def _openai_compatible_provider(
         api_key=api_key,
         base_url=base_url,
         use_responses_api=False,
-        timeout_seconds=timeout_seconds if timeout_seconds is not None else settings.llm_attempt_timeout_seconds,
+        timeout_seconds=timeout_seconds
+        if timeout_seconds is not None
+        else settings.llm_attempt_timeout_seconds,
         max_retries=max_retries,
         provider_name=provider_name,
     )
 
 
 def create_llm_provider(settings: Settings) -> LLMProvider:
-    has_featherless_key = bool(settings.featherless_api_key and settings.featherless_api_key.strip())
+    has_featherless_key = bool(
+        settings.featherless_api_key and settings.featherless_api_key.strip()
+    )
     has_gemini_key = bool(settings.gemini_api_key and settings.gemini_api_key.strip())
     has_openai_key = bool(settings.openai_api_key and settings.openai_api_key.strip())
     has_groq_key = bool(settings.groq_api_key and settings.groq_api_key.strip())
@@ -95,16 +99,27 @@ def create_llm_provider(settings: Settings) -> LLMProvider:
             if has_openrouter_key:
                 logger.info("SMARTDUKA_GROQ_API_KEY not set. Using OpenRouter.")
                 return _openai_compatible_provider(
-                    api_key=settings.openrouter_api_key, base_url=settings.openrouter_base_url, provider_name="OpenRouter", settings=settings
+                    api_key=settings.openrouter_api_key,
+                    base_url=settings.openrouter_base_url,
+                    provider_name="OpenRouter",
+                    settings=settings,
                 )
-            raise ValueError("SMARTDUKA_GROQ_API_KEY or SMARTDUKA_OPENROUTER_API_KEY is required for cloud AI")
+            raise ValueError(
+                "SMARTDUKA_GROQ_API_KEY or SMARTDUKA_OPENROUTER_API_KEY is required for cloud AI"
+            )
         groq_provider = _openai_compatible_provider(
-            api_key=settings.groq_api_key, base_url=settings.groq_base_url, provider_name="Groq", settings=settings
+            api_key=settings.groq_api_key,
+            base_url=settings.groq_base_url,
+            provider_name="Groq",
+            settings=settings,
         )
         if has_openrouter_key:
             logger.info("Configured Groq as primary provider with OpenRouter fallback.")
             openrouter_provider = _openai_compatible_provider(
-                api_key=settings.openrouter_api_key, base_url=settings.openrouter_base_url, provider_name="OpenRouter", settings=settings
+                api_key=settings.openrouter_api_key,
+                base_url=settings.openrouter_base_url,
+                provider_name="OpenRouter",
+                settings=settings,
             )
             return FallbackProvider(
                 primary_provider=groq_provider,
@@ -119,12 +134,18 @@ def create_llm_provider(settings: Settings) -> LLMProvider:
             if has_groq_key:
                 logger.info("SMARTDUKA_OPENROUTER_API_KEY not set. Using Groq.")
                 return _openai_compatible_provider(
-                    api_key=settings.groq_api_key, base_url=settings.groq_base_url, provider_name="Groq", settings=settings
+                    api_key=settings.groq_api_key,
+                    base_url=settings.groq_base_url,
+                    provider_name="Groq",
+                    settings=settings,
                 )
             if has_gemini_key:
                 logger.info("SMARTDUKA_OPENROUTER_API_KEY not set. Using Gemini fallback.")
                 return _openai_compatible_provider(
-                    api_key=settings.gemini_api_key, base_url=settings.gemini_base_url, provider_name="Gemini", settings=settings
+                    api_key=settings.gemini_api_key,
+                    base_url=settings.gemini_base_url,
+                    provider_name="Gemini",
+                    settings=settings,
                 )
             raise ValueError("SMARTDUKA_OPENROUTER_API_KEY is required for cloud AI")
         openrouter_provider = _openai_compatible_provider(
@@ -138,7 +159,10 @@ def create_llm_provider(settings: Settings) -> LLMProvider:
         if has_groq_key:
             logger.info("Configured OpenRouter as primary provider with Groq fallback.")
             groq_provider = _openai_compatible_provider(
-                api_key=settings.groq_api_key, base_url=settings.groq_base_url, provider_name="Groq", settings=settings
+                api_key=settings.groq_api_key,
+                base_url=settings.groq_base_url,
+                provider_name="Groq",
+                settings=settings,
             )
             return FallbackProvider(
                 primary_provider=openrouter_provider,
