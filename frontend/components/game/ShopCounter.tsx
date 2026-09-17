@@ -7,7 +7,6 @@ import { useRef, useState } from "react";
 
 import { LiteracyMoment } from "@/components/game/LiteracyMoment";
 import { ShoppingListPanel } from "@/components/game/ShoppingListPanel";
-import { PatienceMeter } from "@/components/game/PatienceMeter";
 import { AudioSpeakerButton } from "@/components/ui/AudioSpeakerButton";
 import {
   CustomerConversationPanel,
@@ -98,7 +97,20 @@ export function ShopCounter() {
       ]);
       notify("info", `${result.customer.name} is ready at the counter.`);
     },
-    onError: (error) => notify("error", errorMessage(error)),
+    onError: async (error) => {
+      const msg = errorMessage(error);
+      if (msg.includes("Finish the current customer") || msg.includes("409")) {
+        try {
+          const session = await startMutation.mutateAsync();
+          setSessionId(session.session_id);
+          nextCustomerMutation.mutate(session.session_id);
+          return;
+        } catch {
+          // fall through
+        }
+      }
+      notify("error", msg);
+    },
   });
   const startMutation = useMutation({
     mutationFn: gameplayApi.startSession,
@@ -186,28 +198,15 @@ export function ShopCounter() {
       customerRevision.current = result.customer.request_version;
       setBasket(result.basket);
       setLiteracyChallenge(result.literacy_challenge ?? result.basket.literacy_challenge);
-      
-      const offerMsg = customer?.stock_offer 
-        ? `I only have ${customer.stock_offer.available_quantity} ${customer.stock_offer.name.toLowerCase()} left. Would you like to take that amount instead?`
-        : "Sorry, I am short on that item.";
-        
-      const nextConversation = [
-        ...(customer?.chat_history ?? []),
-        { sender: "shopkeeper" as const, message: offerMsg },
-        { sender: "customer" as const, message: result.customer.greeting }
+      setCustomer(result.customer);
+      const history = result.customer.chat_history ?? [
+        { sender: "customer" as const, message: result.customer.greeting },
       ];
-      
-      setCustomer({
-        ...result.customer,
-        chat_history: nextConversation
-      });
-      
-      setCustomerConversation(nextConversation.map((msg, idx) => ({
+      setCustomerConversation(history.map((msg, idx) => ({
         id: `hist-${idx}`,
         side: msg.sender === "shopkeeper" ? "outgoing" : "incoming",
         text: msg.message
       })));
-      
       notify("success", `${result.customer.name}: ${result.customer.greeting}`);
     },
     onError: (error) => notify("error", errorMessage(error)),
@@ -247,14 +246,14 @@ export function ShopCounter() {
   });
 
   const startOrContinue = async () => {
-    if (sessionId) {
-      nextCustomerMutation.mutate(sessionId);
-      return;
-    }
     try {
-      const session = await startMutation.mutateAsync();
-      setSessionId(session.session_id);
-      nextCustomerMutation.mutate(session.session_id);
+      if (!sessionId || !customer) {
+        const session = await startMutation.mutateAsync();
+        setSessionId(session.session_id);
+        nextCustomerMutation.mutate(session.session_id);
+        return;
+      }
+      nextCustomerMutation.mutate(sessionId);
     } catch {
       return;
     }
@@ -397,7 +396,6 @@ export function ShopCounter() {
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/shop?tab=stock" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
       
       <div className="mt-6 space-y-6">
-        <PatienceMeter customerName={customer.name} />
         <ShoppingListPanel customer={customer} basket={basket} />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* Left Column: Shelves, Basket, Checkout */}

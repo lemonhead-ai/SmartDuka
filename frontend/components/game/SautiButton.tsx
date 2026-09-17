@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Mic01Icon, VolumeHighIcon } from "hugeicons-react";
+import { useTTS } from "@/hooks/useTTS";
 
 interface SautiButtonProps {
   promptText?: string;
@@ -10,18 +11,14 @@ interface SautiButtonProps {
 
 export function SautiButton({ promptText = "Karibu duka yetu!", onVoiceInput }: SautiButtonProps) {
   const [isListening, setIsListening] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const { play: playTTS, stop: stopTTS, isPlaying: isPlayingAudio } = useTTS();
 
   const handleSpeechOutput = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(promptText);
-    utterance.lang = "sw-KE";
-    utterance.rate = 0.9;
-    setIsPlayingAudio(true);
-    utterance.onend = () => setIsPlayingAudio(false);
-    utterance.onerror = () => setIsPlayingAudio(false);
-    window.speechSynthesis.speak(utterance);
+    if (isPlayingAudio) {
+      stopTTS();
+    } else {
+      playTTS(promptText, "sw");
+    }
   };
 
   const handleVoiceInput = () => {

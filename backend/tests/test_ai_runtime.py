@@ -1,4 +1,6 @@
+import asyncio
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -87,6 +89,43 @@ def test_openrouter_runtime_builds_all_agents_with_configured_model() -> None:
     assert orchestrator.agents.tutor.model == "meta-llama/llama-3.2-3b-instruct:free"
 
 
+@pytest.mark.asyncio
+async def test_orchestrator_enforces_a_short_ai_deadline() -> None:
+    from src.services.ai.orchestrator import AIOrchestrator
+
+    async def never_finishes() -> None:
+        await asyncio.sleep(1)
+
+    orchestrator = AIOrchestrator(agents=object(), request_timeout_seconds=0.01)
+    with pytest.raises(TimeoutError):
+        await orchestrator._within_deadline(never_finishes())
+
+
+class ReadyProvider(LLMProvider):
+    async def complete(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        model: str,
+        temperature: float,
+        max_output_tokens: int,
+    ) -> str:
+        assert "readiness" in user_prompt
+        assert max_output_tokens == 20
+        return '{"status":"ready"}'
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_cloud_readiness_requires_valid_json() -> None:
+    from src.services.ai.orchestrator import AIOrchestrator
+
+    agents = SimpleNamespace(
+        customer=SimpleNamespace(provider=ReadyProvider(), model="llama-3.3-70b-versatile")
+    )
+    await AIOrchestrator(agents, request_timeout_seconds=0.1).cloud_readiness()
+
+
 class FailingProvider(LLMProvider):
     async def complete(
         self,
@@ -138,6 +177,40 @@ async def test_factory_creates_fallback_provider_when_both_keys_present() -> Non
     assert isinstance(provider, FallbackProvider)
 
 
+def test_groq_uses_openrouter_as_its_cloud_fallback() -> None:
+    from src.services.ai.factory import create_llm_provider
+    from src.services.ai.providers import FallbackProvider
+
+    provider = create_llm_provider(
+        Settings(
+            llm_provider="groq",
+            groq_api_key="gsk_test",
+            openrouter_api_key="sk-or-test",
+        )
+    )
+
+    assert isinstance(provider, FallbackProvider)
+    assert provider.primary_model == "llama-3.3-70b-versatile"
+    assert provider.fallback_model == "meta-llama/llama-3.3-70b-instruct"
+
+
+def test_openrouter_uses_groq_as_its_cloud_fallback() -> None:
+    from src.services.ai.factory import create_llm_provider
+    from src.services.ai.providers import FallbackProvider
+
+    provider = create_llm_provider(
+        Settings(
+            llm_provider="openrouter",
+            groq_api_key="gsk_test",
+            openrouter_api_key="sk-or-test",
+        )
+    )
+
+    assert isinstance(provider, FallbackProvider)
+    assert provider.primary_model == "meta-llama/llama-3.3-70b-instruct"
+    assert provider.fallback_model == "llama-3.3-70b-versatile"
+
+
 @pytest.mark.asyncio
 async def test_application_creates_featherless_orchestrator_at_startup(tmp_path: Path) -> None:
     database_path = tmp_path / "runtime.db"
@@ -175,4 +248,3 @@ async def test_application_creates_ollama_orchestrator_at_startup(tmp_path: Path
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post("/api/v1/gameplay/sessions")
             assert response.status_code == 201
-

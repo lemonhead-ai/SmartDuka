@@ -32,7 +32,11 @@ export function AudioSpeakerButton({
       whileTap={{ scale: 0.92 }}
       onClick={(e) => {
         e.stopPropagation();
-        play(text, lang);
+        if (isPlaying) {
+          stop();
+        } else {
+          play(text, lang);
+        }
       }}
       title={`Listen: "${text}"`}
       aria-label={label ?? `Listen to ${text}`}

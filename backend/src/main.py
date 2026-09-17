@@ -37,10 +37,10 @@ def create_application(settings: Settings | None = None) -> FastAPI:
             configured_settings.llm_provider == "ollama"
         ) or (
             configured_settings.llm_provider == "groq"
-            and (has_groq_key or has_gemini_key)
+            and (has_groq_key or has_openrouter_key)
         ) or (
             configured_settings.llm_provider == "openrouter"
-            and has_openrouter_key
+            and (has_openrouter_key or has_groq_key)
         ) or (
             configured_settings.llm_provider == "featherless"
             and (has_featherless_key or has_gemini_key)

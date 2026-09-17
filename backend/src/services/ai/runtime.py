@@ -43,10 +43,11 @@ def create_ai_orchestrator(
     }
     return AIOrchestrator(
         AgentBundle(
-            # Keep outputs deliberately compact to reduce latency and token use.
-            customer=CustomerAgent(**common_kwargs, max_output_tokens=850),
-            customer_chat=CustomerChatAgent(**common_kwargs, max_output_tokens=150),
-            stock_offer=StockOfferAgent(**common_kwargs, max_output_tokens=160),
-            tutor=TutorAgent(**common_kwargs, max_output_tokens=220),
-        )
+            # Output token limits configured with sufficient budget for structured JSON schema.
+            customer=CustomerAgent(**common_kwargs, max_output_tokens=2500),
+            customer_chat=CustomerChatAgent(**common_kwargs, max_output_tokens=600),
+            stock_offer=StockOfferAgent(**common_kwargs, max_output_tokens=500),
+            tutor=TutorAgent(**common_kwargs, max_output_tokens=600),
+        ),
+        request_timeout_seconds=settings.llm_timeout_seconds,
     )

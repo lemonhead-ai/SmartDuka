@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from src.services.ai.providers.base import LLMProvider
 
@@ -13,11 +14,13 @@ class FallbackProvider:
         primary_model: str,
         fallback_provider: LLMProvider,
         fallback_model: str,
+        primary_timeout_seconds: float = 8.0,
     ) -> None:
         self.primary_provider = primary_provider
         self.primary_model = primary_model
         self.fallback_provider = fallback_provider
         self.fallback_model = fallback_model
+        self.primary_timeout_seconds = primary_timeout_seconds
 
     async def complete(
         self,
@@ -29,17 +32,21 @@ class FallbackProvider:
         max_output_tokens: int,
     ) -> str:
         try:
-            return await self.primary_provider.complete(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                model=self.primary_model or model,
-                temperature=temperature,
-                max_output_tokens=max_output_tokens,
+            return await asyncio.wait_for(
+                self.primary_provider.complete(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    model=self.primary_model or model,
+                    temperature=temperature,
+                    max_output_tokens=max_output_tokens,
+                ),
+                timeout=self.primary_timeout_seconds,
             )
         except Exception as exc:
             logger.warning(
-                "Primary LLM provider (%s) failed: %s. Falling back to Gemini (%s)...",
+                "Primary LLM provider (%s) failed or timed out after %.1fs: %s. Falling back to %s...",
                 self.primary_model or model,
+                self.primary_timeout_seconds,
                 exc,
                 self.fallback_model,
             )

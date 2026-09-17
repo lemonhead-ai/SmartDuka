@@ -1,19 +1,38 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+let activeAudio: HTMLAudioElement | null = null;
+let activeUtterance: SpeechSynthesisUtterance | null = null;
+let activePlaybackListener: ((isPlaying: boolean) => void) | null = null;
+
+function stopActivePlayback() {
+  if (activeAudio) {
+    activeAudio.onended = null;
+    activeAudio.onerror = null;
+    activeAudio.pause();
+    activeAudio.removeAttribute("src");
+    activeAudio.load();
+    activeAudio = null;
+  }
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+  if (activeUtterance) {
+    activeUtterance.onend = null;
+    activeUtterance.onerror = null;
+    activeUtterance = null;
+  }
+  activePlaybackListener?.(false);
+  activePlaybackListener = null;
+}
 
 export function useTTS() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const stop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+    if (activePlaybackListener === setIsPlaying) {
+      stopActivePlayback();
     }
     setIsPlaying(false);
   }, []);
@@ -21,40 +40,66 @@ export function useTTS() {
   const play = useCallback(
     (text: string, lang: "en" | "sw" = "en") => {
       if (!text) return;
-      stop();
+      stopActivePlayback();
 
       setIsPlaying(true);
+      activePlaybackListener = setIsPlaying;
       const apiHost = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const audioUrl = `${apiHost}/api/v1/tts/stream?text=${encodeURIComponent(text)}&lang=${lang}`;
 
       const audio = new Audio(audioUrl);
-      audioRef.current = audio;
+      activeAudio = audio;
+      let hasHandledFallback = false;
 
-      audio.onended = () => {
-        setIsPlaying(false);
-        audioRef.current = null;
-      };
+      const triggerSpeechFallback = () => {
+        if (hasHandledFallback) return;
+        hasHandledFallback = true;
 
-      audio.onerror = () => {
-        // Fallback to Browser Web Speech API if backend audio fails
+        if (activeAudio === audio) {
+          audio.onended = null;
+          audio.onerror = null;
+          audio.pause();
+          audio.removeAttribute("src");
+          audio.load();
+          activeAudio = null;
+        }
+
         if (typeof window !== "undefined" && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
+          activeUtterance = utterance;
           utterance.lang = lang === "sw" ? "sw-KE" : "en-US";
           utterance.rate = 0.9; // Slightly slower for children
-          utterance.onend = () => setIsPlaying(false);
-          utterance.onerror = () => setIsPlaying(false);
+          utterance.onend = () => {
+            if (activeUtterance === utterance) stopActivePlayback();
+          };
+          utterance.onerror = () => {
+            if (activeUtterance === utterance) stopActivePlayback();
+          };
           window.speechSynthesis.speak(utterance);
         } else {
-          setIsPlaying(false);
+          stopActivePlayback();
         }
       };
 
-      audio.play().catch(() => {
-        // Handle autoplay policy restriction by falling back or stopping gracefully
-        audio.onerror?.(new Event("error"));
+      audio.onended = () => {
+        if (activeAudio === audio) stopActivePlayback();
+      };
+
+      audio.onerror = () => {
+        if (activeAudio !== audio) return;
+        triggerSpeechFallback();
+      };
+
+      audio.play().catch((err: unknown) => {
+        if (activeAudio !== audio) return;
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+        triggerSpeechFallback();
       });
     },
-    [stop]
+    []
   );
 
   useEffect(() => {

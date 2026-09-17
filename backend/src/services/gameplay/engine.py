@@ -352,8 +352,8 @@ class GameplayEngine:
         advice = await self._tutor_advice(game_session, student, state)
         if advice is not None:
             return HintResponse(
-                hint=advice.tutor.hint,
-                encouragement=advice.tutor.encouragement,
+                hint=advice.hint,
+                encouragement=advice.encouragement,
                 hints_used=int(challenge["hints_used"]),
             )
         return HintResponse(
@@ -362,14 +362,26 @@ class GameplayEngine:
             hints_used=int(challenge["hints_used"]),
         )
 
-    async def submit_answer(self, session_id: UUID, answer: int) -> AnswerChallengeResponse:
+    async def submit_answer(self, session_id: UUID, answer: float) -> AnswerChallengeResponse:
         game_session, student = await self._session_and_student(session_id)
         state = self._state(game_session)
         challenge = self._require_challenge(state)
         if bool(challenge["complete"]):
             raise ApplicationError("The challenge is already complete.", status_code=409)
         challenge["attempts"] = int(challenge["attempts"]) + 1
-        correct = answer == int(challenge["answer"])
+        expected = float(challenge["answer"])
+        correct = abs(answer - expected) < 0.01
+        if not correct and challenge.get("skill") == "discount":
+            total = float(challenge.get("total_kes", 0))
+            exact_discount = round(total * 0.1, 2)
+            rounded_discount = float(round(total * 0.1))
+            floor_discount = float(int(total // 10))
+            if (
+                abs(answer - exact_discount) < 0.01
+                or abs(answer - rounded_discount) < 0.01
+                or abs(answer - floor_discount) < 0.01
+            ):
+                correct = True
         if correct:
             challenge["complete"] = True
         reward = await self._record_learning_attempt(
@@ -545,10 +557,21 @@ class GameplayEngine:
             return ChatResponse(reply=response.reply, sentiment=response.sentiment)
         except Exception:
             logging.getLogger(__name__).exception("Customer chat failed.")
-            fallback_reply = customer.get("greeting") or "Sorry, I am a bit distracted right now."
+            fallback_reply = self._chat_fallback_reply(customer, message)
             chat_history.append({"sender": "customer", "message": fallback_reply})
             await self._save(game_session, state)
             return ChatResponse(reply=fallback_reply, sentiment="neutral")
+
+    @staticmethod
+    def _chat_fallback_reply(customer: dict[str, object], message: str) -> str:
+        greeting = str(customer.get("greeting", "") or "")
+        normalized_message = message.lower()
+        if "i can take what you have" in greeting.lower() and any(
+            phrase in normalized_message
+            for phrase in ("added", "ready", "basket", "okay", "ok", "here", "packed")
+        ):
+            return "Thank you! Please check the basket, then we can finish the sale."
+        return greeting or "Sorry, I am a bit distracted right now."
 
     async def summary(self, session_id: UUID) -> SessionSummaryResponse:
         game_session, _ = await self._session_and_student(session_id)

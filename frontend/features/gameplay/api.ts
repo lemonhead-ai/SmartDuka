@@ -22,6 +22,8 @@ import type {
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 const sessionTokenKey = "smart-duka-session-token";
+// Extended timeout (2 minutes) so models can complete without early aborts
+const requestTimeoutMs = 120_000;
 
 export class ApiRequestError extends Error {
   readonly detail: string;
@@ -39,15 +41,28 @@ export class ApiRequestError extends Error {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window === "undefined" ? null : window.localStorage.getItem(sessionTokenKey);
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), requestTimeoutMs);
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, {
+      ...options,
+      signal: controller.signal,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers
+      }
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiRequestError("That took too long. Please try again.", 408);
     }
-  });
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
   if (!response.ok) {
     if (response.status === 401 && typeof window !== "undefined") {
       const pathname = window.location.pathname;

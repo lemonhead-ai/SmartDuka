@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from openai import AsyncOpenAI
@@ -11,10 +12,19 @@ class OpenAIProvider:
         client: AsyncOpenAI | None = None,
         use_responses_api: bool = True,
         chat_template_kwargs: dict[str, object] | None = None,
+        timeout_seconds: float = 8.0,
+        max_retries: int = 2,
+        provider_name: str = "OpenAI-compatible",
     ) -> None:
-        self.client = client or AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self.client = client or AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+            timeout=timeout_seconds,
+            max_retries=max_retries,
+        )
         self.use_responses_api = use_responses_api
         self.chat_template_kwargs = chat_template_kwargs
+        self.provider_name = provider_name
 
     async def complete(
         self,
@@ -35,6 +45,9 @@ class OpenAIProvider:
             )
             if not response.output_text:
                 raise RuntimeError("OpenAI returned no output text.")
+            logging.getLogger(__name__).info(
+                "LLM request completed with %s (%s).", self.provider_name, model
+            )
             return response.output_text
         completion_args: dict[str, Any] = {
             "model": model,
@@ -54,5 +67,8 @@ class OpenAIProvider:
         )
         content = response.choices[0].message.content
         if not content:
-            raise RuntimeError("Featherless returned no output text.")
+            raise RuntimeError(f"{self.provider_name} returned no output text.")
+        logging.getLogger(__name__).info(
+            "LLM request completed with %s (%s).", self.provider_name, model
+        )
         return content

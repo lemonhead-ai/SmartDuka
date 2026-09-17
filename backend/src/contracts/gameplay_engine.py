@@ -138,7 +138,7 @@ class HintResponse(BaseModel):
 
 
 class AnswerChallengeRequest(BaseModel):
-    answer: int = Field(ge=0, le=100_000)
+    answer: float = Field(ge=0, le=100_000)
 
 
 class AnswerChallengeResponse(BaseModel):

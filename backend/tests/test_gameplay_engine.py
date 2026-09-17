@@ -85,6 +85,17 @@ def test_basket_validation_identifies_missing_unexpected_and_wrong_quantities() 
     assert "milk" in str(result["tutor_feedback"]).lower()
 
 
+def test_local_chat_fallback_does_not_repeat_the_stock_offer_acceptance() -> None:
+    from src.services.gameplay.engine import GameplayEngine
+
+    reply = GameplayEngine._chat_fallback_reply(
+        {"greeting": "I can take what you have today, thank you."},
+        "Okay thank you, I added the requested items.",
+    )
+
+    assert reply == "Thank you! Please check the basket, then we can finish the sale."
+
+
 def test_checkout_challenges_progress_from_change_to_multiplication_discount_and_division() -> None:
     manager = MathChallengeManager()
     lines = [
