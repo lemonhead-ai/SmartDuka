@@ -1,4 +1,4 @@
-# SmartDuka 🏪🇰🇪
+# SmartDuka
 
 **An agentic AI learning game where Kenyan children master CBC numeracy, literacy, and financial skills by running a virtual corner shop — powered by Meta Llama 3.3 70B via OpenRouter & Groq, with offline Ollama local fallback.**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## 🌟 The Mission
+## The Mission
 
 Over 90% of children in Sub-Saharan Africa cannot read or understand a simple text by age 10, and fewer than 1 in 3 can perform basic arithmetic by the end of Grade 3. Most existing EdTech products rely on dry, abstract drills that feel disconnected from a child's everyday reality.
 
@@ -16,38 +16,38 @@ Children welcome AI customers speaking Sheng, Swahili, and English, calculate ch
 
 ---
 
-## ✨ Key Features & Pedagogical Systems
+## Key Features & Pedagogical Systems
 
-### 1. 🤖 Multi-Provider Agentic AI (Meta Llama 3.3 70B)
+### 1. Multi-Provider Agentic AI (Meta Llama 3.3 70B)
 SmartDuka features an autonomous AI orchestrator with sub-3-second response times and intelligent fallback failovers:
 - **Customer Agent**: Generates culturally authentic Kenyan customers (e.g., Amani, Baraka, Tatu, Wanjiku) with unique personalities, shopping requests, and adaptive difficulty.
 - **Conversational Customer Chat**: Customers dynamically negotiate when items are low in stock (e.g., agreeing to substitute juice for milk, accepting partial stock), updating the counter basket in real time.
 - **Tutor Agent (Milo)**: Watches error patterns across transactions and delivers gentle, encouraging Socratic hints without breaking gameplay flow.
 - **Mission Agent**: Crafts daily narrative quests (e.g., *"Earn 200 KES to buy new crates"*, *"Serve 3 customers without basket errors"*).
 
-### 2. 📚 Kenyan CBC Curriculum Alignment
+### 2. Kenyan CBC Curriculum Alignment
 Designed to reflect Kenya's **Competency-Based Curriculum (CBC)** for Grades 1 through 3:
 - **Strand 1.0 — Numbers**: Counting, addition, subtraction, bundle multiplication, and fair division.
 - **Strand 2.0 — Measurement & Money**: Kenyan Shilling (KES) currency calculations, change calculation, and percentage discounts (with exact decimal and rounded shilling support).
 - **Strand 3.0 — Language & Literacy**: Bilingual shopping lists (Swahili & English), vocabulary word-item matching, and reading comprehension.
 - **Strand 4.0 — Hygiene & Nutrition**: Safe storekeeping, refrigeration rules for perishables (milk, dairy), and shelf inspection.
 
-### 3. 📖 *Daftari ya Deni* (Credit Ledger & Trust System)
+### 3. *Daftari ya Deni* (Credit Ledger & Trust System)
 Teaches real-world micro-commerce and community economics:
 - Trusted neighborhood customers can request items on store credit (*deni*).
 - Children evaluate customer creditworthiness, record debits, and balance repayment ledgers.
 
-### 4. 🎙️ Sauti Audio & Voice Synthesis (TTS)
+### 4. Sauti Audio & Voice Synthesis (TTS)
 - Voice support across dialogue, shopping lists, and items in both English and Swahili.
 - Synchronized audio coordinator preventing dual-voice collisions, leveraging Web Speech API with cached server-side synthesis fallbacks.
 
-### 5. 🧾 3D Interactive Receipts & Analytics
+### 5. 3D Interactive Receipts & Analytics
 - Dynamic 3D sale completion cards showing breakdown of items, discounts, cash tendered, and change given.
 - Diagnostic analytics tracking error taxonomy categories (`arithmetic_calculation`, `credit_balance`, `reading_interpretation`, `storage_hygiene`).
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -90,7 +90,7 @@ graph TD
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 
 | Layer | Technologies |
 |---|---|
@@ -105,7 +105,7 @@ graph TD
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - **Node.js** v18.18+ or v20+
@@ -172,7 +172,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🧪 Testing & Quality Assurance
+## Testing & Quality Assurance
 
 SmartDuka maintains an automated test suite enforcing both mathematical accuracy, gameplay logic, and AI runtime resilience:
 
@@ -191,7 +191,7 @@ python -m ruff check .
 
 ---
 
-## 📊 Pedagogical Framework
+## Pedagogical Framework
 
 ```
 Early Primary CBC Competency Strands
@@ -213,13 +213,14 @@ Early Primary CBC Competency Strands
 
 ---
 
-## 👤 Author
+## Author
 
 **Martin Mwai** — [@lemonhead-ai](https://github.com/lemonhead-ai) · Nairobi, Kenya  
 *Computer Science graduate, Kisii University. Passionate about empowering early childhood education through culturally grounded agentic AI.*
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](./LICENSE).
+
