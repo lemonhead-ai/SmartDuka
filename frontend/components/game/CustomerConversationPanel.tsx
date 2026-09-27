@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { AudioSpeakerButton } from "@/components/ui/AudioSpeakerButton";
 import { playChatSound } from "@/features/feedback/sensory-feedback";
 
 export type CustomerConversationMessage = {
@@ -114,9 +113,6 @@ function MessageBubble({ side, children }: { side: CustomerConversationMessage["
       animate={{ opacity: 1, y: 0 }}
       className={`flex items-start gap-1.5 ${side === "outgoing" ? "justify-end" : "justify-start"}`}
     >
-      {side === "incoming" && textContent && (
-        <AudioSpeakerButton text={textContent} size="sm" className="mt-1 shrink-0 border-0 bg-transparent p-1 text-muted hover:text-accent" />
-      )}
       <p
         className={`w-fit max-w-[90%] rounded-[18px] px-3 py-2 text-sm leading-relaxed ${
           side === "outgoing"

@@ -63,18 +63,6 @@ def test_ollama_runtime_builds_all_agents_with_configured_model() -> None:
     assert orchestrator.agents.tutor.model == "llama3.2"
 
 
-def test_groq_runtime_builds_all_agents_with_configured_model() -> None:
-    settings = Settings(
-        llm_provider="groq",
-        groq_api_key="gsk_test",
-        groq_model="llama-3.3-70b-versatile",
-    )
-
-    orchestrator = create_ai_orchestrator(settings, provider=StubProvider())
-
-    assert orchestrator.agents.customer.model == "llama-3.3-70b-versatile"
-    assert orchestrator.agents.tutor.model == "llama-3.3-70b-versatile"
-
 
 def test_openrouter_runtime_builds_all_agents_with_configured_model() -> None:
     settings = Settings(
@@ -177,38 +165,22 @@ async def test_factory_creates_fallback_provider_when_both_keys_present() -> Non
     assert isinstance(provider, FallbackProvider)
 
 
-def test_groq_uses_openrouter_as_its_cloud_fallback() -> None:
-    from src.services.ai.factory import create_llm_provider
-    from src.services.ai.providers import FallbackProvider
-
-    provider = create_llm_provider(
-        Settings(
-            llm_provider="groq",
-            groq_api_key="gsk_test",
-            openrouter_api_key="sk-or-test",
-        )
-    )
-
-    assert isinstance(provider, FallbackProvider)
-    assert provider.primary_model == "llama-3.3-70b-versatile"
-    assert provider.fallback_model == "meta-llama/llama-3.3-70b-instruct"
-
-
-def test_openrouter_uses_groq_as_its_cloud_fallback() -> None:
+def test_openrouter_uses_gemini_as_its_cloud_fallback() -> None:
     from src.services.ai.factory import create_llm_provider
     from src.services.ai.providers import FallbackProvider
 
     provider = create_llm_provider(
         Settings(
             llm_provider="openrouter",
-            groq_api_key="gsk_test",
             openrouter_api_key="sk-or-test",
+            gemini_api_key="gemini-key",
+            gemini_model="gemini-2.5-flash",
         )
     )
 
     assert isinstance(provider, FallbackProvider)
     assert provider.primary_model == "meta-llama/llama-3.3-70b-instruct"
-    assert provider.fallback_model == "llama-3.3-70b-versatile"
+    assert provider.fallback_model == "gemini-2.5-flash"
 
 
 @pytest.mark.asyncio

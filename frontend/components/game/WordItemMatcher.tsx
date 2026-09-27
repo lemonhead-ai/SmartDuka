@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { CheckmarkCircle01Icon, BookOpen01Icon, RefreshIcon } from "hugeicons-react";
 import { CbcBadge } from "@/components/learning/CbcBadge";
 import { MiloAlert } from "@/components/ui/MiloAlert";
-import { SautiButton } from "@/components/game/SautiButton";
 import type { ToastKind } from "@/features/feedback/toast-store";
 
 interface MatchPair {
@@ -91,7 +90,6 @@ export function WordItemMatcher() {
         </div>
         <div className="flex items-center gap-2">
           <CbcBadge gradeLevel="Grade 1-3" subStrand="3.1 Swahili Vocabulary & Literacy" competencyId="CBC-LANG-G1-01" />
-          <SautiButton promptText={miloFeedback.message} />
           <button
             type="button"
             onClick={resetGame}

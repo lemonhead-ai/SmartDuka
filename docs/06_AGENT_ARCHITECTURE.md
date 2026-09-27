@@ -1,6 +1,6 @@
 # Agent Architecture
 
-Smart Duka operates on **Meta Llama 3.x** architectures (Meta Llama 3.2 3B locally on-device via Ollama for zero-cost offline edge execution, and Meta Llama 3.3 70B / 3.1 8B in the cloud via Groq, OpenRouter, or Featherless, with Google Gemini fallback). This avoids slow multi-agent chains while maintaining responsive, low-latency execution.
+Smart Duka operates on **Meta Llama 3.x** architectures (Meta Llama 3.2 3B locally on-device via Ollama for zero-cost offline edge execution, and Meta Llama 3.3 70B / 3.1 8B in the cloud via OpenRouter or Featherless, with Google Gemini fallback). This avoids slow multi-agent chains while maintaining responsive, low-latency execution.
 
 | Role | When it runs | Output | Purpose |
 |---|---|---|---|

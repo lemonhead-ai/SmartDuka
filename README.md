@@ -1,6 +1,6 @@
 # SmartDuka
 
-**An agentic AI learning game where Kenyan children master CBC numeracy, literacy, and financial skills by running a virtual corner shop — powered by Meta Llama 3.3 70B via OpenRouter & Groq, with offline Ollama local fallback.**
+**An agentic AI learning game where Kenyan children master CBC numeracy, literacy, and financial skills by running a virtual corner shop — powered by Meta Llama 3.3 70B via OpenRouter, with offline Ollama local fallback.**
 
 > CBC (Competency-Based Curriculum) Aligned · Early Primary (Grade 1–4) · Built with Next.js 16 & FastAPI
 
@@ -37,9 +37,8 @@ Teaches real-world micro-commerce and community economics:
 - Trusted neighborhood customers can request items on store credit (*deni*).
 - Children evaluate customer creditworthiness, record debits, and balance repayment ledgers.
 
-### 4. Sauti Audio & Voice Synthesis (TTS)
-- Voice support across dialogue, shopping lists, and items in both English and Swahili.
-- Synchronized audio coordinator preventing dual-voice collisions, leveraging Web Speech API with cached server-side synthesis fallbacks.
+### 4. Sensory & Haptic Feedback
+- Low-latency interactive feedback tones and haptic response on item selection, basket updates, and checkout milestones.
 
 ### 5. 3D Interactive Receipts & Analytics
 - Dynamic 3D sale completion cards showing breakdown of items, discounts, cash tendered, and change given.
@@ -75,14 +74,13 @@ graph TD
     subgraph AI_Layer ["Resilient Multi-Provider AI"]
         direction TB
         P1["Primary: OpenRouter (Meta Llama 3.3 70B)"]
-        P2["Fast Cloud: Groq (Meta Llama 3.3 70B)"]
-        P3["Local / Offline: Ollama (Meta Llama 3.2)"]
-        P4["Cloud Failover: Google Gemini 3.6 Flash / OpenAI"]
+        P2["Local / Offline: Ollama (Meta Llama 3.2)"]
+        P3["Cloud Failover: Google Gemini / OpenAI"]
         
         Orchestrator --> P1
-        P1 -.->|failover / timeout| P2
-        P2 -.->|failover / offline| P3
-        P3 -.->|cloud backup| P4
+        P1 -.->|failover / timeout| P3
+        P1 -.->|offline fallback| P2
+        P2 -.->|cloud backup| P3
     end
 
     Client <-->|REST API / JSON| Router
@@ -95,9 +93,9 @@ graph TD
 | Layer | Technologies |
 |---|---|
 | **Frontend** | **Next.js 16** (App Router, React 19), **TypeScript**, **Tailwind CSS**, **Framer Motion**, **Zustand**, **TanStack React Query**, **HugeIcons** |
-| **PWA & Offline** | Service Worker, IndexedDB caching via `idb`, Web Speech API |
+| **PWA & Offline** | Service Worker, IndexedDB caching via `idb` |
 | **Backend** | **Python 3.12+**, **FastAPI**, **Pydantic v2**, **SQLAlchemy (Async)**, **Alembic**, **Uvicorn**, **Ruff** |
-| **Primary AI Engine** | **Meta Llama 3.3 70B Instruct** (via OpenRouter & Groq) |
+| **Primary AI Engine** | **Meta Llama 3.3 70B Instruct** (via OpenRouter) |
 | **Local AI Engine** | **Meta Llama 3.2** on-device via **Ollama** (zero cost, fully offline capable) |
 | **AI Fallback** | **Google Gemini 3.6 Flash** & **OpenAI** compatible endpoints |
 | **Database** | **SQLite + aiosqlite** (Local Dev) · **Supabase PostgreSQL** via Connection Pooler / Supavisor (Production) |
@@ -110,7 +108,7 @@ graph TD
 ### Prerequisites
 - **Node.js** v18.18+ or v20+
 - **Python** 3.12+
-- *(Optional for cloud AI)* An API key from **OpenRouter** or **Groq** (or Google Gemini)
+- *(Optional for cloud AI)* An API key from **OpenRouter** (or Google Gemini)
 - *(Optional for offline AI)* **Ollama** with `llama3.2` installed: `ollama run llama3.2`
 
 ---
@@ -136,7 +134,7 @@ cp .env.example .env
 
 Edit `backend/.env` with your preferred AI provider:
 ```env
-# Choose: openrouter | groq | ollama | gemini
+# Choose: openrouter | ollama | gemini
 SMARTDUKA_LLM_PROVIDER=openrouter
 
 # OpenRouter (Meta Llama 3.3 70B)
@@ -181,7 +179,7 @@ SmartDuka maintains an automated test suite enforcing both mathematical accuracy
 # Run full gameplay engine tests (Basket matching, discounts, ledger, change calculation)
 pytest tests/test_gameplay_engine.py
 
-# Run AI runtime orchestrator tests (OpenRouter, Groq, Ollama, and Fallback providers)
+# Run AI runtime orchestrator tests (OpenRouter, Ollama, and Fallback providers)
 pytest tests/test_ai_runtime.py
 
 # Format and lint code with Ruff

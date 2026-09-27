@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
     database_url: str = "sqlite+aiosqlite:///./smartduka.db"
-    llm_provider: str = "groq"
+    llm_provider: str = "openrouter"
     # Ollama settings (Local Free Meta Llama)
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_model: str = "llama3.2"
@@ -29,10 +29,6 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 120.0
     # Primary attempt timeout before instant failover to cloud provider
     llm_attempt_timeout_seconds: float = 8.0
-    # Groq settings (Free Cloud Meta Llama 3.3 / 3.1)
-    groq_api_key: str | None = None
-    groq_model: str = "llama-3.3-70b-versatile"
-    groq_base_url: str = "https://api.groq.com/openai/v1"
     # OpenRouter settings (Meta Llama 3.3 70B)
     openrouter_api_key: str | None = None
     openrouter_model: str = "meta-llama/llama-3.3-70b-instruct"

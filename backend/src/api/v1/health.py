@@ -25,18 +25,23 @@ def _cloud_models(settings: SettingsDependency) -> tuple[str, str, str | None, s
         return (
             "OpenRouter",
             settings.openrouter_model,
-            "Groq" if settings.groq_api_key else None,
-            settings.groq_model if settings.groq_api_key else None,
+            "Gemini" if settings.gemini_api_key else None,
+            settings.gemini_model if settings.gemini_api_key else None,
         )
-    if settings.llm_provider == "groq" and not settings.groq_api_key:
-        return "OpenRouter", settings.openrouter_model, None, None
-    if settings.llm_provider == "openrouter" and not settings.openrouter_api_key:
-        return "Groq", settings.groq_model, None, None
+    if settings.llm_provider in ("gemini", "google") and settings.gemini_api_key:
+        return "Gemini", settings.gemini_model, None, None
+    if settings.llm_provider == "featherless" and settings.featherless_api_key:
+        return (
+            "Featherless",
+            settings.featherless_model,
+            "Gemini" if settings.gemini_api_key else None,
+            settings.gemini_model if settings.gemini_api_key else None,
+        )
     return (
-        "Groq",
-        settings.groq_model,
-        "OpenRouter" if settings.openrouter_api_key else None,
-        settings.openrouter_model if settings.openrouter_api_key else None,
+        "OpenRouter",
+        settings.openrouter_model,
+        "Gemini" if settings.gemini_api_key else None,
+        settings.gemini_model if settings.gemini_api_key else None,
     )
 
 
@@ -51,9 +56,9 @@ async def check_cloud_ai_readiness(
     orchestrator: AIOrchestratorDependency,
     _: CurrentShopkeeper,
 ) -> CloudReadinessResponse:
-    if orchestrator is None or settings.llm_provider not in {"groq", "openrouter"}:
+    if orchestrator is None or settings.llm_provider not in {"openrouter", "featherless", "gemini", "google"}:
         raise ApplicationError(
-            "Configure Groq or OpenRouter cloud AI before running this check.",
+            "Configure OpenRouter or Gemini cloud AI before running this check.",
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
     started_at = perf_counter()

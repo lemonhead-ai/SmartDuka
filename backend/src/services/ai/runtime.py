@@ -26,8 +26,6 @@ def create_ai_orchestrator(
         model = settings.gemini_model
     elif settings.llm_provider == "ollama":
         model = settings.ollama_model
-    elif settings.llm_provider == "groq":
-        model = settings.groq_model
     elif settings.llm_provider == "openrouter":
         model = settings.openrouter_model
     elif settings.llm_provider == "featherless":

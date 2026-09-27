@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-import { AudioSpeakerButton } from "@/components/ui/AudioSpeakerButton";
 import type { LiteracyChallenge } from "@/features/gameplay/types";
 
 type LiteracyMomentProps = {
@@ -68,7 +67,6 @@ export function LiteracyMoment({ challenge, isSubmitting, onAnswer }: LiteracyMo
           )}
         </div>
         <div className="flex items-center gap-2">
-          <AudioSpeakerButton text={challenge.content} label="Listen" size="sm" />
           {swahiliTranslation && (
             <button
               type="button"
@@ -98,7 +96,6 @@ export function LiteracyMoment({ challenge, isSubmitting, onAnswer }: LiteracyMo
         >
           <span className="font-semibold">🌐 Swahili Context:</span>
           <span>In Swahili, this product is called <strong>"{swahiliTranslation}"</strong>.</span>
-          <AudioSpeakerButton text={swahiliTranslation} lang="sw" size="sm" className="ml-auto" />
         </motion.div>
       )}
 
@@ -109,14 +106,13 @@ export function LiteracyMoment({ challenge, isSubmitting, onAnswer }: LiteracyMo
         </motion.div>
       )}
 
-      {/* 2nd Wrong Pick: Full Audio & Code-Switching Prompt */}
+      {/* 2nd Wrong Pick: Reading Scaffolding Hint */}
       {attempts >= 2 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 rounded-xl bg-purple-50 border border-purple-200 p-3 text-sm text-purple-950 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="font-semibold">🔊 Spoken Scaffolding:</p>
-            <p className="text-xs text-purple-900 mt-0.5">Listen to the word pronounced clearly before picking the shelf item.</p>
+            <p className="font-semibold">💡 Reading Tip:</p>
+            <p className="text-xs text-purple-900 mt-0.5">Read each letter carefully, then look for the shelf product that matches this word.</p>
           </div>
-          <AudioSpeakerButton text={challenge.content} label="Play spoken word" size="md" className="bg-purple-600 text-white hover:bg-purple-700 border-none" />
         </motion.div>
       )}
 

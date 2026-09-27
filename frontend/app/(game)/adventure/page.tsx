@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FireIcon, Award01Icon, Store01Icon, Target01Icon } from "hugeicons-react";
 
 import { gameplayApi } from "@/features/gameplay/api";
+import { SocialShiftersImpactCard } from "@/components/profile/SocialShiftersImpactCard";
 
 export default function AdventurePage() {
   const progressQuery = useQuery({ queryKey: ["player-progress"], queryFn: gameplayApi.progress });
@@ -49,6 +50,9 @@ export default function AdventurePage() {
             </div>
         </div>
       </section>
+
+      {/* SDG 4.6 Youth Literacy & Numeracy Impact Tracker */}
+      <SocialShiftersImpactCard progress={progress} />
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
         {/* Accomplishments Stats */}

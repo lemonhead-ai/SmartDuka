@@ -7,7 +7,6 @@ import { useRef, useState } from "react";
 
 import { LiteracyMoment } from "@/components/game/LiteracyMoment";
 import { ShoppingListPanel } from "@/components/game/ShoppingListPanel";
-import { AudioSpeakerButton } from "@/components/ui/AudioSpeakerButton";
 import {
   CustomerConversationPanel,
   type CustomerConversationMessage,
@@ -412,7 +411,6 @@ export function ShopCounter() {
               >
                 <div className="flex items-start justify-between gap-1">
                   <p className="font-semibold text-ink leading-tight">{product.name}</p>
-                  <AudioSpeakerButton text={`${product.name}, ${product.price_kes} Shillings`} size="sm" className="shrink-0" />
                 </div>
                 <p className="mt-2 text-xs font-medium text-muted">
                   KES {product.price_kes} · {product.stock} left
