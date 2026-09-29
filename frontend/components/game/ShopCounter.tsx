@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { useRef, useState } from "react";
 
 import { LiteracyMoment } from "@/components/game/LiteracyMoment";
@@ -45,6 +46,7 @@ export function ShopCounter() {
   const dismissToast = useToastStore((state) => state.dismissToast);
   const queryClient = useQueryClient();
   const [answer, setAnswer] = useState("");
+  const [activeHint, setActiveHint] = useState<{ hint: string; encouragement: string } | null>(null);
   const [completion, setCompletion] = useState<{ checkout: Checkout; summary: SessionSummary; basket: Basket; customerName: string } | null>(null);
   const [customerConversation, setCustomerConversation] = useState<CustomerConversationMessage[]>(() => {
     if (customer) {
@@ -88,6 +90,7 @@ export function ShopCounter() {
       setCustomer(result.customer);
       setBasket(result.basket);
       setChallenge(null);
+      setActiveHint(null);
       setLiteracyChallenge(result.literacy_challenge ?? result.basket.literacy_challenge);
       setCompletion(null);
       setAnswer("");
@@ -167,6 +170,7 @@ export function ShopCounter() {
       const summary = await gameplayApi.sessionSummary(sessionId ?? "");
       if (!basket) return;
       clearCurrentCustomer();
+      setActiveHint(null);
       setCompletion({ checkout: result, summary, basket, customerName: customer?.name ?? "Customer" });
       void queryClient.invalidateQueries({ queryKey: ["inventory", sessionId] });
       void queryClient.invalidateQueries({ queryKey: ["player-progress"] });
@@ -179,7 +183,10 @@ export function ShopCounter() {
   });
   const hintMutation = useMutation({
     mutationFn: () => gameplayApi.requestHint(sessionId ?? ""),
-    onSuccess: (result) => notify("info", `${result.hint} ${result.encouragement}`),
+    onSuccess: (result) => {
+      setActiveHint({ hint: result.hint, encouragement: result.encouragement });
+      notify("info", `💡 Milo: ${result.hint}`);
+    },
     onError: (error) => notify("error", errorMessage(error)),
   });
   const stockOfferMutation = useMutation({
@@ -366,7 +373,7 @@ export function ShopCounter() {
               <p className="text-sm leading-relaxed">{customer.stock_offer.message}</p>
             </div>
           </div>
-          <div className="lg:sticky lg:top-6 lg:self-start">
+          <div className="h-full flex flex-col">
             <CustomerConversationPanel
               customerName={customer.name}
               messages={customerConversation}
@@ -395,7 +402,21 @@ export function ShopCounter() {
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium text-muted">Customer at the counter</p><h1 className="text-2xl font-semibold">{customer.name}</h1></div><div className="flex items-center gap-2"><Link href="/shop?tab=stock" className="rounded-full border border-line px-3 py-2 text-sm font-semibold">Restock shop</Link><span className="rounded-full border border-line px-3 py-2 text-sm font-medium">Basket: KES {basket?.total_kes ?? 0}</span></div></div>
       
       <div className="mt-6 space-y-6">
-        <ShoppingListPanel customer={customer} basket={basket} />
+        <ShoppingListPanel
+          customer={customer}
+          basket={basket}
+          onCheckBasket={() => checkoutMutation.mutate()}
+          disabled={!basket?.validation.is_valid || literacyNeedsAttention || checkoutMutation.isPending}
+          isChecking={checkoutMutation.isPending}
+          buttonLabel={challenge ? "Complete checkout" : "Check basket"}
+          helperText={
+            literacyNeedsAttention
+              ? "Help with customer's reading moment to unlock checkout."
+              : basket?.validation.is_valid
+              ? "The basket matches the customer's request!"
+              : "Match the shopping request to unlock checkout."
+          }
+        />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* Left Column: Shelves, Basket, Checkout */}
         <div className="space-y-6">
@@ -437,13 +458,97 @@ export function ShopCounter() {
           
           {literacyChallenge?.type === "spelling" && <LiteracyMoment challenge={literacyChallenge} isSubmitting={literacyAnswerMutation.isPending} onAnswer={answerLiteracy} />}
           
-          {challenge && <div className="rounded-[20px] border border-line p-4"><p className="font-semibold">Math challenge</p><p className="mt-2">{challenge.prompt}</p><div className="mt-4 flex flex-wrap gap-3"><input value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && answer && !answerMutation.isPending) answerMutation.mutate(); }} inputMode="numeric" aria-label="Your answer" className="rounded-[14px] border border-line bg-white px-4 py-3" placeholder="Your answer" /><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => answerMutation.mutate()} disabled={!answer || answerMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">Submit answer</motion.button><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => hintMutation.mutate()} disabled={hintMutation.isPending} className="rounded-[14px] border border-line px-5 py-3 font-semibold disabled:opacity-50">Need a hint</motion.button></div></div>}
-          
-          <div className="flex flex-wrap justify-between gap-3 rounded-[20px] bg-line p-4"><p className="font-medium">{literacyNeedsAttention ? "Help with the customer's reading moment to unlock checkout." : basket?.validation.is_valid ? "The basket matches the request." : "Match the shopping request to unlock checkout."}</p><motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => checkoutMutation.mutate()} disabled={!basket?.validation.is_valid || literacyNeedsAttention || checkoutMutation.isPending} className="rounded-[14px] bg-ink px-5 py-3 font-semibold text-white disabled:opacity-50">{challenge ? "Complete checkout" : "Check basket"}</motion.button></div>
+          {challenge && (
+            <div className="rounded-[28px] border border-line bg-surface p-5 sm:p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-bold text-accent border border-line">
+                    Math Challenge
+                  </span>
+                  <span className="text-xs font-medium text-muted">
+                    Level {challenge.difficulty_tier ?? 1}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-base sm:text-lg font-bold text-ink leading-relaxed">
+                {challenge.prompt}
+              </p>
+
+              {/* Milo's Operator-focused Math Hint Box */}
+              {activeHint && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl bg-canvas border border-line p-3.5 sm:p-4 flex items-start gap-3.5 shadow-xs"
+                >
+                  <div className="size-11 sm:size-12 shrink-0 rounded-2xl bg-surface border border-line p-1 shadow-xs flex items-center justify-center">
+                    <Image
+                      src="/mascots/milo.PNG"
+                      alt="Milo Math Guide"
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-ink">Milo&apos;s Strategy Hint</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2.5 py-0.5 rounded-full border border-line">
+                        Operator Guide
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-semibold text-ink leading-relaxed">
+                      {activeHint.hint}
+                    </p>
+                    {activeHint.encouragement && (
+                      <p className="text-xs text-muted font-medium pt-0.5">
+                        {activeHint.encouragement}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <input
+                  value={answer}
+                  onChange={(event) => setAnswer(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && answer && !answerMutation.isPending) answerMutation.mutate();
+                  }}
+                  inputMode="numeric"
+                  aria-label="Your answer"
+                  className="rounded-2xl border border-line bg-canvas px-4 py-3 text-sm font-bold text-ink placeholder:text-muted focus:outline-none focus:border-accent w-48 shadow-xs"
+                  placeholder="Enter amount (KES)"
+                />
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => answerMutation.mutate()}
+                  disabled={!answer || answerMutation.isPending}
+                  className="rounded-full bg-ink px-6 py-3 text-xs sm:text-sm font-bold text-surface shadow-sm hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 transition-all"
+                >
+                  {answerMutation.isPending ? "Checking..." : "Submit answer"}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => hintMutation.mutate()}
+                  disabled={hintMutation.isPending}
+                  className="rounded-full border border-line bg-canvas px-5 py-3 text-xs sm:text-sm font-bold text-ink hover:border-accent hover:text-accent disabled:opacity-40 transition-all flex items-center gap-1.5"
+                >
+                  <span>💡</span>
+                  <span>{hintMutation.isPending ? "Asking Milo..." : "Need a hint"}</span>
+                </motion.button>
+              </div>
+            </div>
+          )}
         </div>
 
+
         {/* Chat remains visible beside the shelf on desktop and follows it on mobile. */}
-        <div className="lg:sticky lg:top-6 lg:self-start">
+        <div className="h-full flex flex-col">
           <CustomerConversationPanel customerName={customer.name} messages={customerConversation} onChatSubmit={(message) => chatMutation.mutate(message)} isThinking={chatMutation.isPending} />
         </div>
         </div>

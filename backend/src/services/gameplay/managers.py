@@ -495,17 +495,24 @@ class MathChallengeManager:
         }
 
     def hint(self, challenge: dict[str, object]) -> str:
-        if challenge["skill"] == "multiplication":
-            return "Count equal groups: the price of one item, added once for each item."
-        if challenge["skill"] == "discount":
-            return "Ten percent means one out of every ten shillings. Divide the total by 10."
-        if challenge["skill"] == "division":
-            return "Share the total into equal groups, one friend at a time."
-        if challenge["skill"] == "change" and int(challenge["hints_used"]) <= 1:
-            return "Start at the basket total and count up to the amount paid."
-        if challenge["skill"] == "change":
-            return "Write it as money received minus the basket total, then subtract carefully."
-        return "Add each item price carefully, one at a time."
+        skill = str(challenge.get("skill", "change"))
+        total_kes = challenge.get("total_kes", 0)
+        amount_paid_kes = challenge.get("amount_paid_kes", 0)
+
+        if skill == "multiplication":
+            return "Use multiplication (×)! Multiply the price of one item by the quantity: Price × Quantity."
+        if skill == "discount":
+            return f"Use division (÷)! To find a 10% discount, divide the total (KES {total_kes}) by 10: {total_kes} ÷ 10."
+        if skill == "division":
+            return f"Use division (÷)! Divide the total bill (KES {total_kes}) equally among the friends: Total ÷ Number of friends."
+        if skill == "change":
+            if amount_paid_kes and total_kes:
+                return (
+                    f"Use subtraction (−)! Subtract the basket total from the money received: "
+                    f"KES {amount_paid_kes} − KES {total_kes} = Change."
+                )
+            return "Use subtraction (−)! Subtract the basket total from the money given to find the change."
+        return "Use addition (+)! Add the price of each item together to calculate the basket total: Price 1 + Price 2."
 
 
 class ScoringEngine:

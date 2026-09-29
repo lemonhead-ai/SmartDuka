@@ -14,7 +14,7 @@ export function CbcBadge({
 }: CbcBadgeProps) {
   return (
     <div
-      className="inline-flex items-center gap-2 rounded-xl bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent border border-accent/20"
+      className="inline-flex items-center gap-2 rounded-xl bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent border border-line"
       title={`KICD Competency: ${competencyId}`}
     >
       <BookOpen01Icon size={14} className="shrink-0" />

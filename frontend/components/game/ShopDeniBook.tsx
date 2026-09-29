@@ -181,7 +181,7 @@ export function ShopDeniBook() {
                 <button
                   type="button"
                   onClick={() => handleRepayment(selectedCustomer.id, 50)}
-                  className="rounded-xl bg-accent/10 px-3 py-2 text-xs font-bold text-accent border border-accent/20 hover:bg-accent/20"
+                  className="rounded-xl bg-accent/10 px-3 py-2 text-xs font-bold text-accent border border-line hover:border-accent hover:bg-accent/20"
                 >
                   Pokea Malipo ya KES 50
                 </button>

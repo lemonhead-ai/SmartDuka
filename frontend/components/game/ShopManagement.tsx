@@ -45,7 +45,7 @@ export function ShopManagement() {
     
     <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {shop.data.items.map((item) => (
-        <article key={item.id} className="rounded-[20px] bg-canvas p-4 flex flex-col justify-between border border-line/30 hover:scale-[1.02] hover:shadow-md transition-all duration-300">
+        <article key={item.id} className="rounded-[20px] bg-canvas p-4 flex flex-col justify-between border border-line hover:scale-[1.02] hover:shadow-md transition-all duration-300">
           <div>
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-bold text-sm text-ink truncate" title={item.name}>{item.name}</h3>

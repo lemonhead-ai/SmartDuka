@@ -121,9 +121,9 @@ export function WordItemMatcher() {
                   onClick={() => setSelectedWord(pair)}
                   className={`flex items-center justify-between rounded-2xl p-3.5 text-xs font-bold transition-all border ${
                     isMatched
-                      ? "bg-accent/10 border-accent/30 text-accent opacity-60 cursor-default"
+                      ? "bg-accent/10 border-accent text-accent opacity-60 cursor-default"
                       : isSelected
-                      ? "bg-accent text-white border-accent shadow-sm ring-2 ring-accent/20"
+                      ? "bg-accent text-white border-accent shadow-sm"
                       : "bg-canvas hover:bg-surface border-line text-ink"
                   }`}
                 >
@@ -155,7 +155,7 @@ export function WordItemMatcher() {
                   onClick={() => handleItemClick(pair)}
                   className={`flex flex-col items-center justify-center rounded-2xl p-4 transition-all border ${
                     isMatched
-                      ? "bg-accent/10 border-accent/30 opacity-40 cursor-default"
+                      ? "bg-accent/10 border-accent opacity-40 cursor-default"
                       : "bg-canvas hover:bg-surface border-line hover:border-accent"
                   }`}
                 >

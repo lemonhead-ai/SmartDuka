@@ -22,7 +22,7 @@ export function BottomNavigation() {
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center lg:hidden px-4">
-      <nav className="flex items-center gap-1 rounded-full bg-gradient-to-b from-white/45 to-white/15 dark:from-white/10 dark:to-white/5 p-1.5 backdrop-blur-2xl saturate-190 shadow-[0_12px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-white/40 dark:border-white/10">
+      <nav className="flex items-center gap-1 rounded-full bg-gradient-to-b from-white/45 to-white/15 dark:from-white/10 dark:to-white/5 p-1.5 backdrop-blur-2xl saturate-190 shadow-[0_12px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-line">
         {items.map(({ href, icon: Icon, label }) => {
           const isActive = pathname === href || pathname?.startsWith(`${href}/`);
           
@@ -46,7 +46,7 @@ export function BottomNavigation() {
                 {isActive && (
                   <motion.div
                     layoutId="activeBottomTabIndicator"
-                  className="absolute inset-0 rounded-full border border-accent/30 bg-gradient-to-tr from-accent/20 to-accent/5 shadow-inner z-0"
+                  className="absolute inset-0 rounded-full border border-accent bg-gradient-to-tr from-accent/20 to-accent/5 shadow-inner z-0"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}

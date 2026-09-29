@@ -13,6 +13,7 @@ import {
   Invoice01Icon,
 } from "hugeicons-react";
 
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ShopCounter } from "@/components/game/ShopCounter";
 import { ShopManagement } from "@/components/game/ShopManagement";
 import { WordItemMatcher } from "@/components/game/WordItemMatcher";
@@ -26,45 +27,38 @@ type ShopTab = "counter" | "stock" | "wordmatch" | "deni" | "hygiene" | "ledger"
 interface TabConfig {
   id: ShopTab;
   label: string;
-  subLabel: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: number; className?: string; color?: string }>;
 }
 
 const SHOP_TABS: TabConfig[] = [
   {
     id: "counter",
     label: "Counter",
-    subLabel: "Dukani",
     icon: ShoppingBag01Icon,
   },
   {
     id: "stock",
     label: "Stock Room",
-    subLabel: "Stoo",
     icon: PackageIcon,
   },
   {
     id: "wordmatch",
     label: "Word Match",
-    subLabel: "Kusoma",
     icon: BookOpen01Icon,
   },
   {
     id: "deni",
     label: "Deni Book",
-    subLabel: "Madaftari",
     icon: Book02Icon,
   },
   {
     id: "hygiene",
     label: "Hygiene",
-    subLabel: "Usafi",
     icon: ShieldKeyIcon,
   },
   {
     id: "ledger",
     label: "Finances",
-    subLabel: "Hesabu",
     icon: Invoice01Icon,
   },
 ];
@@ -87,81 +81,91 @@ function ShopPageContent() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header Info */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink sm:text-3xl">My Duka</h1>
-          <p className="mt-1 text-xs text-muted">
-            Serve customers, match Swahili words to goods, track credit balances (Deni), and manage shop finances.
+    <div className="space-y-1 sm:space-y-6 pb-6">
+      {/* Top Header */}
+      <DashboardHeader />
+
+      {/* Header Info Banner */}
+      <section className="rounded-[32px] border border-line bg-surface p-5 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+        <div className="pointer-events-none absolute right-0 top-0 size-64 bg-accent/5 rounded-full blur-3xl" />
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 border border-line px-3 py-0.5 text-xs font-bold text-accent uppercase tracking-wider mb-2">
+            <span>Duka Operations</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">My Shop</h1>
+          <p className="mt-1 text-xs sm:text-sm text-muted max-w-xl">
+            Serve customers, match Swahili goods, track customer credit (Deni), and manage shop inventory and finances.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Theme-Consistent Square Navigation Cards Grid */}
-      <nav aria-label="Shop Navigation" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Benchmark Navigation Pill Tabs */}
+      <nav
+        aria-label="Shop Navigation"
+        className="rounded-[28px] border border-line bg-surface p-1.5 sm:p-2 grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-2 shadow-sm"
+      >
         {SHOP_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <motion.button
+            <button
               key={tab.id}
               type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all min-h-[90px] ${
+              className={`relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border text-center transition-all duration-200 min-h-[58px] sm:min-h-[66px] ${
                 isActive
-                  ? "bg-accent text-white border-accent shadow-md ring-2 ring-accent/20 font-bold"
-                  : "bg-surface hover:bg-canvas border-line text-muted hover:text-ink shadow-sm"
+                  ? "bg-accent text-white dark:text-black border-accent font-bold shadow-sm scale-[1.01]"
+                  : "bg-canvas border-line text-muted hover:text-ink hover:bg-surface"
               }`}
             >
-              <Icon size={22} className={`mb-1.5 shrink-0 ${isActive ? "text-white" : "text-muted"}`} />
-              <span className="text-xs font-bold leading-tight">{tab.label}</span>
-              <span className={`text-[10px] mt-0.5 ${isActive ? "text-white/80" : "text-muted/70"}`}>
-                {tab.subLabel}
-              </span>
-            </motion.button>
+              <Icon
+                size={20}
+                className={`mb-1 shrink-0 ${isActive ? "text-white dark:text-black" : "text-muted"}`}
+              />
+              <span className="text-xs sm:text-sm font-bold leading-tight">{tab.label}</span>
+            </button>
           );
         })}
       </nav>
 
       {/* Tab Panels */}
-      {activeTab === "counter" && (
-        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          <ShopCounter />
-        </motion.div>
-      )}
+      <div className="pt-1">
+        {activeTab === "counter" && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+            <ShopCounter />
+          </motion.div>
+        )}
 
-      {activeTab === "stock" && (
-        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          <ShopManagement />
-        </motion.div>
-      )}
+        {activeTab === "stock" && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+            <ShopManagement />
+          </motion.div>
+        )}
 
-      {activeTab === "wordmatch" && (
-        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          <WordItemMatcher />
-        </motion.div>
-      )}
+        {activeTab === "wordmatch" && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+            <WordItemMatcher />
+          </motion.div>
+        )}
 
-      {activeTab === "deni" && (
-        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          <ShopDeniBook />
-        </motion.div>
-      )}
+        {activeTab === "deni" && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+            <ShopDeniBook />
+          </motion.div>
+        )}
 
-      {activeTab === "hygiene" && (
-        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          <ShopHygieneInspector />
-        </motion.div>
-      )}
+        {activeTab === "hygiene" && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+            <ShopHygieneInspector />
+          </motion.div>
+        )}
 
-      {activeTab === "ledger" && (
-        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          <ShopLedger ledger={ledgerQuery.data} isLoading={ledgerQuery.isLoading} />
-        </motion.div>
-      )}
+        {activeTab === "ledger" && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+            <ShopLedger ledger={ledgerQuery.data} isLoading={ledgerQuery.isLoading} />
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
