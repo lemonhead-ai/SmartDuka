@@ -31,6 +31,7 @@ data/audio_cache/
 .idea/
 .vscode/
 *.log
+~$*
 
 # ShipStudio metadata
 .shipstudio/
