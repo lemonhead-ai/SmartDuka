@@ -405,16 +405,18 @@ export function ShopCounter() {
         <ShoppingListPanel
           customer={customer}
           basket={basket}
-          onCheckBasket={() => checkoutMutation.mutate()}
+          onCheckBasket={!challenge ? () => checkoutMutation.mutate() : undefined}
           disabled={!basket?.validation.is_valid || literacyNeedsAttention || checkoutMutation.isPending}
           isChecking={checkoutMutation.isPending}
-          buttonLabel={challenge ? "Complete checkout" : "Check basket"}
+          buttonLabel="Check basket"
           helperText={
-            literacyNeedsAttention
+            challenge
+              ? "✓ Basket verified! Calculate the change in the quiz below to check out."
+              : literacyNeedsAttention
               ? "Help with customer's reading moment to unlock checkout."
               : basket?.validation.is_valid
-              ? "The basket matches the customer's request!"
-              : "Match the shopping request to unlock checkout."
+              ? "The basket matches the customer's request! Click 'Check basket' to continue."
+              : "Match the shopping request to check basket."
           }
         />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
@@ -526,10 +528,11 @@ export function ShopCounter() {
                   type="button"
                   whileTap={{ scale: 0.97 }}
                   onClick={() => answerMutation.mutate()}
-                  disabled={!answer || answerMutation.isPending}
-                  className="rounded-full bg-ink px-6 py-3 text-xs sm:text-sm font-bold text-surface shadow-sm hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 transition-all"
+                  disabled={!answer || answerMutation.isPending || checkoutMutation.isPending}
+                  className="rounded-full bg-accent text-white dark:text-black px-6 py-3 text-xs sm:text-sm font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 transition-all flex items-center gap-2"
                 >
-                  {answerMutation.isPending ? "Checking..." : "Submit answer"}
+                  <span>{answerMutation.isPending || checkoutMutation.isPending ? "Checking out..." : "Check out"}</span>
+                  <span aria-hidden="true">→</span>
                 </motion.button>
                 <motion.button
                   type="button"

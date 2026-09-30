@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  MoreHorizontalIcon,
   Store01Icon,
   FireIcon,
-  Award02Icon
+  Award02Icon,
+  ArrowRight01Icon
 } from "hugeicons-react";
 import { gameplayApi } from "@/features/gameplay/api";
 
@@ -14,26 +15,17 @@ export function ProgressCardGrid() {
     queryKey: ["player-progress"],
     queryFn: gameplayApi.progress
   });
-  const motivationQuery = useQuery({
-    queryKey: ["motivation"],
-    queryFn: gameplayApi.motivation
-  });
 
   const progress = progressQuery.data;
-  const motivation = motivationQuery.data;
 
   // Accuracy
   const accuracy = progress?.questions_attempted
     ? Math.round((progress.correct_answers / progress.questions_attempted) * 100)
     : 85;
 
-  // Level progress
-  const levelProgress = progress?.xp_earned ? Math.min(progress.xp_earned % 100, 100) : 65;
-
-  // Mission / Streak progress
-  const missionProgress = motivation?.daily_mission
-    ? Math.min(Math.round((motivation.daily_mission.progress / motivation.daily_mission.target) * 100), 100)
-    : 50;
+  const streak = progress?.daily_streak_days ?? 1;
+  const level = progress?.current_learning_level ?? 1;
+  const xp = progress?.xp_earned ?? 205;
 
   return (
     <section className="space-y-3">
@@ -42,119 +34,85 @@ export function ProgressCardGrid() {
       </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        {/* Card 1: Shopkeeper Level Mastery */}
-        <article className="rounded-[32px] border border-line bg-surface p-5 sm:p-6 flex flex-col justify-between min-h-[190px] shadow-sm hover:scale-[1.01] transition-all">
+        {/* Card 1: Daily Streak (Duolingo-style fire icon + streak number container) */}
+        <Link
+          href="/adventure"
+          title="View Quests & Keep Streak"
+          className="group rounded-[32px] border border-line bg-surface p-5 sm:p-6 flex flex-col justify-between min-h-[160px] shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-start justify-between">
+            {/* Duolingo-style fire pill container with the streak number inside */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-500">
+              <FireIcon size={20} color="currentColor" className="shrink-0" />
+              <span className="text-sm font-black tracking-tight">{streak}</span>
+            </div>
+
+            <div className="grid size-8 place-items-center rounded-full bg-canvas text-muted group-hover:text-amber-500 group-hover:bg-amber-500/10 transition-colors">
+              <ArrowRight01Icon size={16} color="currentColor" />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <h4 className="font-extrabold text-base sm:text-lg text-ink group-hover:text-amber-500 transition-colors tracking-tight leading-snug">
+              Daily Streak
+            </h4>
+            <p className="text-xs font-medium text-muted mt-1">
+              Tap to play today&apos;s quests
+            </p>
+          </div>
+        </Link>
+
+        {/* Card 2: Shopkeeper Level (Minimalist, showing XP directly, no arbitrary progress line) */}
+        <Link
+          href="/profile"
+          title="View Profile & Level Details"
+          className="group rounded-[32px] border border-line bg-surface p-5 sm:p-6 flex flex-col justify-between min-h-[160px] shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+        >
           <div className="flex items-start justify-between">
             <div className="grid size-11 place-items-center rounded-2xl bg-canvas border border-line text-accent">
               <Store01Icon size={20} color="currentColor" />
             </div>
-            <button
-              type="button"
-              aria-label="More options"
-              className="grid size-8 place-items-center rounded-full hover:bg-canvas text-muted hover:text-ink transition-colors"
-            >
-              <MoreHorizontalIcon size={18} color="currentColor" />
-            </button>
+
+            <div className="grid size-8 place-items-center rounded-full bg-canvas text-muted group-hover:text-accent group-hover:bg-accent/10 transition-colors">
+              <ArrowRight01Icon size={16} color="currentColor" />
+            </div>
           </div>
 
           <div className="mt-4">
-            <h4 className="font-extrabold text-base sm:text-lg text-ink tracking-tight leading-snug">
-              Shopkeeper Level {progress?.current_learning_level ?? 1}
+            <h4 className="font-extrabold text-base sm:text-lg text-ink group-hover:text-accent transition-colors tracking-tight leading-snug">
+              Shopkeeper Level {level}
             </h4>
-            <p className="text-xs font-medium text-muted mt-0.5">
-              {progress?.xp_earned ?? 0} Total XP Earned
+            <p className="text-xs font-black text-accent mt-1">
+              {xp} XP
             </p>
           </div>
+        </Link>
 
-          <div className="mt-5 space-y-1.5">
-            <div className="h-2 w-full rounded-full bg-canvas overflow-hidden">
-              <div
-                className="h-full rounded-full bg-accent transition-all duration-500"
-                style={{ width: `${levelProgress}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-muted">Progress</span>
-              <span className="font-bold text-ink">{levelProgress}%</span>
-            </div>
-          </div>
-        </article>
-
-        {/* Card 2: Daily Streak & Missions */}
-        <article className="rounded-[32px] border border-line bg-surface p-5 sm:p-6 flex flex-col justify-between min-h-[190px] shadow-sm hover:scale-[1.01] transition-all">
-          <div className="flex items-start justify-between">
-            <div className="grid size-11 place-items-center rounded-2xl bg-canvas border border-line text-amber-500">
-              <FireIcon size={20} color="currentColor" />
-            </div>
-            <button
-              type="button"
-              aria-label="More options"
-              className="grid size-8 place-items-center rounded-full hover:bg-canvas text-muted hover:text-ink transition-colors"
-            >
-              <MoreHorizontalIcon size={18} color="currentColor" />
-            </button>
-          </div>
-
-          <div className="mt-4">
-            <h4 className="font-extrabold text-base sm:text-lg text-ink tracking-tight leading-snug">
-              Daily Mission &amp; Streak
-            </h4>
-            <p className="text-xs font-medium text-muted mt-0.5">
-              {progress?.daily_streak_days ?? 1}-Day Active Streak
-            </p>
-          </div>
-
-          <div className="mt-5 space-y-1.5">
-            <div className="h-2 w-full rounded-full bg-canvas overflow-hidden">
-              <div
-                className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                style={{ width: `${missionProgress}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-muted">Progress</span>
-              <span className="font-bold text-ink">{missionProgress}%</span>
-            </div>
-          </div>
-        </article>
-
-        {/* Card 3: Math & Change Accuracy */}
-        <article className="rounded-[32px] border border-line bg-surface p-5 sm:p-6 flex flex-col justify-between min-h-[190px] shadow-sm hover:scale-[1.01] transition-all">
+        {/* Card 3: Basic Math Accuracy (Renamed, minimalist percentage, no progress line) */}
+        <Link
+          href="/shop?tab=counter"
+          title="Practice Math at Counter"
+          className="group rounded-[32px] border border-line bg-surface p-5 sm:p-6 flex flex-col justify-between min-h-[160px] shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+        >
           <div className="flex items-start justify-between">
             <div className="grid size-11 place-items-center rounded-2xl bg-canvas border border-line text-sky-500">
               <Award02Icon size={20} color="currentColor" />
             </div>
-            <button
-              type="button"
-              aria-label="More options"
-              className="grid size-8 place-items-center rounded-full hover:bg-canvas text-muted hover:text-ink transition-colors"
-            >
-              <MoreHorizontalIcon size={18} color="currentColor" />
-            </button>
+
+            <div className="grid size-8 place-items-center rounded-full bg-canvas text-muted group-hover:text-sky-500 group-hover:bg-sky-500/10 transition-colors">
+              <ArrowRight01Icon size={16} color="currentColor" />
+            </div>
           </div>
 
           <div className="mt-4">
-            <h4 className="font-extrabold text-base sm:text-lg text-ink tracking-tight leading-snug">
-              Math &amp; Change Accuracy
+            <h4 className="font-extrabold text-base sm:text-lg text-ink group-hover:text-sky-500 transition-colors tracking-tight leading-snug">
+              Basic Math Accuracy
             </h4>
-            <p className="text-xs font-medium text-muted mt-0.5">
-              {progress?.correct_answers ?? 0} Correct calculations
+            <p className="text-xs font-black text-sky-500 mt-1">
+              {accuracy}% accuracy
             </p>
           </div>
-
-          <div className="mt-5 space-y-1.5">
-            <div className="h-2 w-full rounded-full bg-canvas overflow-hidden">
-              <div
-                className="h-full rounded-full bg-sky-500 transition-all duration-500"
-                style={{ width: `${accuracy}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-muted">Progress</span>
-              <span className="font-bold text-ink">{accuracy}%</span>
-            </div>
-          </div>
-        </article>
+        </Link>
       </div>
     </section>
   );

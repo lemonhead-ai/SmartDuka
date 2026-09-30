@@ -34,10 +34,10 @@ export default function DashboardPage() {
       {/* Top Header: Search pill, Duka Coins wallet balance, Notification bell, Profile avatar */}
       <DashboardHeader />
 
-      {/* Mobile-only Salutation: Between Search and First Card */}
-      <div className="sm:hidden text-center py-2 px-3">
+      {/* Salutation / Greetings: Below Header, Above Calendar */}
+      <div className="py-2 px-1 sm:px-0">
         <p className="text-xs font-bold uppercase tracking-widest text-muted">Welcome back</p>
-        <h1 className="text-2xl font-black text-ink tracking-tight flex items-center justify-center gap-1.5 mt-0.5">
+        <h1 className="text-2xl sm:text-3xl font-black text-ink tracking-tight flex items-center gap-1.5 mt-0.5">
           <span>Hello {childName}!</span>
           <span className="inline-block animate-bounce">👋</span>
         </h1>
@@ -51,26 +51,33 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Main Grid: Left Column (Hero, 3 Progress Cards, 2 Guides) & Right Column (Calendar, Badges) */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-1 sm:gap-6 items-start">
+      {/* Main Grid: Left Column (Hero Quest Card, 3 Progress Cards, 2 Guides) & Right Column (Calendar, Badges) */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-3 sm:gap-6 items-start">
         {/* Left / Center Main Stream */}
-        <div className="space-y-1 sm:space-y-6">
-          {/* Top Big Hero Card */}
+        <div className="space-y-3 sm:space-y-6">
+          {/* Mobile-only Calendar: Appears above Today's Store Quest card on mobile */}
+          <div className="xl:hidden">
+            <DashboardCalendar />
+          </div>
+
+          {/* Today's Store Quest Card */}
           <HeroBannerCard />
 
-          {/* Middle: 3 Progress Cards (Lavender, Warm Honey, Soft Rose) */}
+          {/* Middle: 3 Progress Cards (Daily Streak, Shopkeeper Level, Basic Math Accuracy) */}
           <ProgressCardGrid />
 
-          {/* Bottom: 2 Wide Guide Cards */}
+          {/* Bottom: 2 Wide Guide Cards (Clickable notes reader) */}
           <GuideCardGrid />
         </div>
 
-        {/* Right Stream: Calendar & Badges */}
-        <div className="space-y-1 sm:space-y-6">
-          {/* Calendar Widget with 7-Day Pill Strip */}
-          <DashboardCalendar />
+        {/* Right Stream: Desktop Calendar & Badges Showcase */}
+        <div className="space-y-3 sm:space-y-6">
+          {/* Desktop Calendar: Retains its position in the right sidebar on desktop */}
+          <div className="hidden xl:block">
+            <DashboardCalendar />
+          </div>
 
-          {/* 'Your Badges' Showcase Card (Replaces upcoming courses) */}
+          {/* 'Your Badges' Showcase Card */}
           <BadgesShowcaseCard />
         </div>
       </div>

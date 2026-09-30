@@ -48,20 +48,6 @@ function applyPreferences(prefs: Preferences) {
   } else {
     delete document.documentElement.dataset.reducedMotion;
   }
-
-  // Dynamically update theme-color meta tag to unify the status bar with the header in light/dark mode
-  if (typeof document !== "undefined") {
-    const targetColor = theme === "dark" ? "#000000" : "#F5F5F7";
-    const existing = document.querySelectorAll('meta[name="theme-color"]');
-    if (existing.length > 0) {
-      existing.forEach((el) => el.setAttribute("content", targetColor));
-    } else {
-      const meta = document.createElement("meta");
-      meta.name = "theme-color";
-      meta.content = targetColor;
-      document.head.appendChild(meta);
-    }
-  }
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {

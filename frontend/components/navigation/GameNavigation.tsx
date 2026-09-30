@@ -22,7 +22,7 @@ import { useKidProfileStore } from "@/features/kids/store";
 const items = [
   { href: "/dashboard", icon: DashboardSquare01Icon, label: "Home" },
   { href: "/shop", icon: ShoppingBag01Icon, label: "My shop" },
-  { href: "/adventure", icon: AdventureIcon, label: "Missions" }
+  { href: "/adventure", icon: AdventureIcon, label: "Quests" }
 ];
 
 type GameNavigationProps = { onWidthChange?: (width: number) => void };

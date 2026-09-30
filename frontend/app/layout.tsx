@@ -25,10 +25,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F5F5F7",
-  viewportFit: "cover",
-  width: "device-width",
-  initialScale: 1
+  themeColor: "#FFFFFF"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -38,7 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{let p=JSON.parse(localStorage.getItem('smart-duka-preferences-v2')||'null');if(!p){const t=localStorage.getItem('smart-duka-theme');const o=localStorage.getItem('smart-duka-preferences');p=o?JSON.parse(o):{theme:'system',largeText:false,reducedMotion:false,sound:true};if(t)p.theme=t}const th=p.theme==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):(p.theme||'light');document.documentElement.dataset.theme=th;document.documentElement.style.colorScheme=th;document.documentElement.dataset.sound=String(p.sound!==false);if(p.largeText)document.documentElement.dataset.largeText='true';if(p.reducedMotion)document.documentElement.dataset.reducedMotion='true';const tc=th==='dark'?'#000000':'#F5F5F7';let m=document.querySelector('meta[name=\"theme-color\"]');if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m);}m.setAttribute('content',tc);}catch{}"
+              "try{let p=JSON.parse(localStorage.getItem('smart-duka-preferences-v2')||'null');if(!p){const t=localStorage.getItem('smart-duka-theme');const o=localStorage.getItem('smart-duka-preferences');p=o?JSON.parse(o):{theme:'system',largeText:false,reducedMotion:false,sound:true};if(t)p.theme=t}const th=p.theme==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):(p.theme||'light');document.documentElement.dataset.theme=th;document.documentElement.style.colorScheme=th;document.documentElement.dataset.sound=String(p.sound!==false);if(p.largeText)document.documentElement.dataset.largeText='true';if(p.reducedMotion)document.documentElement.dataset.reducedMotion='true';}catch{}"
           }}
         />
       </head>

@@ -63,22 +63,13 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  background-color: color-mix(in srgb, var(--color-grey-soft) 80%, transparent);
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--color-grey-mid);
 }
 
-.sticky-dashboard-header::before {
-  content: "";
-  position: absolute;
-  top: -120px;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background-color: inherit;
-  backdrop-filter: inherit;
-  -webkit-backdrop-filter: inherit;
-  pointer-events: none;
+:root[data-theme="dark"] .sticky-dashboard-header {
+  background-color: #000000;
+  border-bottom: 1px solid var(--color-grey-mid);
 }
 
 :focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
