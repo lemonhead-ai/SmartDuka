@@ -46,6 +46,7 @@ html, body {
   font-family: 'Montserrat', sans-serif;
   scrollbar-width: thin;
   scrollbar-color: var(--color-grey-mid) transparent;
+  background-color: var(--color-grey-soft);
 }
 body { min-height: 100dvh; margin: 0; background: var(--color-grey-soft); color: var(--color-black); }
 *::-webkit-scrollbar { width: 8px; height: 8px; }

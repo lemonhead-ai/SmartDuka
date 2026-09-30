@@ -38,8 +38,15 @@ function ShopIcon({ filled }: { filled: boolean }) {
 function QuestsIcon({ filled }: { filled: boolean }) {
   if (filled) {
     return (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm3.8 5.7a.8.8 0 0 0-.96-.18l-5.7 2.1a.8.8 0 0 0-.46.46l-2.1 5.7a.8.8 0 0 0 1.02 1.02l5.7-2.1a.8.8 0 0 0 .46-.46l2.1-5.7a.8.8 0 0 0-.06-.78Zm-2.8 4.3-2.5.9.9-2.5 1.6 1.6Z" />
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9.5" />
+        <polygon
+          points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"
+          fill="currentColor"
+          stroke="currentColor"
+          strokeWidth="1"
+          strokeLinejoin="round"
+        />
       </svg>
     );
   }
@@ -148,15 +155,12 @@ export function BottomNavigation() {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       aria-label="Bottom Navigation"
-      className="fixed inset-x-[21px] bottom-[calc(env(safe-area-inset-bottom)+8px)] z-50 lg:hidden h-[64px] rounded-full p-[4px] select-none touch-none bg-[rgba(28,28,30,0.72)] backdrop-blur-[24px] backdrop-saturate-[180%] border-[0.5px] border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.45)]"
-      style={{
-        boxShadow: "inset 0 0 0 0.5px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.45)"
-      }}
+      className="fixed inset-x-[21px] bottom-[calc(env(safe-area-inset-bottom)+8px)] z-50 lg:hidden h-[64px] rounded-full p-[4px] select-none touch-none bg-[rgba(255,255,255,0.85)] dark:bg-[rgba(28,28,30,0.72)] backdrop-blur-[24px] backdrop-saturate-[180%] border-[0.5px] border-black/10 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)] transition-colors duration-300"
     >
       <div className="relative w-full h-[56px] flex items-center">
         {/* Switcher capsule */}
         <div
-          className="absolute top-0 bottom-0 left-0 w-1/3 h-[56px] rounded-full bg-white/[0.12] pointer-events-none z-0"
+          className="absolute top-0 bottom-0 left-0 w-1/3 h-[56px] rounded-full bg-black/[0.08] dark:bg-white/[0.12] pointer-events-none z-0 transition-colors duration-300"
           style={{
             transform: `translateX(${currentPos * 100}%) scale(${isPressed ? 1.08 : 1})`,
             transformOrigin: "center center",
@@ -178,7 +182,9 @@ export function BottomNavigation() {
                 aria-selected={isSelected}
                 aria-label={tab.label}
                 className={`flex flex-col items-center justify-center gap-[2px] h-full w-full select-none cursor-pointer transition-colors duration-200 ${
-                  isSelected ? "text-[#30D158]" : "text-white/60 hover:text-white/80"
+                  isSelected
+                    ? "text-[#15803d] dark:text-[#30D158]"
+                    : "text-black/55 hover:text-black/85 dark:text-white/60 dark:hover:text-white/80"
                 }`}
               >
                 <tab.Icon filled={isSelected} />
