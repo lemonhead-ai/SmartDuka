@@ -11,7 +11,8 @@ import {
   Wallet02Icon,
   Notification01Icon,
   FireIcon,
-  CheckmarkCircle02Icon
+  CheckmarkCircle02Icon,
+  Cancel01Icon
 } from "hugeicons-react";
 import { gameplayApi } from "@/features/gameplay/api";
 import { authApi } from "@/features/auth/api";
@@ -39,6 +40,7 @@ export function DashboardHeader() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isWalletExpanded, setIsWalletExpanded] = useState(false);
@@ -85,8 +87,21 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky-dashboard-header flex items-center justify-between gap-3 sm:gap-4 py-2.5 sm:py-3.5 w-full transition-all">
-      {/* Search Input Bar */}
-      <div ref={searchContainerRef} className="relative flex-1 max-w-xl">
+      {/* Mobile: Search Icon Only on top left corner */}
+      <div className="sm:hidden">
+        <button
+          type="button"
+          onClick={() => setIsMobileSearchOpen(true)}
+          aria-label="Search"
+          title="Search items, missions, guides"
+          className="grid size-10 place-items-center rounded-full bg-surface border border-line text-ink hover:text-accent hover:border-accent transition-all shrink-0"
+        >
+          <Search01Icon size={20} color="currentColor" />
+        </button>
+      </div>
+
+      {/* Desktop Search Input Bar */}
+      <div ref={searchContainerRef} className="hidden sm:block relative flex-1 max-w-xl">
         <div className="relative flex items-center">
           <Search01Icon
             size={20}
@@ -116,7 +131,7 @@ export function DashboardHeader() {
           )}
         </div>
 
-        {/* Search Results Dropdown */}
+        {/* Desktop Search Results Dropdown */}
         <AnimatePresence>
           {isSearchOpen && searchQuery.trim().length > 0 && (
             <motion.div
@@ -159,6 +174,96 @@ export function DashboardHeader() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Mobile Search Modal Overlay */}
+      <AnimatePresence>
+        {isMobileSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex flex-col justify-start sm:hidden"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setIsMobileSearchOpen(false);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              className="w-full rounded-[28px] bg-surface border border-line p-4 shadow-2xl space-y-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search01Icon size={20} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                  <input
+                    type="text"
+                    autoFocus
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search items, missions..."
+                    className="w-full rounded-full bg-canvas border border-line pl-10 pr-10 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-accent"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-ink px-1.5 py-0.5 rounded-full"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileSearchOpen(false);
+                    setSearchQuery("");
+                  }}
+                  className="grid size-10 place-items-center rounded-full bg-canvas border border-line text-ink hover:text-accent shrink-0"
+                  aria-label="Close search"
+                >
+                  <Cancel01Icon size={18} />
+                </button>
+              </div>
+
+              {/* Mobile search results */}
+              {searchQuery.trim().length > 0 && (
+                <div className="space-y-1 max-h-72 overflow-y-auto pt-2 border-t border-line">
+                  {filteredItems.length > 0 ? (
+                    filteredItems.map((item) => (
+                      <button
+                        key={item.title}
+                        onClick={() => {
+                          setIsMobileSearchOpen(false);
+                          setSearchQuery("");
+                          router.push(item.href);
+                        }}
+                        className="w-full flex items-center justify-between text-left px-3 py-2.5 rounded-xl hover:bg-canvas transition-colors group"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-ink group-hover:text-accent">
+                            {item.title}
+                          </p>
+                          <p className="text-xs text-muted">{item.desc}</p>
+                        </div>
+                        <span className="text-[10px] font-medium uppercase px-2 py-0.5 rounded-md bg-canvas text-muted border border-line">
+                          {item.category}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="py-4 text-center text-xs text-muted">
+                      No results found for &ldquo;{searchQuery}&rdquo;
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Right Controls: Single-Bordered Circular Buttons (Wallet, Notifications, Profile Avatar) */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
