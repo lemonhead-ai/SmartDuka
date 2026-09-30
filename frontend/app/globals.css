@@ -62,9 +62,22 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background-color: color-mix(in srgb, var(--color-grey-soft) 85%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background-color: color-mix(in srgb, var(--color-grey-soft) 80%, transparent);
+}
+
+.sticky-dashboard-header::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background-color: inherit;
+  backdrop-filter: inherit;
+  -webkit-backdrop-filter: inherit;
+  pointer-events: none;
 }
 
 :focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }

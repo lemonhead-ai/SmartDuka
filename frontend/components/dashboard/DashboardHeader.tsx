@@ -86,7 +86,7 @@ export function DashboardHeader() {
     : [];
 
   return (
-    <header className="sticky-dashboard-header flex items-center justify-between gap-3 sm:gap-4 py-2.5 sm:py-3.5 w-full transition-all">
+    <header className="sticky-dashboard-header flex items-center justify-between gap-3 sm:gap-4 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] pb-2.5 sm:pt-3.5 sm:pb-3.5 -mx-1 sm:mx-0 px-3 sm:px-0 w-[calc(100%+0.5rem)] sm:w-full transition-all">
       {/* Mobile: Search Icon Only on top left corner */}
       <div className="sm:hidden">
         <button

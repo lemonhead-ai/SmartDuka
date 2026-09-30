@@ -12,11 +12,11 @@ export function GameShell({ children }: Readonly<{ children: React.ReactNode }>)
   }
 
   return (
-    <div className="min-h-dvh w-full overflow-x-clip bg-canvas pb-20 lg:pb-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+    <div className="min-h-dvh w-full overflow-x-clip bg-canvas pb-[calc(env(safe-area-inset-bottom)+96px)] lg:pb-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
       <ShopThemeSync />
       <div className="w-full px-1 sm:px-6 lg:px-8 flex gap-1 sm:gap-6 min-h-dvh relative">
         <GameNavigation />
-        <main id="main-content" tabIndex={-1} className="flex-1 min-w-0 py-1 sm:py-4 lg:py-4 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+        <main id="main-content" tabIndex={-1} className="flex-1 min-w-0 pt-0 pb-1 sm:py-4 lg:py-4 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
           {children}
         </main>
       </div>

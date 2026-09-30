@@ -19,12 +19,20 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Smart Duka",
   }
 };
 
-export const viewport: Viewport = { themeColor: "#FFFFFF" };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F5F7" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" }
+  ],
+  viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
